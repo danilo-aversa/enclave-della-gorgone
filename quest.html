@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quest | Enclave della Gorgone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Uncial+Antiqua&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles/styles.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar" aria-label="Navigazione laterale">
+        <a class="sidebar-brand" href="index.html" aria-label="Enclave della Gorgone">
+          <span class="brand-mark" aria-hidden="true">EG</span>
+          <span>
+            <strong>Enclave della Gorgone</strong>
+            <small>Portale campagna</small>
+          </span>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Navigazione portale">
+          <a class="nav-item" href="index.html">
+            <i class="fa-solid fa-compass" aria-hidden="true"></i>
+            <span>Accesso</span>
+          </a>
+          <a class="nav-item" href="docs.html?doc=lore/introduzione">
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+            <span>Lore</span>
+          </a>
+          <a class="nav-item" href="docs.html?doc=regole/panoramica">
+            <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+            <span>Regole</span>
+          </a>
+          <a class="nav-item" href="characters.html">
+            <i class="fa-solid fa-users" aria-hidden="true"></i>
+            <span>Personaggi</span>
+          </a>
+          <a class="nav-item is-active" href="quest.html">
+            <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
+            <span>Quest</span>
+          </a>
+          <a class="nav-item" href="#">
+            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+            <span>Sessioni</span>
+          </a>
+          <a class="nav-item" href="#">
+            <i class="fa-solid fa-clipboard" aria-hidden="true"></i>
+            <span>Bacheca</span>
+          </a>
+
+          <div class="nav-manage">
+            <button type="button" class="nav-item manage-toggle">
+              <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+              <span>Gestione</span>
+              <i class="fa-solid fa-chevron-right manage-caret" aria-hidden="true"></i>
+            </button>
+            <ul class="manage-menu">
+              <li>
+                <button
+                  type="button"
+                  class="manage-action"
+                  data-manage-action
+                  data-character-import-action
+                  disabled
+                >
+                  Aggiungi personaggio
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="manage-action"
+                  data-manage-action
+                  data-quest-import-action
+                  disabled
+                >
+                  Aggiungi quest
+                </button>
+              </li>
+              <li>
+                <button type="button" class="manage-action" data-manage-action disabled>
+                  Aggiungi sessione
+                </button>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+        <section class="sidebar-access" aria-label="Codice locale">
+          <label class="access-label" for="access-code-input">Codice Identificativo</label>
+          <input
+            id="access-code-input"
+            class="access-input"
+            type="text"
+            autocomplete="off"
+            data-access-input
+            placeholder="Inserisci codice"
+          />
+          <p class="access-note">Le azioni di Gestione richiedono un codice valido.</p>
+          <p class="access-status" data-access-status>Codice non inserito</p>
+        </section>
+
+        <a class="btn-vtt" href="#">
+          <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+          <span>Apri VTT</span>
+        </a>
+      </aside>
+
+      <div class="content-shell">
+        <main class="main-content quest-page" aria-live="polite">
+          <section class="section-card quest-page-header" aria-labelledby="quest-page-title">
+            <div class="section-head">
+              <h1 id="quest-page-title">Quest</h1>
+            </div>
+            <p class="hero-support">Scheda operativa della quest selezionata.</p>
+            <p class="access-note" data-quest-slug></p>
+          </section>
+
+          <section class="section-card quest-page-body" data-quest-page>
+            <p class="quest-loading">Caricamento quest...</p>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="quest-modal" data-quest-modal hidden>
+      <div class="quest-modal__backdrop" data-quest-modal-close></div>
+      <div class="quest-modal__panel" role="dialog" aria-modal="true" aria-labelledby="quest-modal-title">
+        <h3 id="quest-modal-title">Aggiungi quest</h3>
+
+        <form class="quest-modal__form" data-quest-form>
+          <div class="quest-modal__grid">
+            <label class="quest-modal__field" for="quest-title-input">
+              <span>Titolo</span>
+              <input id="quest-title-input" class="quest-modal__input" type="text" data-quest-title required />
+            </label>
+
+            <label class="quest-modal__field" for="quest-slug-input">
+              <span>Slug</span>
+              <input id="quest-slug-input" class="quest-modal__input" type="text" data-quest-slug-input required />
+            </label>
+
+            <label class="quest-modal__field" for="quest-type-input">
+              <span>Tipo</span>
+              <select id="quest-type-input" class="quest-modal__input" data-quest-type>
+                <option value="main">Quest principale</option>
+                <option value="side" selected>Quest secondaria</option>
+              </select>
+            </label>
+
+            <label class="quest-modal__field" for="quest-status-input">
+              <span>Stato</span>
+              <select id="quest-status-input" class="quest-modal__input" data-quest-status-input>
+                <option value="in-corso" selected>In corso</option>
+                <option value="preparazione">Preparazione</option>
+                <option value="prioritaria">Prioritaria</option>
+                <option value="sospesa">Sospesa</option>
+                <option value="conclusa">Conclusa</option>
+              </select>
+            </label>
+
+            <label class="quest-modal__field quest-modal__field--full" for="quest-image-input">
+              <span>Immagine quest (URL)</span>
+              <input id="quest-image-input" class="quest-modal__input" type="url" data-quest-image />
+            </label>
+
+            <label class="quest-modal__field quest-modal__field--full" for="quest-location-input">
+              <span>Luogo</span>
+              <input id="quest-location-input" class="quest-modal__input" type="text" data-quest-location />
+            </label>
+
+            <label class="quest-modal__field quest-modal__field--full" for="quest-report-input">
+              <span>Rapporto</span>
+              <textarea id="quest-report-input" class="quest-modal__textarea" rows="4" data-quest-report></textarea>
+            </label>
+
+            <label class="quest-modal__field" for="quest-last-session-input">
+              <span>Ultima sessione</span>
+              <input id="quest-last-session-input" class="quest-modal__input" type="date" data-quest-last-session />
+            </label>
+
+            <label class="quest-modal__field" for="quest-next-session-input">
+              <span>Prossima sessione</span>
+              <input id="quest-next-session-input" class="quest-modal__input" type="date" data-quest-next-session />
+            </label>
+          </div>
+
+          <section class="quest-team-picker" aria-labelledby="quest-team-title">
+            <div class="quest-team-picker__head">
+              <h4 id="quest-team-title">Squadra assegnata</h4>
+              <input
+                class="quest-team-picker__search"
+                type="search"
+                data-quest-team-search
+                placeholder="Cerca personaggio"
+                autocomplete="off"
+              />
+            </div>
+            <div class="quest-team-picker__list" data-quest-team-list>
+              <p class="quest-loading">Caricamento personaggi...</p>
+            </div>
+          </section>
+
+          <p class="quest-modal__status" data-quest-status aria-live="polite"></p>
+
+          <div class="quest-modal__actions">
+            <button type="submit" class="quest-modal__btn quest-modal__btn--primary" data-quest-submit>
+              Salva quest
+            </button>
+            <button type="button" class="quest-modal__btn" data-quest-cancel>
+              Annulla
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="import-modal" data-character-import-modal hidden>
+      <div class="import-modal__backdrop" data-character-import-close></div>
+      <div class="import-modal__panel" role="dialog" aria-modal="true" aria-labelledby="import-title">
+        <h3 id="import-title">Importa personaggio</h3>
+
+        <form class="import-modal__form" data-character-import-form>
+          <label class="import-modal__label" for="character-json-file">JSON personaggio</label>
+          <input
+            id="character-json-file"
+            class="import-modal__input"
+            type="file"
+            accept=".json,application/json"
+            data-character-json-file
+            required
+          />
+
+          <label class="import-modal__label" for="character-portrait-file">Portrait</label>
+          <input
+            id="character-portrait-file"
+            class="import-modal__input"
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            data-character-portrait-file
+            required
+          />
+
+          <p class="import-modal__status" data-character-import-status aria-live="polite"></p>
+
+          <div class="import-modal__actions">
+            <button type="submit" class="import-modal__btn import-modal__btn--primary" data-character-import-submit>
+              Importa
+            </button>
+            <button type="button" class="import-modal__btn" data-character-import-cancel>
+              Annulla
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="scripts/main.js" defer></script>
+    <script src="scripts/quest.js" defer></script>
+    <script src="scripts/quest-import.js" defer></script>
+    <script src="scripts/character-import.js" defer></script>
+  </body>
+</html>

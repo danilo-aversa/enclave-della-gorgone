@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "defaultDoc": "lore/introduzione",
+  "sections": [
+    {
+      "slug": "lore",
+      "title": "Lore",
+      "description": "Archivio narrativo dell'Enclave e stato delle fratture.",
+      "items": [
+        {
+          "title": "Fondamenti",
+          "children": [
+            {
+              "slug": "introduzione",
+              "title": "Introduzione",
+              "file": "content/lore/introduzione.md"
+            },
+            {
+              "slug": "enclave-della-gorgone",
+              "title": "Enclave della Gorgone",
+              "file": "content/lore/enclave-della-gorgone.md"
+            }
+          ]
+        },
+        {
+          "title": "Fratture e Specchi",
+          "children": [
+            {
+              "slug": "trama-e-fratture",
+              "title": "Trama e Fratture",
+              "file": "content/lore/trama-e-fratture.md"
+            },
+            {
+              "slug": "specchi-della-gorgone",
+              "title": "Specchi della Gorgone",
+              "file": "content/lore/specchi-della-gorgone.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "regole",
+      "title": "Regole",
+      "description": "Procedure operative e regole condivise di campagna.",
+      "items": [
+        {
+          "title": "Base",
+          "children": [
+            {
+              "slug": "panoramica",
+              "title": "Panoramica",
+              "file": "content/regole/panoramica.md"
+            },
+            {
+              "slug": "combattimento",
+              "title": "Combattimento",
+              "file": "content/regole/combattimento.md"
+            },
+            {
+              "slug": "condizioni",
+              "title": "Condizioni",
+              "file": "content/regole/condizioni.md"
+            }
+          ]
+        },
+        {
+          "title": "Operativita",
+          "children": [
+            {
+              "slug": "sessioni-e-quest",
+              "title": "Sessioni e Quest",
+              "file": "content/regole/sessioni-e-quest.md"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Documentazione | Enclave della Gorgone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Uncial+Antiqua&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles/styles.css" />
+    <link rel="stylesheet" href="styles/docs.css" />
+  </head>
+  <body class="docs-reading-page">
+    <aside class="docs-site-rail" aria-label="Navigazione portale">
+      <a class="docs-site-rail__brand" href="index.html" aria-label="Vai ad Accesso" data-label="Accesso">
+        <span aria-hidden="true">EG</span>
+      </a>
+
+      <nav class="docs-site-rail__nav" aria-label="Navigazione principale">
+        <a class="docs-site-rail__link" href="index.html" aria-label="Accesso" data-label="Accesso">
+          <i class="fa-solid fa-compass" aria-hidden="true"></i>
+          <span>Accesso</span>
+        </a>
+        <a
+          class="docs-site-rail__link"
+          href="docs.html?doc=lore/introduzione"
+          aria-label="Lore"
+          data-label="Lore"
+          data-doc-group-link="lore"
+        >
+          <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+          <span>Lore</span>
+        </a>
+        <a
+          class="docs-site-rail__link"
+          href="docs.html?doc=regole/panoramica"
+          aria-label="Regole"
+          data-label="Regole"
+          data-doc-group-link="regole"
+        >
+          <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+          <span>Regole</span>
+        </a>
+        <a class="docs-site-rail__link" href="characters.html" aria-label="Personaggi" data-label="Personaggi">
+          <i class="fa-solid fa-users" aria-hidden="true"></i>
+          <span>Personaggi</span>
+        </a>
+        <a class="docs-site-rail__link" href="quest.html" aria-label="Quest" data-label="Quest">
+          <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
+          <span>Quest</span>
+        </a>
+        <a class="docs-site-rail__link" href="#" aria-label="Sessioni" data-label="Sessioni">
+          <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+          <span>Sessioni</span>
+        </a>
+        <a class="docs-site-rail__link" href="#" aria-label="Bacheca" data-label="Bacheca">
+          <i class="fa-solid fa-clipboard" aria-hidden="true"></i>
+          <span>Bacheca</span>
+        </a>
+      </nav>
+
+      <div class="docs-site-rail__foot">
+        <button
+          type="button"
+          class="docs-site-rail__access"
+          data-docs-access-toggle
+          aria-expanded="false"
+          aria-controls="docs-access-panel"
+          aria-label="Codice Identificativo"
+          data-label="Codice"
+        >
+          <i class="fa-solid fa-key" aria-hidden="true"></i>
+          <span>Codice</span>
+        </button>
+
+        <a class="docs-site-rail__vtt" href="#" aria-label="Apri VTT" data-label="Apri VTT">
+          <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+          <span>VTT</span>
+        </a>
+      </div>
+    </aside>
+
+    <div id="docs-access-panel" class="docs-access-panel" data-docs-access-panel hidden>
+      <label class="docs-access-panel__label" for="docs-access-input">Codice Identificativo</label>
+      <input id="docs-access-input" type="text" data-docs-access-input autocomplete="off" spellcheck="false" />
+      <p class="docs-access-panel__status" data-docs-access-status aria-live="polite"></p>
+    </div>
+
+    <div class="docs-shell">
+      <aside class="section-card docs-tree" aria-label="Indice documentazione">
+        <div class="docs-tree__head">
+          <div>
+            <h1>Documentazione</h1>
+            <p>Lore e regole dell'Enclave in formato consultazione.</p>
+          </div>
+          <button
+            type="button"
+            class="docs-tree__toggle"
+            data-docs-tree-toggle
+            aria-expanded="false"
+            aria-controls="docs-tree-panel"
+            aria-label="Sezioni"
+            title="Sezioni"
+            data-tooltip="Sezioni"
+          >
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <p class="docs-tree__reorder-status" data-docs-reorder-status aria-live="polite"></p>
+
+        <section class="docs-search" aria-label="Ricerca wiki">
+          <label class="docs-search__label" for="docs-search-input">Cerca</label>
+          <div class="docs-search__field">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input
+              id="docs-search-input"
+              type="search"
+              data-docs-search-input
+              placeholder="Cerca pagine wiki..."
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button type="button" class="docs-search__clear" data-docs-search-clear hidden aria-label="Pulisci ricerca">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="docs-search__results" data-docs-search-results hidden aria-live="polite"></div>
+        </section>
+
+        <nav id="docs-tree-panel" data-docs-tree aria-live="polite">
+          <p class="docs-state">Caricamento indice...</p>
+        </nav>
+      </aside>
+
+      <main class="section-card docs-main" aria-live="polite">
+        <header class="docs-meta" data-docs-meta>
+          <p class="docs-meta__section" data-docs-meta-section>Documentazione</p>
+          <h2 class="docs-meta__title" data-docs-meta-title>Caricamento documento...</h2>
+          <p class="docs-meta__crumb" data-docs-meta-crumb></p>
+          <div class="docs-meta__actions">
+            <button
+              type="button"
+              class="docs-meta__create"
+              data-docs-create-open
+              hidden
+              aria-label="Nuova pagina"
+              title="Nuova pagina"
+              data-tooltip="Nuova pagina"
+            >
+              <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i>
+            </button>
+            <button
+              type="button"
+              class="docs-meta__edit"
+              data-docs-edit-open
+              hidden
+              aria-label="Modifica pagina"
+              title="Modifica pagina"
+              data-tooltip="Modifica pagina"
+            >
+              <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+            </button>
+            <button
+              type="button"
+              class="docs-meta__toggle-publish"
+              data-docs-toggle-publish
+              hidden
+              aria-label="Nascondi pagina"
+              title="Nascondi pagina"
+              data-tooltip="Nascondi pagina"
+            >
+              <i class="fa-solid fa-eye-slash" aria-hidden="true"></i>
+            </button>
+          </div>
+        </header>
+        <article class="docs-content" data-docs-content>
+          <p class="docs-state">Caricamento documento...</p>
+        </article>
+        <nav class="docs-prev-next" data-docs-prev-next aria-label="Navigazione documenti"></nav>
+      </main>
+
+      <aside class="section-card docs-toc" data-docs-toc-wrap aria-label="Indice della pagina">
+        <h2>In questa pagina</h2>
+        <nav data-docs-toc>
+          <p class="docs-state docs-state--compact">Nessuna sezione disponibile.</p>
+        </nav>
+      </aside>
+    </div>
+
+    <div class="docs-editor-modal" data-docs-editor-modal hidden>
+      <div class="docs-editor-modal__backdrop" data-docs-editor-close></div>
+      <section class="docs-editor-modal__panel" role="dialog" aria-modal="true" aria-labelledby="docs-editor-title">
+        <header class="docs-editor-modal__head">
+          <h3 id="docs-editor-title" data-docs-editor-title>Modifica pagina</h3>
+          <button type="button" class="docs-editor-modal__icon-btn" data-docs-editor-close aria-label="Chiudi editor" title="Chiudi editor" data-tooltip="Chiudi editor">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <form class="docs-editor-form" data-docs-editor-form>
+          <div class="docs-editor-form__grid">
+            <label>
+              Sezione
+              <select name="section" required>
+                <option value="lore">Lore</option>
+                <option value="regole">Regole</option>
+              </select>
+            </label>
+            <label>
+              Slug
+              <input type="text" name="slug" required />
+            </label>
+            <label>
+              Titolo
+              <input type="text" name="title" required />
+            </label>
+            <label>
+              Gruppo navigazione
+              <input type="text" name="nav_group" />
+            </label>
+            <label>
+              Etichetta navigazione
+              <input type="text" name="nav_label" />
+            </label>
+            <label>
+              Pagina genitore
+              <select name="parent_slug" data-docs-parent-select>
+                <option value="">Nessuna pagina genitore</option>
+              </select>
+            </label>
+            <label>
+              Ordine
+              <input type="number" name="sort_order" step="1" />
+            </label>
+            <label>
+              Profondita
+              <input type="number" name="depth" step="1" min="1" />
+            </label>
+            <label class="docs-editor-form__checkbox">
+              <input type="checkbox" name="is_published" />
+              <span>Pubblicata</span>
+            </label>
+          </div>
+
+          <label>
+            Estratto
+            <textarea name="excerpt" rows="3"></textarea>
+          </label>
+
+          <label class="docs-editor-form__content-wrap">
+            Contenuto markdown
+            <div class="docs-md-toolbar" data-docs-md-toolbar role="toolbar" aria-label="Strumenti markdown">
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="h2" aria-label="Titolo H2" title="Titolo H2" data-tooltip="Titolo H2">
+                <i class="fa-solid fa-heading" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="h3" aria-label="Titolo H3" title="Titolo H3" data-tooltip="Titolo H3">
+                <i class="fa-solid fa-text-height" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="bold" aria-label="Grassetto" title="Grassetto" data-tooltip="Grassetto">
+                <i class="fa-solid fa-bold" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="italic" aria-label="Corsivo" title="Corsivo" data-tooltip="Corsivo">
+                <i class="fa-solid fa-italic" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="ul" aria-label="Lista puntata" title="Lista puntata" data-tooltip="Lista puntata">
+                <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="ol" aria-label="Lista numerata" title="Lista numerata" data-tooltip="Lista numerata">
+                <i class="fa-solid fa-list-ol" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="quote" aria-label="Citazione" title="Citazione" data-tooltip="Citazione">
+                <i class="fa-solid fa-quote-left" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="divider" aria-label="Divisore" title="Divisore" data-tooltip="Divisore">
+                <i class="fa-solid fa-minus" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="link" aria-label="Link" title="Link" data-tooltip="Link">
+                <i class="fa-solid fa-link" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="internal-link" aria-label="Link interno" title="Link interno" data-tooltip="Link interno">
+                <i class="fa-solid fa-book-bookmark" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="image" aria-label="Immagine" title="Immagine" data-tooltip="Immagine">
+                <i class="fa-solid fa-image" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="inline-code" aria-label="Codice inline" title="Codice inline" data-tooltip="Codice inline">
+                <i class="fa-solid fa-code" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-md-toolbar__btn" data-md-action="code-block" aria-label="Blocco codice" title="Blocco codice" data-tooltip="Blocco codice">
+                <i class="fa-solid fa-file-code" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="docs-internal-link-picker" data-docs-internal-link-panel hidden>
+              <label class="docs-internal-link-picker__label" for="docs-internal-link-input">Link interno</label>
+              <div class="docs-internal-link-picker__field">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input
+                  id="docs-internal-link-input"
+                  type="search"
+                  data-docs-internal-link-input
+                  placeholder="Cerca pagina wiki..."
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+              <div class="docs-internal-link-picker__results" data-docs-internal-link-results aria-live="polite"></div>
+            </div>
+            <textarea name="content_md" rows="16" required data-docs-content-md></textarea>
+          </label>
+
+          <section class="docs-editor-upload" aria-label="Upload immagine wiki">
+            <h4>Immagini</h4>
+            <div class="docs-editor-upload__grid">
+              <label>
+                File immagine
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+                  data-docs-image-file
+                />
+              </label>
+              <label>
+                Alt text (facoltativo)
+                <input type="text" data-docs-image-alt placeholder="Immagine" />
+              </label>
+            </div>
+            <div class="docs-editor-upload__actions">
+              <button type="button" class="docs-editor-form__btn docs-editor-form__btn--icon-only" data-docs-image-upload aria-label="Carica immagine" title="Carica immagine" data-tooltip="Carica immagine">
+                <i class="fa-solid fa-image" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="docs-editor-form__btn docs-editor-form__btn--icon-only" data-docs-media-open aria-label="Libreria immagini" title="Libreria immagini" data-tooltip="Libreria immagini">
+                <i class="fa-solid fa-photo-film" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="docs-media-library" data-docs-media-library-panel hidden>
+              <label class="docs-media-library__label" for="docs-media-library-search">Libreria immagini</label>
+              <div class="docs-media-library__field">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input
+                  id="docs-media-library-search"
+                  type="search"
+                  data-docs-media-search
+                  placeholder="Cerca per nome o percorso..."
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+              <div class="docs-media-library__results" data-docs-media-results aria-live="polite"></div>
+              <p class="docs-media-library__status" data-docs-media-status aria-live="polite"></p>
+            </div>
+            <p class="docs-editor-upload__status" data-docs-image-status aria-live="polite"></p>
+          </section>
+
+          <p class="docs-editor-form__status" data-docs-editor-status aria-live="polite"></p>
+
+          <div class="docs-editor-form__actions">
+            <button type="button" class="docs-editor-form__btn docs-editor-form__btn--icon-only" data-docs-editor-close aria-label="Annulla" title="Annulla" data-tooltip="Annulla">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+            <button type="submit" class="docs-editor-form__btn docs-editor-form__btn--primary docs-editor-form__btn--icon-only" data-docs-editor-submit aria-label="Salva pagina" title="Salva pagina" data-tooltip="Salva pagina">
+              <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="scripts/docs.js" defer></script>
+  </body>
+</html>
+
+
+
+
+

@@ -1,0 +1,48 @@
+﻿{
+  "characters": [
+    {
+      "id": "wulfric",
+      "name": "Wulfric",
+      "portrait": "assets/characters/wulfric/portrait.webp",
+      "token": "assets/characters/wulfric/token.webp",
+      "class": "Guerriero",
+      "subclass": "Campione",
+      "level": 7,
+      "bio": "Veterano disciplinato, noto per la sua freddezza tattica.",
+      "status": "active"
+    },
+    {
+      "id": "lyra-vane",
+      "name": "Lyra Vane",
+      "portrait": "assets/characters/lyra-vane/portrait.webp",
+      "token": "assets/characters/lyra-vane/token.webp",
+      "class": "Maga",
+      "subclass": "Divinazione",
+      "level": 7,
+      "bio": "Studiosa delle fratture e dei presagi rituali.",
+      "status": "active"
+    },
+    {
+      "id": "ser-kael",
+      "name": "Ser Kael",
+      "portrait": "assets/characters/ser-kael/portrait.webp",
+      "token": "assets/characters/ser-kael/token.webp",
+      "class": "Paladino",
+      "subclass": "Giuramento della Corona",
+      "level": 7,
+      "bio": "Difensore dell'Enclave, incaricato delle missioni ad alto rischio.",
+      "status": "active"
+    },
+    {
+      "id": "mira-thorne",
+      "name": "Mira Thorne",
+      "portrait": "assets/characters/mira-thorne/portrait.webp",
+      "token": "assets/characters/mira-thorne/token.webp",
+      "class": "Ranger",
+      "subclass": "Cacciatrice",
+      "level": 7,
+      "bio": "Esploratrice specializzata in ricognizione e rilevamento anomalie.",
+      "status": "active"
+    }
+  ]
+}

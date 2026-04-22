@@ -1,0 +1,43 @@
+﻿{
+  "quests": [
+    {
+      "id": "vetro-salino",
+      "title": "Vetro Salino",
+      "type": "main",
+      "status": "in-corso",
+      "image": "assets/quests/vetro-salino.webp",
+      "characterIds": ["wulfric", "lyra-vane", "mira-thorne"],
+      "lastReport": "Recuperato un frammento presso il Bacino Sordo.",
+      "lastSession": "2026-04-18",
+      "nextSession": "2026-04-24",
+      "location": "Bacino Sordo",
+      "ctaLabel": "Apri missione"
+    },
+    {
+      "id": "cava-silente",
+      "title": "Cava Silente",
+      "type": "side",
+      "status": "prioritaria",
+      "image": "assets/quests/cava-silente.webp",
+      "characterIds": ["ser-kael", "wulfric"],
+      "lastReport": "Varco minore stabile con attività intermittente.",
+      "lastSession": "2026-04-18",
+      "nextSession": null,
+      "location": "Cava Silente",
+      "ctaLabel": "Apri missione"
+    },
+    {
+      "id": "argine-nero",
+      "title": "Argine Nero",
+      "type": "side",
+      "status": "preparazione",
+      "image": "assets/quests/argine-nero.webp",
+      "characterIds": ["mira-thorne", "lyra-vane"],
+      "lastReport": "Mappatura iniziale completata sul settore ovest.",
+      "lastSession": null,
+      "nextSession": "2026-04-27",
+      "location": "Argine Nero",
+      "ctaLabel": "Apri missione"
+    }
+  ]
+}
