@@ -40,8 +40,10 @@
     searchQuery: "",
     internalLinkQuery: "",
     internalLinkSelection: null,
+    colorSelection: null,
     reorderSaving: false,
     reorderDrag: null,
+    reorderMode: false,
     reorderStatusTimer: 0,
     mediaLibraryItems: null,
     mediaLibraryQuery: "",
@@ -49,6 +51,11 @@
     mediaLibraryLoading: false,
     mediaLibraryStatusTone: "",
     mediaLibraryNeedsRefresh: false,
+    editorHistoryUndo: [],
+    editorHistoryRedo: [],
+    editorHistoryPendingSnapshot: null,
+    editorHistoryRestoring: false,
+    editorHistoryLimit: 120,
   };
 
   document.addEventListener("DOMContentLoaded", initDocsPage);
@@ -60,6 +67,7 @@
       toc: document.querySelector("[data-docs-toc]"),
       prevNext: document.querySelector("[data-docs-prev-next]"),
       treeToggle: document.querySelector("[data-docs-tree-toggle]"),
+      reorderToggle: document.querySelector("[data-docs-reorder-toggle]"),
       treePanel: document.querySelector(".docs-tree"),
       groupLinks: document.querySelectorAll("[data-doc-group-link]"),
       metaSection: document.querySelector("[data-docs-meta-section]"),
@@ -89,6 +97,7 @@
       editorInternalLinkPanel: document.querySelector("[data-docs-internal-link-panel]"),
       editorInternalLinkInput: document.querySelector("[data-docs-internal-link-input]"),
       editorInternalLinkResults: document.querySelector("[data-docs-internal-link-results]"),
+      editorColorPicker: document.querySelector("[data-docs-color-picker]"),
       accessToggle: document.querySelector("[data-docs-access-toggle]"),
       accessPanel: document.querySelector("[data-docs-access-panel]"),
       accessInput: document.querySelector("[data-docs-access-input]"),
@@ -117,6 +126,7 @@
     syncDocsTreeToggleState();
     syncManageAccessState();
     syncEditActionVisibility();
+    syncReorderToggleUi();
 
     try {
       var wikiPages = await fetchWikiPages();
@@ -229,6 +239,15 @@
       });
     }
 
+    if (state.elements.reorderToggle) {
+      state.elements.reorderToggle.addEventListener("click", function onReorderToggleClick() {
+        if (!state.isManageUnlocked || state.reorderSaving) {
+          return;
+        }
+
+        setReorderMode(!state.reorderMode);
+      });
+    }
     if (state.elements.createOpen) {
       state.elements.createOpen.addEventListener("click", function onCreateOpenClick() {
         openEditorForCreate();
@@ -285,6 +304,15 @@
     }
 
     if (state.elements.editorMarkdownToolbar) {
+      state.elements.editorMarkdownToolbar.addEventListener("mousedown", function onMarkdownToolbarMouseDown(event) {
+        var button = event.target.closest("button[data-md-action]");
+        if (!button || button.disabled) {
+          return;
+        }
+
+        event.preventDefault();
+      });
+
       state.elements.editorMarkdownToolbar.addEventListener("click", function onMarkdownToolbarClick(event) {
         var button = event.target.closest("button[data-md-action]");
         if (!button || button.disabled) {
@@ -296,6 +324,31 @@
       });
     }
 
+    if (state.elements.editorContentMd) {
+      state.elements.editorContentMd.addEventListener("beforeinput", function onEditorMarkdownBeforeInput(event) {
+        rememberEditorHistoryBeforeNativeInput(event);
+      });
+
+      state.elements.editorContentMd.addEventListener("input", function onEditorMarkdownInput(event) {
+        commitEditorHistoryAfterNativeInput(event);
+      });
+
+      state.elements.editorContentMd.addEventListener("keydown", function onEditorMarkdownKeydown(event) {
+        handleEditorMarkdownShortcut(event);
+      });
+    }
+
+    if (state.elements.editorColorPicker) {
+      state.elements.editorColorPicker.addEventListener("click", function onColorChoiceClick(event) {
+        var button = event.target.closest("button[data-docs-color-choice]");
+        if (!button || button.disabled) {
+          return;
+        }
+
+        event.preventDefault();
+        insertColoredText(button.getAttribute("data-docs-color-choice"));
+      });
+    }
     if (state.elements.editorImageUpload) {
       state.elements.editorImageUpload.addEventListener("click", function onImageUploadClick() {
         uploadImageFromEditor();
@@ -406,13 +459,17 @@
         return;
       }
 
+      if (isColorPickerOpen()) {
+        closeColorPicker({ restoreTextareaFocus: true });
+        return;
+      }
+
       if (isMediaLibraryPanelOpen()) {
         closeMediaLibraryPanel({ restoreTextareaFocus: true });
         return;
       }
 
       if (isEditorOpen()) {
-        closeEditorModal();
         return;
       }
 
@@ -488,6 +545,17 @@
       closeInternalLinkPicker();
     });
 
+    document.addEventListener("click", function onColorPickerOutsideClick(event) {
+      if (!isColorPickerOpen()) {
+        return;
+      }
+
+      if (isEventInsideColorPicker(event.target)) {
+        return;
+      }
+
+      closeColorPicker();
+    });
     document.addEventListener("click", function onMediaLibraryOutsideClick(event) {
       if (!isMediaLibraryPanelOpen()) {
         return;
@@ -999,11 +1067,82 @@
     }
   }
   function isDocsTreeReorderEnabled() {
-    return state.isManageUnlocked && !state.reorderSaving;
+    return state.isManageUnlocked && state.reorderMode && !state.reorderSaving;
+  }
+
+  function setReorderMode(isEnabled) {
+    var nextValue = !!isEnabled;
+
+    if (!state.isManageUnlocked) {
+      nextValue = false;
+    }
+
+    if (state.reorderMode === nextValue) {
+      syncReorderToggleUi();
+      return;
+    }
+
+    state.reorderMode = nextValue;
+    syncReorderToggleUi();
+    clearDocsTreeDragState();
+    renderDocsTree();
+
+    if (!nextValue) {
+      setDocsReorderStatus("", "");
+    }
+  }
+
+  function syncReorderToggleUi() {
+    if (!state.elements || !state.elements.reorderToggle) {
+      return;
+    }
+
+    var button = state.elements.reorderToggle;
+    var canUse = state.isManageUnlocked;
+
+    button.hidden = !canUse;
+    button.disabled = !canUse || state.reorderSaving;
+    button.classList.toggle("is-active", !!(canUse && state.reorderMode));
+    button.setAttribute("aria-pressed", canUse && state.reorderMode ? "true" : "false");
+
+    setIconButtonLabel(button, canUse && state.reorderMode ? "Disattiva riordino" : "Attiva riordino");
   }
 
   function normalizeReorderParentSlug(value) {
     return normalizeDocPath(readString(value, ""));
+  }
+
+  function normalizeReorderNavGroup(value) {
+    return readString(value, "");
+  }
+
+  function toNavGroupKey(value) {
+    var normalized = cleanSegment(readString(value, ""));
+    return normalized || "__none__";
+  }
+
+  function readReorderKindFromRow(row) {
+    return readString(row && row.getAttribute("data-reorder-kind"), "doc");
+  }
+
+  function readReorderGroupMetaFromRow(row) {
+    if (!row) {
+      return null;
+    }
+
+    var section = cleanSegment(readString(row.getAttribute("data-section"), ""));
+    var navGroup = normalizeReorderNavGroup(row.getAttribute("data-nav-group"));
+    var navGroupKey = toNavGroupKey(navGroup);
+
+    if (!section || !navGroupKey) {
+      return null;
+    }
+
+    return {
+      section: section,
+      navGroup: navGroup,
+      navGroupKey: navGroupKey,
+    };
   }
 
   function getTreeDragRow(target) {
@@ -1021,6 +1160,7 @@
 
     var section = cleanSegment(readString(row.getAttribute("data-section"), ""));
     var parentSlug = normalizeReorderParentSlug(row.getAttribute("data-parent-slug"));
+    var navGroup = normalizeReorderNavGroup(row.getAttribute("data-nav-group"));
 
     if (!section) {
       return null;
@@ -1029,6 +1169,8 @@
     return {
       section: section,
       parentSlug: parentSlug,
+      navGroup: navGroup,
+      navGroupKey: toNavGroupKey(navGroup),
     };
   }
 
@@ -1037,7 +1179,11 @@
       return false;
     }
 
-    return left.section === right.section && left.parentSlug === right.parentSlug;
+    return (
+      left.section === right.section &&
+      left.parentSlug === right.parentSlug &&
+      left.navGroupKey === right.navGroupKey
+    );
   }
 
   function clearDocsTreeDropIndicators() {
@@ -1100,6 +1246,37 @@
       return;
     }
 
+    var reorderKind = readReorderKindFromRow(row);
+
+    if (reorderKind === "group") {
+      var sourceGroup = readReorderGroupMetaFromRow(row);
+      if (!sourceGroup) {
+        event.preventDefault();
+        return;
+      }
+
+      state.reorderDrag = {
+        kind: "group",
+        sourceGroup: sourceGroup,
+        targetGroupKey: "",
+        targetPosition: "after",
+      };
+
+      row.classList.add("is-dragging");
+
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.dropEffect = "move";
+        try {
+          event.dataTransfer.setData("text/plain", "group:" + sourceGroup.navGroupKey);
+        } catch (_groupError) {
+          // Ignore dataTransfer set errors.
+        }
+      }
+
+      return;
+    }
+
     var docKey = normalizeDocPath(readString(row.getAttribute("data-doc-key"), ""));
     var group = readReorderGroupFromRow(row);
 
@@ -1109,6 +1286,7 @@
     }
 
     state.reorderDrag = {
+      kind: "doc",
       sourceDocKey: docKey,
       sourceGroup: group,
       targetDocKey: "",
@@ -1139,21 +1317,59 @@
       return;
     }
 
+    var position = resolveDropPosition(targetRow, event.clientY);
+
+    if (state.reorderDrag.kind === "group") {
+      if (readReorderKindFromRow(targetRow) !== "group") {
+        clearDocsTreeDropIndicators();
+        return;
+      }
+
+      var targetGroup = readReorderGroupMetaFromRow(targetRow);
+      if (!targetGroup) {
+        clearDocsTreeDropIndicators();
+        return;
+      }
+
+      if (
+        !state.reorderDrag.sourceGroup ||
+        state.reorderDrag.sourceGroup.section !== targetGroup.section ||
+        state.reorderDrag.sourceGroup.navGroupKey === targetGroup.navGroupKey
+      ) {
+        clearDocsTreeDropIndicators();
+        return;
+      }
+
+      event.preventDefault();
+      state.reorderDrag.targetGroupKey = targetGroup.navGroupKey;
+      state.reorderDrag.targetPosition = position;
+
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+
+      setDocsTreeDropIndicator(targetRow, position);
+      return;
+    }
+
+    if (readReorderKindFromRow(targetRow) !== "doc") {
+      clearDocsTreeDropIndicators();
+      return;
+    }
+
     var targetDocKey = normalizeDocPath(readString(targetRow.getAttribute("data-doc-key"), ""));
     if (!targetDocKey || targetDocKey === state.reorderDrag.sourceDocKey) {
       clearDocsTreeDropIndicators();
       return;
     }
 
-    var targetGroup = readReorderGroupFromRow(targetRow);
-    if (!isSameReorderGroup(state.reorderDrag.sourceGroup, targetGroup)) {
+    var targetDocGroup = readReorderGroupFromRow(targetRow);
+    if (!isSameReorderGroup(state.reorderDrag.sourceGroup, targetDocGroup)) {
       clearDocsTreeDropIndicators();
       return;
     }
 
     event.preventDefault();
-
-    var position = resolveDropPosition(targetRow, event.clientY);
     state.reorderDrag.targetDocKey = targetDocKey;
     state.reorderDrag.targetPosition = position;
 
@@ -1171,6 +1387,21 @@
 
     event.preventDefault();
 
+    if (state.reorderDrag.kind === "group") {
+      var sourceGroup = state.reorderDrag.sourceGroup;
+      var targetGroupKey = readString(state.reorderDrag.targetGroupKey, "");
+      var groupTargetPosition = state.reorderDrag.targetPosition;
+
+      clearDocsTreeDragState();
+
+      if (!sourceGroup || !targetGroupKey) {
+        return;
+      }
+
+      void persistNavGroupReorder(sourceGroup.section, sourceGroup.navGroupKey, targetGroupKey, groupTargetPosition);
+      return;
+    }
+
     var sourceDocKey = state.reorderDrag.sourceDocKey;
     var targetDocKey = state.reorderDrag.targetDocKey;
     var targetPosition = state.reorderDrag.targetPosition;
@@ -1185,12 +1416,132 @@
     void persistDocsTreeReorder(group, sourceDocKey, targetDocKey, targetPosition);
   }
 
+  async function persistNavGroupReorder(section, sourceGroupKey, targetGroupKey, targetPosition) {
+    if (!section || !sourceGroupKey || !targetGroupKey || state.reorderSaving) {
+      return;
+    }
+
+    var groups = getSiblingNavGroupsForReorder(section);
+    if (groups.length < 2) {
+      return;
+    }
+
+    var orderedGroupKeys = [];
+    for (var i = 0; i < groups.length; i += 1) {
+      orderedGroupKeys.push(groups[i].navGroupKey);
+    }
+
+    var sourceIndex = orderedGroupKeys.indexOf(sourceGroupKey);
+    var targetIndex = orderedGroupKeys.indexOf(targetGroupKey);
+
+    if (sourceIndex === -1 || targetIndex === -1) {
+      return;
+    }
+
+    orderedGroupKeys.splice(sourceIndex, 1);
+    var insertIndex = targetPosition === "before" ? targetIndex : targetIndex + 1;
+    if (sourceIndex < targetIndex) {
+      insertIndex -= 1;
+    }
+
+    insertIndex = Math.max(0, Math.min(insertIndex, orderedGroupKeys.length));
+    orderedGroupKeys.splice(insertIndex, 0, sourceGroupKey);
+
+    var unchanged = true;
+    for (var j = 0; j < orderedGroupKeys.length; j += 1) {
+      if (orderedGroupKeys[j] !== groups[j].navGroupKey) {
+        unchanged = false;
+        break;
+      }
+    }
+
+    if (unchanged) {
+      return;
+    }
+
+    var groupMap = new Map();
+    for (var k = 0; k < groups.length; k += 1) {
+      groupMap.set(groups[k].navGroupKey, groups[k]);
+    }
+
+    var items = [];
+    for (var g = 0; g < orderedGroupKeys.length; g += 1) {
+      var groupData = groupMap.get(orderedGroupKeys[g]);
+      if (!groupData) {
+        continue;
+      }
+
+      items.push({
+        nav_group: toNullableString(groupData.navGroup),
+        nav_group_order: (g + 1) * REORDER_SORT_STEP,
+      });
+    }
+
+    if (!items.length) {
+      return;
+    }
+
+    state.reorderSaving = true;
+    renderDocsTree();
+    setDocsReorderStatus("Riordino gruppi in corso...", "");
+
+    try {
+      await submitWikiReorder({
+        mode: "groups",
+        section: section,
+        items: items,
+      });
+
+      await refreshDocsData(state.currentEntry ? state.currentEntry.docKey : "");
+      setDocsReorderStatus("Ordine gruppi aggiornato.", "success");
+    } catch (error) {
+      console.error("Errore riordino gruppi wiki:", error);
+      setDocsReorderStatus(readString(error && error.message, "Riordino gruppi non riuscito."), "error");
+    } finally {
+      state.reorderSaving = false;
+      renderDocsTree();
+    }
+  }
+
+  function getSiblingNavGroupsForReorder(section) {
+    var sectionSlug = cleanSegment(readString(section, ""));
+    if (!sectionSlug || !state.index || !Array.isArray(state.index.sections)) {
+      return [];
+    }
+
+    var sectionData = null;
+    for (var i = 0; i < state.index.sections.length; i += 1) {
+      if (state.index.sections[i] && state.index.sections[i].slug === sectionSlug) {
+        sectionData = state.index.sections[i];
+        break;
+      }
+    }
+
+    if (!sectionData || !Array.isArray(sectionData.nodes)) {
+      return [];
+    }
+
+    var groups = [];
+    for (var j = 0; j < sectionData.nodes.length; j += 1) {
+      var node = sectionData.nodes[j];
+      if (!node || node.kind !== "group") {
+        continue;
+      }
+
+      groups.push({
+        navGroup: normalizeReorderNavGroup(node.navGroup),
+        navGroupKey: toNavGroupKey(node.navGroup),
+      });
+    }
+
+    return groups;
+  }
   async function persistDocsTreeReorder(group, sourceDocKey, targetDocKey, targetPosition) {
     if (!group || !sourceDocKey || !targetDocKey || state.reorderSaving) {
       return;
     }
 
-    var siblings = getSiblingPagesForReorder(group.section, group.parentSlug);
+    var siblings = getSiblingPagesForReorder(group.section, group.parentSlug, group.navGroupKey);
     if (siblings.length < 2) {
       return;
     }
@@ -1260,6 +1611,7 @@
       await submitWikiReorder({
         section: group.section,
         parent_slug: group.parentSlug || null,
+        nav_group: group.navGroup || null,
         items: items,
       });
 
@@ -1274,7 +1626,7 @@
     }
   }
 
-  function getSiblingPagesForReorder(section, parentSlug) {
+  function getSiblingPagesForReorder(section, parentSlug, navGroupKey) {
     var sourcePages = state.manageIndex && Array.isArray(state.manageIndex.pages)
       ? state.manageIndex.pages
       : state.index && Array.isArray(state.index.pages)
@@ -1283,6 +1635,7 @@
 
     var normalizedSection = cleanSegment(readString(section, ""));
     var normalizedParent = normalizeReorderParentSlug(parentSlug);
+    var normalizedGroupKey = toNavGroupKey(navGroupKey);
 
     var siblings = [];
 
@@ -1297,6 +1650,10 @@
       }
 
       if (normalizeReorderParentSlug(page.parentSlug) !== normalizedParent) {
+        continue;
+      }
+
+      if (toNavGroupKey(page.navGroup) !== normalizedGroupKey) {
         continue;
       }
 
@@ -1457,7 +1814,12 @@
     }
 
     state.isManageUnlocked = accessCode === VALID_ACCESS_CODE;
+    if (!state.isManageUnlocked) {
+      state.reorderMode = false;
+    }
+
     updateAccessPanelUi(accessCode);
+    syncReorderToggleUi();
   }
 
   function refreshManageUi() {
@@ -1471,9 +1833,14 @@
 
     syncManageAccessState();
     syncEditActionVisibility();
+    syncReorderToggleUi();
     renderDocsTree();
 
     if (wasUnlocked !== state.isManageUnlocked) {
+      if (!state.isManageUnlocked) {
+        setReorderMode(false);
+      }
+
       fetchWikiPages()
         .then(function onAccessRefreshRows(rows) {
           rebuildWikiIndexes(rows);
@@ -1492,7 +1859,6 @@
       });
     }
   }
-
   function saveAccessCodeLocal(value) {
     try {
       var normalized = String(value || "");
@@ -1687,13 +2053,19 @@
       slug: normalizeDocPath(readString(current.rawSlug, current.docKey || "")),
       title: readString(current.title, "Documento"),
       nav_group: toNullableString(current.navGroup),
+      nav_group_order:
+        Number.isFinite(current.navGroupOrder) && current.navGroupOrder !== Number.MAX_SAFE_INTEGER
+          ? current.navGroupOrder
+          : 0,
+      nav_group_icon: toNullableString(current.navGroupIcon),
       nav_label: toNullableString(current.navLabel),
+      page_icon: toNullableString(current.pageIcon),
       parent_slug: toNullablePath(current.parentSlug),
       sort_order:
         Number.isFinite(current.sortOrder) && current.sortOrder !== Number.MAX_SAFE_INTEGER
           ? current.sortOrder
           : 0,
-      depth: Math.max(1, toDepth(current.depth)),
+      depth: Math.max(0, toDepth(current.depth)),
       is_published: nextPublished,
       excerpt: toNullableString(current.excerpt),
       content_md: String(current.contentMd || ""),
@@ -1727,6 +2099,13 @@
       setPublishToggleBusyState(false);
     }
   }
+  function resetEditorHistory() {
+    state.editorHistoryUndo = [];
+    state.editorHistoryRedo = [];
+    state.editorHistoryPendingSnapshot = null;
+    state.editorHistoryRestoring = false;
+  }
+
   function openEditorModal() {
     if (!state.elements || !state.elements.editorModal || !state.elements.editorForm) {
       return;
@@ -1738,6 +2117,7 @@
     state.elements.editorModal.hidden = false;
     state.isEditorOpen = true;
     document.body.classList.add("docs-editor-open");
+    resetEditorHistory();
 
     var titleInput = state.elements.editorForm.elements.namedItem("title");
     if (titleInput && typeof titleInput.focus === "function") {
@@ -1772,7 +2152,16 @@
     setFormFieldValue(form, "slug", readString(entry.rawSlug, entry.slug || ""));
     setFormFieldValue(form, "title", readString(entry.title, ""));
     setFormFieldValue(form, "nav_group", readString(entry.navGroup, ""));
+    setFormFieldValue(
+      form,
+      "nav_group_order",
+      Number.isFinite(entry.navGroupOrder) && entry.navGroupOrder !== Number.MAX_SAFE_INTEGER
+        ? String(entry.navGroupOrder)
+        : ""
+    );
+    setFormFieldValue(form, "nav_group_icon", readString(entry.navGroupIcon, ""));
     setFormFieldValue(form, "nav_label", readString(entry.navLabel, ""));
+    setFormFieldValue(form, "page_icon", readString(entry.pageIcon, ""));
     setFormFieldValue(
       form,
       "sort_order",
@@ -1800,9 +2189,12 @@
     setFormFieldValue(form, "slug", "");
     setFormFieldValue(form, "title", "");
     setFormFieldValue(form, "nav_group", "");
+    setFormFieldValue(form, "nav_group_order", "0");
+    setFormFieldValue(form, "nav_group_icon", "");
     setFormFieldValue(form, "nav_label", "");
+    setFormFieldValue(form, "page_icon", "");
     setFormFieldValue(form, "sort_order", "0");
-    setFormFieldValue(form, "depth", "1");
+    setFormFieldValue(form, "depth", "0");
     setFormCheckboxValue(form, "is_published", true);
     setFormFieldValue(form, "excerpt", "");
     setFormFieldValue(form, "content_md", "# Nuova pagina\n\nScrivi qui il contenuto della nuova pagina.");
@@ -1869,7 +2261,7 @@
       option.value = page.docKey;
 
       var hiddenBadge = page.isPublished === false ? " (nascosta)" : "";
-      option.textContent = page.title + " — " + page.docKey + hiddenBadge;
+      option.textContent = page.title + " - " + page.docKey + hiddenBadge;
 
       parentSelect.appendChild(option);
     }
@@ -1920,7 +2312,7 @@
       return;
     }
 
-    depthField.value = String(Math.max(1, toDepth(parentEntry.depth) + 1));
+    depthField.value = String(Math.max(0, toDepth(parentEntry.depth) + 1));
   }
   function hasSelectOption(selectElement, value) {
     var normalized = normalizeDocPath(readString(value, ""));
@@ -2293,6 +2685,11 @@
       return;
     }
 
+    if (action === "text-color") {
+      toggleColorPicker(textarea);
+      return;
+    }
+
     if (action === "inline-code") {
       wrapSelection(textarea, "`", "`", "codice");
       return;
@@ -2301,6 +2698,209 @@
     if (action === "code-block") {
       applyCodeBlockAction(textarea);
     }
+  }
+
+  function handleEditorMarkdownShortcut(event) {
+    if (!event || event.defaultPrevented || !isPrimaryModifierPressed(event)) {
+      return;
+    }
+
+    if (event.altKey) {
+      return;
+    }
+
+    var key = String(event.key || "").toLowerCase();
+    if (!key) {
+      return;
+    }
+
+    if (key === "z") {
+      if (event.shiftKey) {
+        if (canRedoEditorHistory()) {
+          event.preventDefault();
+          redoEditorHistory();
+        }
+        return;
+      }
+
+      if (canUndoEditorHistory()) {
+        event.preventDefault();
+        undoEditorHistory();
+      }
+      return;
+    }
+
+    if (key === "y") {
+      if (canRedoEditorHistory()) {
+        event.preventDefault();
+        redoEditorHistory();
+      }
+      return;
+    }
+
+    if (key === "b") {
+      event.preventDefault();
+      applyMarkdownToolbarAction("bold");
+      return;
+    }
+
+    if (key === "i") {
+      event.preventDefault();
+      applyMarkdownToolbarAction("italic");
+      return;
+    }
+
+    if (key === "k") {
+      event.preventDefault();
+      applyMarkdownToolbarAction("link");
+    }
+  }
+
+  function isPrimaryModifierPressed(event) {
+    return !!(event && (event.ctrlKey || event.metaKey));
+  }
+
+  function shouldTrackNativeEditorInput(event) {
+    var inputType = readString(event && event.inputType, "");
+    if (!inputType) {
+      return true;
+    }
+
+    return inputType !== "historyUndo" && inputType !== "historyRedo";
+  }
+
+  function getEditorModalScrollContainer(textarea) {
+    if (!textarea || !textarea.closest) {
+      return null;
+    }
+
+    return textarea.closest(".docs-editor-modal__panel");
+  }
+
+  function getEditorHistorySnapshot(textarea) {
+    if (!textarea) {
+      return null;
+    }
+
+    var panel = getEditorModalScrollContainer(textarea);
+
+    return {
+      value: String(textarea.value || ""),
+      selectionStart: typeof textarea.selectionStart === "number" ? textarea.selectionStart : 0,
+      selectionEnd: typeof textarea.selectionEnd === "number" ? textarea.selectionEnd : 0,
+      scrollTop: typeof textarea.scrollTop === "number" ? textarea.scrollTop : 0,
+      scrollLeft: typeof textarea.scrollLeft === "number" ? textarea.scrollLeft : 0,
+      panelScrollTop: panel && typeof panel.scrollTop === "number" ? panel.scrollTop : 0,
+    };
+  }
+
+  function rememberEditorHistoryBeforeNativeInput(event) {
+    if (state.editorHistoryRestoring || !shouldTrackNativeEditorInput(event)) {
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    state.editorHistoryPendingSnapshot = getEditorHistorySnapshot(textarea);
+  }
+
+  function commitEditorHistoryAfterNativeInput(event) {
+    if (state.editorHistoryRestoring || !shouldTrackNativeEditorInput(event)) {
+      state.editorHistoryPendingSnapshot = null;
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      state.editorHistoryPendingSnapshot = null;
+      return;
+    }
+
+    var snapshot = state.editorHistoryPendingSnapshot;
+    state.editorHistoryPendingSnapshot = null;
+
+    if (!snapshot) {
+      return;
+    }
+
+    pushEditorHistorySnapshot(snapshot, textarea);
+  }
+
+  function trimEditorHistoryStack(stack) {
+    while (stack.length > state.editorHistoryLimit) {
+      stack.shift();
+    }
+  }
+
+  function pushEditorHistorySnapshot(snapshot, textarea) {
+    if (state.editorHistoryRestoring || !snapshot || !textarea) {
+      return;
+    }
+
+    if (snapshot.value === String(textarea.value || "")) {
+      return;
+    }
+
+    state.editorHistoryUndo.push(snapshot);
+    trimEditorHistoryStack(state.editorHistoryUndo);
+    state.editorHistoryRedo = [];
+  }
+
+  function canUndoEditorHistory() {
+    return Array.isArray(state.editorHistoryUndo) && state.editorHistoryUndo.length > 0;
+  }
+
+  function canRedoEditorHistory() {
+    return Array.isArray(state.editorHistoryRedo) && state.editorHistoryRedo.length > 0;
+  }
+
+  function restoreEditorHistorySnapshot(snapshot) {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea || !snapshot) {
+      return;
+    }
+
+    state.editorHistoryRestoring = true;
+    try {
+      setTextareaSelection(textarea, snapshot.value, snapshot.selectionStart, snapshot.selectionEnd, {
+        preserveScrollTop: snapshot.scrollTop,
+        preserveScrollLeft: snapshot.scrollLeft,
+        preservePanelScrollTop: snapshot.panelScrollTop,
+        skipHistory: true,
+      });
+    } finally {
+      state.editorHistoryRestoring = false;
+      state.editorHistoryPendingSnapshot = null;
+    }
+  }
+
+  function undoEditorHistory() {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea || !canUndoEditorHistory()) {
+      return;
+    }
+
+    var currentSnapshot = getEditorHistorySnapshot(textarea);
+    var previousSnapshot = state.editorHistoryUndo.pop();
+    state.editorHistoryRedo.push(currentSnapshot);
+    trimEditorHistoryStack(state.editorHistoryRedo);
+    restoreEditorHistorySnapshot(previousSnapshot);
+  }
+
+  function redoEditorHistory() {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea || !canRedoEditorHistory()) {
+      return;
+    }
+
+    var currentSnapshot = getEditorHistorySnapshot(textarea);
+    var nextSnapshot = state.editorHistoryRedo.pop();
+    state.editorHistoryUndo.push(currentSnapshot);
+    trimEditorHistoryStack(state.editorHistoryUndo);
+    restoreEditorHistorySnapshot(nextSnapshot);
   }
 
   function getEditorMarkdownTextarea() {
@@ -2340,12 +2940,48 @@
     };
   }
 
-  function setTextareaSelection(textarea, value, selectionStart, selectionEnd) {
+  function setTextareaSelection(textarea, value, selectionStart, selectionEnd, options) {
+    var opts = options || {};
+    var previousSnapshot = !opts.skipHistory ? getEditorHistorySnapshot(textarea) : null;
+    var panel = getEditorModalScrollContainer(textarea);
+    var preservedScrollTop = typeof opts.preserveScrollTop === "number" ? opts.preserveScrollTop : textarea.scrollTop;
+    var preservedScrollLeft = typeof opts.preserveScrollLeft === "number" ? opts.preserveScrollLeft : textarea.scrollLeft;
+    var preservedPanelScrollTop = typeof opts.preservePanelScrollTop === "number"
+      ? opts.preservePanelScrollTop
+      : panel && typeof panel.scrollTop === "number"
+      ? panel.scrollTop
+      : 0;
+
     textarea.value = value;
-    textarea.focus();
+
+    try {
+      textarea.focus({ preventScroll: true });
+    } catch (_error) {
+      textarea.focus();
+    }
 
     if (typeof textarea.setSelectionRange === "function") {
       textarea.setSelectionRange(selectionStart, selectionEnd);
+    }
+
+    textarea.scrollTop = preservedScrollTop;
+    textarea.scrollLeft = preservedScrollLeft;
+
+    if (panel && typeof panel.scrollTop === "number") {
+      panel.scrollTop = preservedPanelScrollTop;
+    }
+
+    window.requestAnimationFrame(function restoreEditorScrollPosition() {
+      textarea.scrollTop = preservedScrollTop;
+      textarea.scrollLeft = preservedScrollLeft;
+
+      if (panel && typeof panel.scrollTop === "number") {
+        panel.scrollTop = preservedPanelScrollTop;
+      }
+    });
+
+    if (!opts.skipHistory) {
+      pushEditorHistorySnapshot(previousSnapshot, textarea);
     }
   }
 
@@ -2361,8 +2997,61 @@
     setTextareaSelection(textarea, nextValue, start, end);
   }
 
+  function resolveInlineWrapToggle(info, prefix, suffix) {
+    if (!info || !prefix || !suffix) {
+      return null;
+    }
+
+    var selectedText = info.selectedText || "";
+    var selectedLength = selectedText.length;
+    var prefixLength = prefix.length;
+    var suffixLength = suffix.length;
+
+    if (
+      selectedLength >= prefixLength + suffixLength &&
+      selectedText.slice(0, prefixLength) === prefix &&
+      selectedText.slice(selectedLength - suffixLength) === suffix
+    ) {
+      var unwrappedSelected = selectedText.slice(prefixLength, selectedLength - suffixLength);
+      return {
+        start: info.start,
+        end: info.end,
+        replacement: unwrappedSelected,
+        selectionStart: 0,
+        selectionEnd: unwrappedSelected.length,
+      };
+    }
+
+    if (
+      info.start >= prefixLength &&
+      info.value.slice(info.start - prefixLength, info.start) === prefix &&
+      info.value.slice(info.end, info.end + suffixLength) === suffix
+    ) {
+      var innerText = info.value.slice(info.start, info.end);
+      return {
+        start: info.start - prefixLength,
+        end: info.end + suffixLength,
+        replacement: innerText,
+        selectionStart: 0,
+        selectionEnd: innerText.length,
+      };
+    }
+
+    return null;
+  }
+
   function wrapSelection(textarea, prefix, suffix, placeholder) {
     var info = getSelectionInfo(textarea);
+    var toggle = resolveInlineWrapToggle(info, prefix, suffix);
+
+    if (toggle) {
+      replaceSelectionByRange(textarea, toggle.start, toggle.end, toggle.replacement, {
+        start: toggle.selectionStart,
+        end: toggle.selectionEnd,
+      });
+      return;
+    }
+
     var content = info.selectedText || placeholder;
     var replacement = prefix + content + suffix;
 
@@ -2397,15 +3086,59 @@
     });
   }
 
+  function stripExistingHeadingPrefix(lineText) {
+    var text = String(lineText || "");
+    var index = 0;
+
+    while (index < text.length && (text.charAt(index) === " " || text.charAt(index) === "	")) {
+      index += 1;
+    }
+
+    var markerCount = 0;
+    while (index + markerCount < text.length && text.charAt(index + markerCount) === "#" && markerCount < 6) {
+      markerCount += 1;
+    }
+
+    if (!markerCount) {
+      return text;
+    }
+
+    var nextIndex = index + markerCount;
+    if (nextIndex < text.length && text.charAt(nextIndex) === " ") {
+      while (nextIndex < text.length && text.charAt(nextIndex) === " ") {
+        nextIndex += 1;
+      }
+      return text.slice(0, index) + text.slice(nextIndex);
+    }
+
+    return text;
+  }
+
   function applyHeadingAction(textarea, level) {
     var marker = Array(level + 1).join("#") + " ";
     var info = getSelectionInfo(textarea);
 
     if (!info.selectedText) {
-      var fallback = marker + "Titolo sezione";
-      replaceSelectionRange(textarea, fallback, {
-        start: marker.length,
-        end: fallback.length,
+      var lineStart = info.value.lastIndexOf("\n", Math.max(0, info.start - 1));
+      lineStart = lineStart === -1 ? 0 : lineStart + 1;
+
+      var lineEnd = info.value.indexOf("\n", info.start);
+      if (lineEnd === -1) {
+        lineEnd = info.value.length;
+      }
+
+      var lineText = info.value.slice(lineStart, lineEnd);
+      var leadingMatch = lineText.match(/^\s*/);
+      var leadingWhitespace = leadingMatch ? leadingMatch[0] : "";
+      var contentText = lineText.slice(leadingWhitespace.length).replace(/^#{1,6}\s+/, "");
+      var replacement = leadingWhitespace + marker + contentText;
+      var relativeCaret = Math.max(0, info.start - lineStart);
+      var nextCaret = Math.max(leadingWhitespace.length + marker.length, relativeCaret + marker.length);
+      nextCaret = Math.min(replacement.length, nextCaret);
+
+      replaceSelectionByRange(textarea, lineStart, lineEnd, replacement, {
+        start: nextCaret,
+        end: nextCaret,
       });
       return;
     }
@@ -2414,7 +3147,11 @@
     var replaced = [];
 
     for (var i = 0; i < linesList.length; i += 1) {
-      replaced.push(marker + linesList[i].replace(/^\s*#{1,6}\s+/, ""));
+      var currentLine = linesList[i];
+      var currentLeadingMatch = currentLine.match(/^\s*/);
+      var currentLeadingWhitespace = currentLeadingMatch ? currentLeadingMatch[0] : "";
+      var currentContent = currentLine.slice(currentLeadingWhitespace.length).replace(/^#{1,6}\s+/, "");
+      replaced.push(currentLeadingWhitespace + marker + currentContent);
     }
 
     var replacement = replaced.join("\n");
@@ -2438,6 +3175,149 @@
     });
   }
 
+  function isColorPickerOpen() {
+    return !!(
+      state.elements &&
+      state.elements.editorColorPicker &&
+      !state.elements.editorColorPicker.hasAttribute("hidden")
+    );
+  }
+
+  function isEventInsideColorPicker(target) {
+    if (!state.elements) {
+      return false;
+    }
+
+    if (state.elements.editorColorPicker && state.elements.editorColorPicker.contains(target)) {
+      return true;
+    }
+
+    if (
+      state.elements.editorMarkdownToolbar &&
+      target &&
+      target.closest &&
+      target.closest('button[data-md-action="text-color"]') &&
+      state.elements.editorMarkdownToolbar.contains(target)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function toggleColorPicker(textarea) {
+    if (isColorPickerOpen()) {
+      closeColorPicker({ restoreTextareaFocus: true });
+      return;
+    }
+
+    openColorPicker(textarea);
+  }
+
+  function openColorPicker(textarea) {
+    if (!state.elements || !state.elements.editorColorPicker) {
+      return;
+    }
+
+    var editorTextarea = textarea || getEditorMarkdownTextarea();
+    if (!editorTextarea) {
+      return;
+    }
+
+    var snapshot = getSelectionInfo(editorTextarea);
+    state.colorSelection = {
+      start: snapshot.start,
+      end: snapshot.end,
+      selectedText: snapshot.selectedText,
+    };
+
+    closeInternalLinkPicker();
+    closeMediaLibraryPanel();
+
+    state.elements.editorColorPicker.hidden = false;
+  }
+
+  function closeColorPicker(options) {
+    if (!state.elements || !state.elements.editorColorPicker) {
+      return;
+    }
+
+    var opts = options || {};
+    var snapshot = state.colorSelection;
+
+    state.elements.editorColorPicker.hidden = true;
+
+    if (!opts.keepSelection) {
+      state.colorSelection = null;
+    }
+
+    if (opts.restoreTextareaFocus) {
+      var textarea = getEditorMarkdownTextarea();
+      if (textarea) {
+        textarea.focus();
+
+        if (snapshot && typeof textarea.setSelectionRange === "function") {
+          var value = String(textarea.value || "");
+          var start = Math.max(0, Math.min(snapshot.start, value.length));
+          var end = Math.max(start, Math.min(snapshot.end, value.length));
+          textarea.setSelectionRange(start, end);
+        }
+      }
+    }
+  }
+
+  function normalizeWikiColor(value) {
+    var allowed = {
+      sage: true,
+      sea: true,
+      teal: true,
+      moss: true,
+      amber: true,
+      ochre: true,
+      slate: true,
+      stone: true,
+      plum: true,
+      rose: true,
+    };
+
+    var color = cleanSegment(readString(value, ""));
+    return allowed[color] ? color : "sage";
+  }
+
+  function escapeInlineHtmlText(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function insertColoredText(colorName) {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    var color = normalizeWikiColor(colorName);
+    var value = String(textarea.value || "");
+    var snapshot = state.colorSelection || getSelectionInfo(textarea);
+    var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
+    var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
+    var selectedText = value.slice(start, end) || readString(snapshot.selectedText, "");
+    var content = selectedText || "testo colorato";
+    var escapedContent = escapeInlineHtmlText(content);
+    var openTag = '<span class="wiki-color wiki-color-' + color + '">';
+    var closeTag = "</span>";
+    var replacement = openTag + escapedContent + closeTag;
+
+    replaceSelectionByRange(textarea, start, end, replacement, {
+      start: openTag.length,
+      end: openTag.length + escapedContent.length,
+    });
+
+    closeColorPicker();
+  }
   function isInternalLinkPickerOpen() {
     return !!(
       state.elements &&
@@ -2978,6 +3858,7 @@
 
     var sortOrder = parseOptionalInteger(getFormValue(form, "sort_order"));
     var depth = parseOptionalInteger(getFormValue(form, "depth"));
+    var navGroupOrder = parseOptionalInteger(getFormValue(form, "nav_group_order"));
 
     if (sortOrder.invalid) {
       setEditorStatus("Ordine non valido.", "error");
@@ -2989,6 +3870,11 @@
       return null;
     }
 
+    if (navGroupOrder.invalid) {
+      setEditorStatus("Ordine gruppo non valido.", "error");
+      return null;
+    }
+
     var publishedInput = form.elements.namedItem("is_published");
 
     var payload = {
@@ -2996,10 +3882,13 @@
       slug: slug,
       title: title,
       nav_group: toNullableString(getFormValue(form, "nav_group")),
+      nav_group_order: navGroupOrder.value === null ? 0 : navGroupOrder.value,
+      nav_group_icon: toNullableString(getFormValue(form, "nav_group_icon")),
       nav_label: toNullableString(getFormValue(form, "nav_label")),
+      page_icon: toNullableString(getFormValue(form, "page_icon")),
       parent_slug: toNullablePath(getFormValue(form, "parent_slug")),
       sort_order: sortOrder.value === null ? 0 : sortOrder.value,
-      depth: Math.max(1, depth.value === null ? 0 : depth.value),
+      depth: Math.max(0, depth.value === null ? 0 : depth.value),
       is_published: !!(publishedInput && publishedInput.checked),
       excerpt: toNullableString(getFormValue(form, "excerpt")),
       content_md: String(getFormValue(form, "content_md") || ""),
@@ -3279,11 +4168,14 @@
             "sort_order",
             "is_published",
             "nav_group",
+            "nav_group_order",
+            "nav_group_icon",
             "nav_label",
+            "page_icon",
             "depth",
           ].join(",")
         ),
-      "order=" + encodeURIComponent("section.asc,sort_order.asc,title.asc"),
+      "order=" + encodeURIComponent("section.asc,nav_group_order.asc.nullslast,nav_group.asc.nullslast,sort_order.asc,title.asc"),
     ];
 
     var url = SUPABASE_URL + "/rest/v1/wiki_pages?" + queryParts.join("&");
@@ -3326,7 +4218,6 @@
     var pages = [];
     var pageMap = new Map();
     var sectionMap = new Map();
-    var sectionOrder = [];
 
     for (var j = 0; j < normalizedPages.length; j += 1) {
       var currentPage = normalizedPages[j];
@@ -3346,33 +4237,42 @@
           description: readSectionDescription(currentPage.sectionSlug),
           rows: [],
         });
-        sectionOrder.push(currentPage.sectionSlug);
       }
 
       sectionMap.get(currentPage.sectionSlug).rows.push(currentPage);
-      pages.push(currentPage);
       pageMap.set(currentPage.docKey, currentPage);
+    }
+
+    var sectionEntries = Array.from(sectionMap.values()).sort(function compareSections(left, right) {
+      return readString(left.slug, "").localeCompare(readString(right.slug, ""), "it", {
+        sensitivity: "base",
+      });
+    });
+
+    var sections = [];
+
+    for (var s = 0; s < sectionEntries.length; s += 1) {
+      var sectionData = sectionEntries[s];
+      if (!sectionData || !sectionData.rows.length) {
+        continue;
+      }
+
+      var sectionNodes = buildSectionNodesFromPages(sectionData.rows);
+      sections.push({
+        slug: sectionData.slug,
+        title: sectionData.title,
+        description: sectionData.description,
+        nodes: sectionNodes.nodes,
+      });
+
+      for (var p = 0; p < sectionNodes.orderedPages.length; p += 1) {
+        pages.push(sectionNodes.orderedPages[p]);
+      }
     }
 
     for (var k = 0; k < pages.length; k += 1) {
       pages[k].prevKey = k > 0 ? pages[k - 1].docKey : "";
       pages[k].nextKey = k < pages.length - 1 ? pages[k + 1].docKey : "";
-    }
-
-    var sections = [];
-
-    for (var s = 0; s < sectionOrder.length; s += 1) {
-      var sectionData = sectionMap.get(sectionOrder[s]);
-      if (!sectionData || !sectionData.rows.length) {
-        continue;
-      }
-
-      sections.push({
-        slug: sectionData.slug,
-        title: sectionData.title,
-        description: sectionData.description,
-        nodes: buildSectionNodesFromPages(sectionData.rows),
-      });
     }
 
     var defaultDoc = pages.length ? pages[0].docKey : "";
@@ -3396,6 +4296,29 @@
       return sectionCompare;
     }
 
+    var groupOrderCompare = toGroupOrder(left.navGroupOrder) - toGroupOrder(right.navGroupOrder);
+    if (groupOrderCompare !== 0) {
+      return groupOrderCompare;
+    }
+
+    var groupCompare = readString(left.navGroupDisplay, "").localeCompare(
+      readString(right.navGroupDisplay, ""),
+      "it",
+      { sensitivity: "base" }
+    );
+
+    if (groupCompare !== 0) {
+      return groupCompare;
+    }
+
+    var parentCompare = readString(left.parentSlug, "").localeCompare(readString(right.parentSlug, ""), "it", {
+      sensitivity: "base",
+    });
+
+    if (parentCompare !== 0) {
+      return parentCompare;
+    }
+
     var sortCompare = toSortOrder(left.sortOrder) - toSortOrder(right.sortOrder);
     if (sortCompare !== 0) {
       return sortCompare;
@@ -3405,6 +4328,7 @@
       sensitivity: "base",
     });
   }
+
   function normalizeWikiPage(row) {
     if (!row) {
       return null;
@@ -3421,6 +4345,7 @@
     var title = readString(row.title, "Documento");
     var navGroup = readString(row.nav_group, "");
     var navLabel = readString(row.nav_label, "");
+    var navGroupDisplay = navGroup || "Generale";
     var breadcrumb = [toSectionTitle(sectionSlug)];
 
     if (navGroup) {
@@ -3441,7 +4366,11 @@
       excerpt: readString(row.excerpt, ""),
       isPublished: row.is_published !== false,
       navGroup: navGroup,
-      parentSlug: readString(row.parent_slug, ""),
+      navGroupDisplay: navGroupDisplay,
+      navGroupOrder: toGroupOrder(row.nav_group_order),
+      navGroupIcon: readString(row.nav_group_icon, ""),
+      pageIcon: readString(row.page_icon, ""),
+      parentSlug: resolveParentDocKey(sectionSlug, readString(row.parent_slug, "")),
       depth: toDepth(row.depth),
       sortOrder: toSortOrder(row.sort_order),
       prevKey: "",
@@ -3451,82 +4380,186 @@
     };
   }
 
+  function resolveParentDocKey(sectionSlug, parentSlug) {
+    var normalizedParent = normalizeDocPath(readString(parentSlug, ""));
+    if (!normalizedParent) {
+      return "";
+    }
+
+    if (normalizedParent.indexOf("/") !== -1) {
+      return normalizedParent;
+    }
+
+    return buildDocKey(sectionSlug, normalizedParent);
+  }
+
   function buildSectionNodesFromPages(pages) {
     var grouped = new Map();
-    var groupOrder = [];
 
     for (var i = 0; i < pages.length; i += 1) {
       var page = pages[i];
-      var groupKey = readString(page.navGroup, "");
+      var groupKey = toNavGroupKey(page.navGroup);
 
       if (!grouped.has(groupKey)) {
-        grouped.set(groupKey, []);
-        groupOrder.push(groupKey);
+        grouped.set(groupKey, {
+          key: groupKey,
+          title: readString(page.navGroupDisplay, "Generale"),
+          order: toGroupOrder(page.navGroupOrder),
+          icon: readString(page.navGroupIcon, ""),
+          pages: [],
+        });
       }
 
-      grouped.get(groupKey).push(page);
+      var group = grouped.get(groupKey);
+      group.pages.push(page);
+
+      if (!group.icon && page.navGroupIcon) {
+        group.icon = page.navGroupIcon;
+      }
+
+      if (!Number.isFinite(group.order) || group.order === Number.MAX_SAFE_INTEGER) {
+        group.order = toGroupOrder(page.navGroupOrder);
+      }
     }
 
-    var nodes = [];
-
-    for (var j = 0; j < groupOrder.length; j += 1) {
-      var currentGroup = groupOrder[j];
-      var groupPages = grouped.get(currentGroup) || [];
-      var docNodes = buildDocNodesByDepth(groupPages);
-
-      if (!docNodes.length) {
-        continue;
+    var groups = Array.from(grouped.values()).sort(function compareGroups(left, right) {
+      var orderCompare = toGroupOrder(left.order) - toGroupOrder(right.order);
+      if (orderCompare !== 0) {
+        return orderCompare;
       }
 
-      if (!currentGroup) {
-        for (var d = 0; d < docNodes.length; d += 1) {
-          nodes.push(docNodes[d]);
-        }
+      return readString(left.title, "").localeCompare(readString(right.title, ""), "it", {
+        sensitivity: "base",
+      });
+    });
+
+    var nodes = [];
+    var orderedPages = [];
+
+    for (var g = 0; g < groups.length; g += 1) {
+      var currentGroup = groups[g];
+      currentGroup.pages.sort(comparePageWithinGroup);
+
+      var docNodes = buildDocNodesByParent(currentGroup.pages);
+      if (!docNodes.length) {
         continue;
       }
 
       nodes.push({
         kind: "group",
-        title: currentGroup,
-        depth: 1,
+        title: currentGroup.title,
+        icon: readString(currentGroup.icon, ""),
+        navGroupKey: currentGroup.key,
         children: docNodes,
       });
+
+      collectOrderedPagesFromNodes(docNodes, orderedPages);
     }
 
-    return nodes;
+    return {
+      nodes: nodes,
+      orderedPages: orderedPages,
+    };
   }
 
-  function buildDocNodesByDepth(pages) {
+  function comparePageWithinGroup(left, right) {
+    var parentCompare = readString(left.parentSlug, "").localeCompare(readString(right.parentSlug, ""), "it", {
+      sensitivity: "base",
+    });
+
+    if (parentCompare !== 0) {
+      return parentCompare;
+    }
+
+    var sortCompare = toSortOrder(left.sortOrder) - toSortOrder(right.sortOrder);
+    if (sortCompare !== 0) {
+      return sortCompare;
+    }
+
+    return readString(left.title, "").localeCompare(readString(right.title, ""), "it", {
+      sensitivity: "base",
+    });
+  }
+
+  function buildDocNodesByParent(pages) {
+    var nodeMap = new Map();
     var roots = [];
-    var stack = [];
 
     for (var i = 0; i < pages.length; i += 1) {
       var page = pages[i];
-      var depth = toDepth(page.depth);
-      var node = {
+      nodeMap.set(page.docKey, {
         kind: "doc",
         title: page.navLabel || page.title,
         docKey: page.docKey,
-        depth: depth,
+        icon: readString(page.pageIcon, ""),
+        sortOrder: toSortOrder(page.sortOrder),
+        entry: page,
         children: [],
-      };
-
-      while (stack.length && stack[stack.length - 1].depth >= depth) {
-        stack.pop();
-      }
-
-      if (!stack.length) {
-        roots.push(node);
-      } else {
-        stack[stack.length - 1].children.push(node);
-      }
-
-      stack.push(node);
+      });
     }
 
+    for (var j = 0; j < pages.length; j += 1) {
+      var currentPage = pages[j];
+      var currentNode = nodeMap.get(currentPage.docKey);
+      if (!currentNode) {
+        continue;
+      }
+
+      var parentKey = resolveParentDocKey(currentPage.sectionSlug, currentPage.parentSlug);
+      var parentNode = parentKey ? nodeMap.get(parentKey) : null;
+
+      if (parentNode && parentKey !== currentPage.docKey) {
+        parentNode.children.push(currentNode);
+      } else {
+        roots.push(currentNode);
+      }
+    }
+
+    sortDocNodeTree(roots);
     return roots;
   }
 
+  function sortDocNodeTree(nodes) {
+    nodes.sort(function compareNodes(left, right) {
+      var sortCompare = toSortOrder(left.sortOrder) - toSortOrder(right.sortOrder);
+      if (sortCompare !== 0) {
+        return sortCompare;
+      }
+
+      return readString(left.title, "").localeCompare(readString(right.title, ""), "it", {
+        sensitivity: "base",
+      });
+    });
+
+    for (var i = 0; i < nodes.length; i += 1) {
+      if (nodes[i].children && nodes[i].children.length) {
+        sortDocNodeTree(nodes[i].children);
+      }
+    }
+  }
+
+  function collectOrderedPagesFromNodes(nodes, orderedPages) {
+    for (var i = 0; i < nodes.length; i += 1) {
+      var node = nodes[i];
+
+      if (node.entry) {
+        orderedPages.push(node.entry);
+      }
+
+      if (node.children && node.children.length) {
+        collectOrderedPagesFromNodes(node.children, orderedPages);
+      }
+    }
+  }
+
+  function toGroupOrder(value) {
+    var parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+
+    return Math.floor(parsed);
+  }
   function buildDocKey(sectionSlug, rawSlug) {
     var normalizedSection = cleanSegment(sectionSlug);
     var normalizedSlug = normalizeDocPath(rawSlug);
@@ -3588,8 +4621,8 @@
 
   function toDepth(value) {
     var parsed = Number(value);
-    if (!Number.isFinite(parsed) || parsed < 1) {
-      return 1;
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return 0;
     }
 
     return Math.floor(parsed);
@@ -4071,7 +5104,7 @@
     var container = state.elements.tree;
     container.innerHTML = "";
     state.reorderDrag = null;
-    container.classList.toggle("is-reorder-enabled", !!state.isManageUnlocked);
+    container.classList.toggle("is-reorder-enabled", isDocsTreeReorderEnabled());
     container.classList.toggle("is-reordering", !!state.reorderSaving);
     container.setAttribute("aria-busy", state.reorderSaving ? "true" : "false");
 
@@ -4158,6 +5191,11 @@
       return;
     }
 
+    var hiddenData = buildSectionNodesFromPages(hiddenPages);
+    if (!hiddenData || !Array.isArray(hiddenData.nodes) || !hiddenData.nodes.length) {
+      return;
+    }
+
     var hiddenWrap = document.createElement("div");
     hiddenWrap.className = "docs-tree-hidden";
 
@@ -4176,30 +5214,14 @@
     hiddenWrap.appendChild(hiddenTitle);
 
     var hiddenList = document.createElement("ul");
-    hiddenList.className = "docs-tree-hidden__list";
-
-    for (var i = 0; i < hiddenPages.length; i += 1) {
-      var page = hiddenPages[i];
-      var item = document.createElement("li");
-      var row = buildDocsTreeDocRow({
-        docKey: page.docKey,
-        title: page.title,
-        linkClass: "docs-tree-link docs-tree-link--hidden",
-      });
-
-      if (!row) {
-        continue;
-      }
-
-      item.appendChild(row);
-      hiddenList.appendChild(item);
-    }
+    hiddenList.className = "docs-tree-hidden__list docs-tree-list";
+    appendNodesToList(hiddenList, hiddenData.nodes, {
+      linkClass: "docs-tree-link docs-tree-link--hidden",
+    });
 
     hiddenWrap.appendChild(hiddenList);
     sectionBlock.appendChild(hiddenWrap);
-  }
-
-  function getHiddenPagesForSection(sectionSlug) {
+  }  function getHiddenPagesForSection(sectionSlug) {
     if (!state.manageIndex || !Array.isArray(state.manageIndex.pages)) {
       return [];
     }
@@ -4235,6 +5257,29 @@
     return null;
   }
 
+  function resolveTreeIconClass(iconValue, fallback) {
+    var raw = readString(iconValue, "");
+    if (!raw) {
+      return fallback;
+    }
+
+    var clean = raw
+      .replace(/[^a-zA-Z0-9\s_-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!clean) {
+      return fallback;
+    }
+
+    if (clean.indexOf("fa-") !== -1) {
+      return clean;
+    }
+
+    var slug = cleanSegment(clean);
+    return slug ? "fa-solid fa-" + slug : fallback;
+  }
+
   function buildDocsTreeDocRow(options) {
     if (!options) {
       return null;
@@ -4266,6 +5311,7 @@
       row.setAttribute("data-doc-key", entry.docKey);
       row.setAttribute("data-section", entry.sectionSlug);
       row.setAttribute("data-parent-slug", normalizeReorderParentSlug(entry.parentSlug));
+      row.setAttribute("data-nav-group", normalizeReorderNavGroup(entry.navGroup));
       row.draggable = isDocsTreeReorderEnabled();
 
       if (!isDocsTreeReorderEnabled()) {
@@ -4277,7 +5323,21 @@
     link.className = options.linkClass || "docs-tree-link";
     link.href = "docs.html?doc=" + encodeURIComponent(docKey);
     link.setAttribute("data-doc-link", docKey);
-    link.textContent = readString(options.title, "Documento");
+
+    var iconWrap = document.createElement("span");
+    iconWrap.className = "docs-tree-link__icon";
+
+    var icon = document.createElement("i");
+    icon.className = resolveTreeIconClass(options.icon || (entry && entry.pageIcon), "fa-solid fa-file-lines");
+    icon.setAttribute("aria-hidden", "true");
+    iconWrap.appendChild(icon);
+
+    var text = document.createElement("span");
+    text.className = "docs-tree-link__text";
+    text.textContent = readString(options.title, "Documento");
+
+    link.appendChild(iconWrap);
+    link.appendChild(text);
 
     if (state.currentEntry && state.currentEntry.docKey === docKey) {
       link.classList.add("is-active");
@@ -4288,7 +5348,9 @@
     return row;
   }
 
-  function appendNodesToList(list, nodes) {
+  function appendNodesToList(list, nodes, options) {
+    var opts = options || {};
+
     for (var i = 0; i < nodes.length; i += 1) {
       var node = nodes[i];
       var item = document.createElement("li");
@@ -4297,7 +5359,8 @@
         var row = buildDocsTreeDocRow({
           docKey: node.docKey,
           title: node.title,
-          linkClass: "docs-tree-link",
+          icon: node.icon,
+          linkClass: opts.linkClass || "docs-tree-link",
         });
 
         if (row) {
@@ -4307,19 +5370,33 @@
         if (node.children && node.children.length) {
           var nestedList = document.createElement("ul");
           nestedList.className = "docs-tree-sublist";
-          appendNodesToList(nestedList, node.children);
+          appendNodesToList(nestedList, node.children, opts);
           item.appendChild(nestedList);
         }
       } else {
         var label = document.createElement("span");
         label.className = "docs-tree-label";
-        label.textContent = node.title;
+
+        var groupIconWrap = document.createElement("span");
+        groupIconWrap.className = "docs-tree-label__icon";
+
+        var groupIcon = document.createElement("i");
+        groupIcon.className = resolveTreeIconClass(node.icon, "fa-solid fa-folder-tree");
+        groupIcon.setAttribute("aria-hidden", "true");
+        groupIconWrap.appendChild(groupIcon);
+
+        var groupText = document.createElement("span");
+        groupText.className = "docs-tree-label__text";
+        groupText.textContent = readString(node.title, "Gruppo");
+
+        label.appendChild(groupIconWrap);
+        label.appendChild(groupText);
         item.appendChild(label);
 
         if (node.children && node.children.length) {
           var subList = document.createElement("ul");
           subList.className = "docs-tree-sublist";
-          appendNodesToList(subList, node.children);
+          appendNodesToList(subList, node.children, opts);
           item.appendChild(subList);
         }
       }
@@ -4672,82 +5749,3 @@
       .replace(/'/g, "&#039;");
   }
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

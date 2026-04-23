@@ -92,12 +92,7 @@
       return;
     }
 
-    if (!portraitFile) {
-      setStatus(elements, "Seleziona il file Portrait.", "is-error");
-      return;
-    }
-
-    if (!isPortraitFileValid(portraitFile)) {
+    if (portraitFile && !isPortraitFileValid(portraitFile)) {
       setStatus(elements, "Formato Portrait non valido. Usa JPG, PNG o WEBP.", "is-error");
       return;
     }
@@ -117,7 +112,10 @@
 
       var formData = new FormData();
       formData.append("character_json", jsonFile);
-      formData.append("portrait_image", portraitFile);
+
+      if (portraitFile) {
+        formData.append("portrait_image", portraitFile);
+      }
 
       var response = await fetch(IMPORT_ENDPOINT, {
         method: "POST",

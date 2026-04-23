@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   "use strict";
 
   var SUPABASE_URL = "https://atglgaritxzowshenaqr.supabase.co";
@@ -8,10 +8,12 @@
   var VALID_ACCESS_CODE = "Enclave";
 
   var FALLBACK_QUEST_IMAGE =
-    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 480'><rect width='800' height='480' fill='%23162229'/><rect x='24' y='24' width='752' height='432' fill='none' stroke='%233b5865' stroke-width='2'/><text x='50%25' y='50%25' fill='%2371ddca' font-family='Arial' font-size='28' text-anchor='middle' dominant-baseline='middle'>Immagine quest non disponibile</text></svg>";
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 480'><rect width='800' height='480' fill='%23162229'/><rect x='24' y='24' width='752' height='432' fill='none' stroke='%233b5865' stroke-width='2'/><text x='50%25' y='50%25' fill='%2371ddca' font-family='Arial' font-size='28' text-anchor='middle' dominant-baseline='middle'>Immagine missione non disponibile</text></svg>";
 
   var FALLBACK_TOKEN_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23162229'/><circle cx='32' cy='24' r='12' fill='%234db8a6'/><rect x='14' y='40' width='36' height='16' fill='%233b5865'/></svg>";
+
+  var QUEST_SUMMARY_MAX_LENGTH = 180;
 
   document.addEventListener("DOMContentLoaded", function onReady() {
     initLocalAccessControls();
@@ -121,8 +123,8 @@
       var questCharacterMap = buildQuestCharacterMap(data.questCharacters);
       renderQuests(questList, data.quests, characterMap, questCharacterMap);
     } catch (error) {
-      console.error("Errore nel caricamento delle quest:", error);
-      renderMessage(questList, "Impossibile caricare le quest in questo momento.");
+      console.error("Errore nel caricamento delle missioni:", error);
+      renderMessage(questList, "Impossibile caricare le missioni in questo momento.");
     }
   }
 
@@ -138,6 +140,7 @@
           "status",
           "image_url",
           "location",
+          "summary",
           "report",
           "last_session_at",
           "next_session_at",
@@ -233,7 +236,7 @@
     container.innerHTML = "";
 
     if (!Array.isArray(quests) || quests.length === 0) {
-      renderMessage(container, "Nessuna quest attiva disponibile.");
+      renderMessage(container, "Nessuna missione attiva disponibile.");
       return;
     }
 
@@ -247,7 +250,7 @@
     }
 
     if (!fragment.childNodes.length) {
-      renderMessage(container, "Nessuna quest valida da mostrare.");
+      renderMessage(container, "Nessuna missione valida da mostrare.");
       return;
     }
 
@@ -256,14 +259,14 @@
 
   function renderQuestCard(quest, characterMap, questCharacterMap) {
     if (!quest || typeof quest !== "object") {
-      console.warn("Quest ignorata: formato non valido.", quest);
+      console.warn("Missione ignorata: formato non valido.", quest);
       return null;
     }
 
-    var title = readString(quest.title, "Quest senza titolo");
+    var title = readString(quest.title, "Missione senza titolo");
     var questId = toKey(quest.id);
     var questSlug = readString(quest.slug, slugify(title || questId || "quest"));
-    var reportText = readString(quest.report, "Rapporto non disponibile.");
+    var summaryText = buildQuestCardSummary(quest);
     var imagePath = readString(quest.image_url, FALLBACK_QUEST_IMAGE);
 
     var sessionInfo = buildSessionInfo(quest);
@@ -271,7 +274,8 @@
     var typeLabel = mapQuestType(quest.type);
 
     var article = createElement("article", "quest-item");
-    article.setAttribute("aria-label", "Quest " + title);
+    article.setAttribute("aria-label", "Missione " + title);
+    article.style.setProperty("--quest-bg-image", toCssBackgroundImage(imagePath));
 
     var questTop = createElement("div", "quest-top");
     var heading = createElement("h3", "", title);
@@ -287,10 +291,11 @@
     article.appendChild(questTop);
 
     var layout = createElement("div", "quest-layout");
+
     var media = createElement("figure", "quest-media");
     var image = document.createElement("img");
     image.src = imagePath;
-    image.alt = "Veduta quest " + title;
+    image.alt = "Veduta missione " + title;
     attachImageFallback(image, FALLBACK_QUEST_IMAGE);
     media.appendChild(image);
 
@@ -298,20 +303,33 @@
     body.appendChild(renderTokenRow(questId, characterMap, questCharacterMap));
 
     var locationValue = readString(quest.location, "Luogo non disponibile");
-    body.appendChild(renderField("Luogo", locationValue));
-    body.appendChild(renderField("Ultimo rapporto", reportText));
-    body.appendChild(renderField(sessionInfo.label, sessionInfo.value));
+    var metaGrid = createElement("div", "quest-meta-grid");
+    metaGrid.appendChild(renderField("Luogo", locationValue));
+    metaGrid.appendChild(renderField(sessionInfo.label, sessionInfo.value));
+
+    var summaryField = renderField("Sintesi", summaryText);
+    summaryField.classList.add("quest-field--report");
+    metaGrid.appendChild(summaryField);
+
+    body.appendChild(metaGrid);
 
     layout.appendChild(media);
     layout.appendChild(body);
 
     article.appendChild(layout);
 
-    var cta = createElement("a", "quest-cta", "Apri quest");
+    var cta = createElement("a", "quest-cta", "Apri missione");
     cta.href = "quest.html?quest=" + encodeURIComponent(questSlug);
     article.appendChild(cta);
 
     return article;
+  }
+
+  function buildQuestCardSummary(quest) {
+    var summary = readString(quest.summary, "");
+    var fallbackReport = readString(quest.report, "");
+    var source = summary || fallbackReport || "Nessuna sintesi disponibile.";
+    return truncateText(source, QUEST_SUMMARY_MAX_LENGTH);
   }
 
   function renderTokenRow(questId, characterMap, questCharacterMap) {
@@ -326,7 +344,7 @@
       var character = characterMap.get(characterIds[i]);
 
       if (!character) {
-        console.warn("Quest con personaggio non trovato:", characterIds[i]);
+        console.warn("Missione con personaggio non trovato:", characterIds[i]);
         continue;
       }
 
@@ -377,7 +395,7 @@
     var subclassName = readString(character.subclass_name, "");
 
     if (className && subclassName) {
-      lines.push(className + " — " + subclassName);
+      lines.push(className + " - " + subclassName);
     } else if (className) {
       lines.push(className);
     }
@@ -437,16 +455,22 @@
     }).format(parsed);
   }
 
+  function toCssBackgroundImage(path) {
+    var src = readString(path, FALLBACK_QUEST_IMAGE);
+    var sanitized = src.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\)/g, "\\)");
+    return 'url("' + sanitized + '")';
+  }
+
   function mapQuestType(type) {
     if (type === "main") {
-      return "Quest principale";
+      return "Missione principale";
     }
 
     if (type === "side") {
-      return "Quest secondaria";
+      return "Missione secondaria";
     }
 
-    return "Quest secondaria";
+    return "Missione secondaria";
   }
 
   function mapQuestStatus(status) {
@@ -464,6 +488,20 @@
       default:
         return { label: "In corso", className: "status-ongoing" };
     }
+  }
+
+  function truncateText(value, maxLength) {
+    var text = readString(value, "");
+    if (!text) {
+      return "";
+    }
+
+    var normalized = text.replace(/\s+/g, " ").trim();
+    if (normalized.length <= maxLength) {
+      return normalized;
+    }
+
+    return normalized.slice(0, maxLength - 1).trimEnd() + "…";
   }
 
   function renderMessage(container, text) {
@@ -519,7 +557,7 @@
   }
 
   function readString(value, fallback) {
-    return typeof value === "string" && value.trim() !== "" ? value : fallback;
+    return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
   }
 
   function createElement(tag, className, text) {

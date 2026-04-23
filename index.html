@@ -30,71 +30,98 @@
         </a>
 
         <nav class="sidebar-nav" aria-label="Navigazione portale">
-          <a class="nav-item is-active" href="#">
-            <i class="fa-solid fa-compass" aria-hidden="true"></i>
-            <span>Accesso</span>
-          </a>
-          <a class="nav-item" href="docs.html?doc=lore/introduzione">
-            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-            <span>Lore</span>
-          </a>
-          <a class="nav-item" href="docs.html?doc=regole/panoramica">
-            <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
-            <span>Regole</span>
-          </a>
-          <a class="nav-item" href="characters.html">
-            <i class="fa-solid fa-users" aria-hidden="true"></i>
-            <span>Personaggi</span>
-          </a>
-          <a class="nav-item" href="#quest">
-            <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
-            <span>Quest</span>
-          </a>
-          <a class="nav-item" href="#">
-            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-            <span>Sessioni</span>
-          </a>
-          <a class="nav-item" href="#">
-            <i class="fa-solid fa-clipboard" aria-hidden="true"></i>
-            <span>Bacheca</span>
-          </a>
+          <section class="sidebar-nav-group" aria-label="Home">
+            <a class="nav-item is-active" href="index.html">
+              <i class="fa-solid fa-compass" aria-hidden="true"></i>
+              <span>Home</span>
+            </a>
+          </section>
 
-          <div class="nav-manage">
-            <button type="button" class="nav-item manage-toggle">
-              <i class="fa-solid fa-sliders" aria-hidden="true"></i>
-              <span>Gestione</span>
-              <i class="fa-solid fa-chevron-right manage-caret" aria-hidden="true"></i>
-            </button>
-            <ul class="manage-menu">
-              <li>
-                <button
-                  type="button"
-                  class="manage-action"
-                  data-manage-action
-                  data-character-import-action
-                  disabled
-                >
-                  Aggiungi personaggio
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  class="manage-action"
-                  data-manage-action
-                  data-quest-import-action
-                  disabled
-                >
-                  Aggiungi quest
-                </button>
-              </li>
-              <li>
-                <button type="button" class="manage-action" data-manage-action disabled>
-                  Aggiungi sessione
-                </button>
-              </li>
-            </ul>
-          </div>
+          <section class="sidebar-nav-group" aria-label="Enciclopedia">
+            <p class="sidebar-nav-group__title">
+              <i class="fa-solid fa-book-atlas" aria-hidden="true"></i>
+              <span>Enciclopedia</span>
+            </p>
+            <a class="nav-item" href="docs.html?doc=lore/introduzione">
+              <i class="fa-solid fa-landmark" aria-hidden="true"></i>
+              <span>Ambientazione</span>
+            </a>
+            <a class="nav-item" href="docs.html?doc=regole/panoramica">
+              <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+              <span>Regole</span>
+            </a>
+          </section>
+
+          <section class="sidebar-nav-group" aria-label="Enclave">
+            <p class="sidebar-nav-group__title">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              <span>Enclave</span>
+            </p>
+            <a class="nav-item" href="characters.html">
+              <i class="fa-solid fa-users" aria-hidden="true"></i>
+              <span>Personaggi</span>
+            </a>
+            <a class="nav-item" href="#missioni">
+              <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
+              <span>Missioni</span>
+            </a>
+            <a class="nav-item" href="docs.html?doc=regole/sessioni-e-quest">
+              <i class="fa-solid fa-scroll" aria-hidden="true"></i>
+              <span>Cronache</span>
+            </a>
+          </section>
+
+          <section class="sidebar-nav-group" aria-label="Organizzazione">
+            <p class="sidebar-nav-group__title">
+              <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
+              <span>Organizzazione</span>
+            </p>
+            <a class="nav-item" href="#">
+              <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+              <span>Sessioni</span>
+            </a>
+            <a class="nav-item" href="#">
+              <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+              <span>Avvisi</span>
+            </a>
+
+            <div class="nav-manage">
+              <button type="button" class="nav-item manage-toggle">
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                <span>Gestione</span>
+                <i class="fa-solid fa-chevron-right manage-caret" aria-hidden="true"></i>
+              </button>
+              <ul class="manage-menu">
+                <li>
+                  <button
+                    type="button"
+                    class="manage-action"
+                    data-manage-action
+                    data-character-import-action
+                    disabled
+                  >
+                    Aggiungi personaggio
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="manage-action"
+                    data-manage-action
+                    data-quest-import-action
+                    disabled
+                  >
+                    Aggiungi missione
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="manage-action" data-manage-action disabled>
+                    Aggiungi sessione
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </section>
         </nav>
 
         <section class="sidebar-access" aria-label="Codice locale">
@@ -107,7 +134,6 @@
             data-access-input
             placeholder="Inserisci codice"
           />
-          <p class="access-note">Le azioni di Gestione richiedono un codice valido.</p>
           <p class="access-status" data-access-status>Codice non inserito</p>
         </section>
 
@@ -132,23 +158,23 @@
             </div>
           </section>
 
-          <section id="quest" class="section-card section-quest" aria-labelledby="titolo-quest">
+          <section id="missioni" class="section-card section-quest" aria-labelledby="titolo-missioni">
             <div class="section-head">
-              <h2 id="titolo-quest">Quest attive</h2>
+              <h2 id="titolo-missioni">Missioni attive</h2>
             </div>
 
             <div id="quest-list" class="quest-list" data-quest-list>
-              <p class="quest-loading">Caricamento quest...</p>
+              <p class="quest-loading">Caricamento missioni...</p>
             </div>
           </section>
         </main>
 
         <footer class="site-footer">
           <div class="footer-links">
-            <a href="#">Lore</a>
+            <a href="docs.html?doc=lore/introduzione">Ambientazione</a>
             <a href="#">Regole</a>
-            <a href="#quest">Quest</a>
-            <a href="#">Bacheca</a>
+            <a href="#missioni">Missioni</a>
+            <a href="#">Avvisi</a>
             <a href="#">Apri VTT</a>
           </div>
           <p>Ultima sincronizzazione: 21 aprile 2026, 16:40</p>
@@ -159,7 +185,7 @@
     <div class="quest-modal" data-quest-modal hidden>
       <div class="quest-modal__backdrop" data-quest-modal-close></div>
       <div class="quest-modal__panel" role="dialog" aria-modal="true" aria-labelledby="quest-modal-title">
-        <h3 id="quest-modal-title">Aggiungi quest</h3>
+        <h3 id="quest-modal-title">Aggiungi missione</h3>
 
         <form class="quest-modal__form" data-quest-form>
           <div class="quest-modal__grid">
@@ -176,8 +202,8 @@
             <label class="quest-modal__field" for="quest-type-input">
               <span>Tipo</span>
               <select id="quest-type-input" class="quest-modal__input" data-quest-type>
-                <option value="main">Quest principale</option>
-                <option value="side" selected>Quest secondaria</option>
+                <option value="main">Missione principale</option>
+                <option value="side" selected>Missione secondaria</option>
               </select>
             </label>
 
@@ -193,7 +219,7 @@
             </label>
 
             <label class="quest-modal__field quest-modal__field--full" for="quest-image-input">
-              <span>Immagine quest (URL)</span>
+              <span>Immagine missione (URL)</span>
               <input id="quest-image-input" class="quest-modal__input" type="url" data-quest-image />
             </label>
 
@@ -238,7 +264,7 @@
 
           <div class="quest-modal__actions">
             <button type="submit" class="quest-modal__btn quest-modal__btn--primary" data-quest-submit>
-              Salva quest
+              Salva missione
             </button>
             <button type="button" class="quest-modal__btn" data-quest-cancel>
               Annulla

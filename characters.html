@@ -1,46 +1,58 @@
 <!doctype html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Personaggi | Enclave della Gorgone</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Uncial+Antiqua&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
-    />
-    <link rel="stylesheet" href="styles/styles.css" />
-    <link rel="stylesheet" href="styles/characters.css" />
-  </head>
-  <body>
-    <div class="app-layout">
-      <aside class="sidebar" aria-label="Navigazione laterale">
-        <a class="sidebar-brand" href="index.html" aria-label="Enclave della Gorgone">
-          <span class="brand-mark" aria-hidden="true">EG</span>
-          <span>
-            <strong>Enclave della Gorgone</strong>
-            <small>Portale campagna</small>
-          </span>
-        </a>
 
-        <nav class="sidebar-nav" aria-label="Navigazione portale">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Personaggi | Enclave della Gorgone</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Uncial+Antiqua&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="styles/styles.css" />
+  <link rel="stylesheet" href="styles/characters.css" />
+</head>
+
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" aria-label="Navigazione laterale">
+      <a class="sidebar-brand" href="index.html" aria-label="Enclave della Gorgone">
+        <span class="brand-mark" aria-hidden="true">EG</span>
+        <span>
+          <strong>Enclave della Gorgone</strong>
+          <small>Portale campagna</small>
+        </span>
+      </a>
+
+      <nav class="sidebar-nav" aria-label="Navigazione portale">
+        <section class="sidebar-nav-group" aria-label="Home">
           <a class="nav-item" href="index.html">
             <i class="fa-solid fa-compass" aria-hidden="true"></i>
-            <span>Accesso</span>
+            <span>Home</span>
           </a>
+        </section>
+
+        <section class="sidebar-nav-group" aria-label="Enciclopedia">
+          <p class="sidebar-nav-group__title">
+            <i class="fa-solid fa-book-atlas" aria-hidden="true"></i>
+            <span>Enciclopedia</span>
+          </p>
           <a class="nav-item" href="docs.html?doc=lore/introduzione">
-            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-            <span>Lore</span>
+            <i class="fa-solid fa-landmark" aria-hidden="true"></i>
+            <span>Ambientazione</span>
           </a>
           <a class="nav-item" href="docs.html?doc=regole/panoramica">
             <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
             <span>Regole</span>
           </a>
+        </section>
+
+        <section class="sidebar-nav-group" aria-label="Enclave">
+          <p class="sidebar-nav-group__title">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <span>Enclave</span>
+          </p>
           <a class="nav-item is-active" href="characters.html">
             <i class="fa-solid fa-users" aria-hidden="true"></i>
             <span>Personaggi</span>
@@ -49,13 +61,24 @@
             <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
             <span>Missioni</span>
           </a>
+          <a class="nav-item" href="docs.html?doc=regole/sessioni-e-quest">
+            <i class="fa-solid fa-scroll" aria-hidden="true"></i>
+            <span>Cronache</span>
+          </a>
+        </section>
+
+        <section class="sidebar-nav-group" aria-label="Organizzazione">
+          <p class="sidebar-nav-group__title">
+            <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
+            <span>Organizzazione</span>
+          </p>
           <a class="nav-item" href="#">
             <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
             <span>Sessioni</span>
           </a>
           <a class="nav-item" href="#">
-            <i class="fa-solid fa-clipboard" aria-hidden="true"></i>
-            <span>Bacheca</span>
+            <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+            <span>Avvisi</span>
           </a>
 
           <div class="nav-manage">
@@ -66,13 +89,7 @@
             </button>
             <ul class="manage-menu">
               <li>
-                <button
-                  type="button"
-                  class="manage-action"
-                  data-manage-action
-                  data-character-import-action
-                  disabled
-                >
+                <button type="button" class="manage-action" data-manage-action data-character-import-action disabled>
                   Aggiungi personaggio
                 </button>
               </li>
@@ -88,126 +105,136 @@
               </li>
             </ul>
           </div>
-        </nav>
+        </section>
+      </nav>
 
-        <section class="sidebar-access" aria-label="Codice locale">
-          <label class="access-label" for="access-code-input">Codice Identificativo</label>
-          <input
-            id="access-code-input"
-            class="access-input"
-            type="text"
-            autocomplete="off"
-            data-access-input
-            placeholder="Inserisci codice"
-          />
-          <p class="access-note">Le azioni di Gestione richiedono un codice valido.</p>
-          <p class="access-status" data-access-status>Codice non inserito</p>
+      <section class="sidebar-access" aria-label="Codice locale">
+        <label class="access-label" for="access-code-input">Codice Identificativo</label>
+        <input id="access-code-input" class="access-input" type="text" autocomplete="off" data-access-input
+          placeholder="Inserisci codice" />
+        <p class="access-note">Le azioni di Gestione richiedono un codice valido.</p>
+        <p class="access-status" data-access-status>Codice non inserito</p>
+      </section>
+
+      <a class="btn-vtt" href="#">
+        <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+        <span>Apri VTT</span>
+      </a>
+    </aside>
+
+    <div class="content-shell">
+      <main class="main-content characters-page" aria-live="polite">
+        <section class="section-card quest-page-header" aria-labelledby="characters-page-title">
+          <div class="quest-page-header__top">
+            <div class="quest-page-header__copy">
+              <p class="quest-page-eyebrow">Enclave</p>
+              <h1 id="characters-page-title">Personaggi</h1>
+              <p class="hero-support">Archivio operativo dei membri dell’Enclave, con filtri rapidi e schede complete.
+              </p>
+            </div>
+          </div>
         </section>
 
-        <a class="btn-vtt" href="#">
-          <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
-          <span>Apri VTT</span>
-        </a>
-      </aside>
+        <section class="section-card characters-top-card" aria-label="Roster personaggi">
+          <div class="characters-header-tools">
+            <section class="characters-filters" aria-label="Filtri personaggi">
+              <div class="characters-filter-block">
+                <p class="characters-filter-title">Classi</p>
+                <div class="characters-class-filters" data-characters-class-filters>
+                  <p class="characters-state">Caricamento classi...</p>
+                </div>
+              </div>
 
-      <div class="content-shell">
-        <main class="main-content characters-page" aria-live="polite">
-          <section class="section-card characters-top-card" aria-labelledby="characters-page-title">
-            <header class="characters-header">
-              <div class="characters-header-copy">
-                <h1 id="characters-page-title">Personaggi</h1>
-                <p>Archivio operativo dell'Enclave con schede complete e selezione rapida.</p>
+              <div class="characters-filter-block">
+                <p class="characters-filter-title">Disponibilità</p>
+                <div class="characters-availability-filters">
+                  <button type="button" class="characters-filter-pill is-active" data-characters-availability="all">
+                    Tutti
+                  </button>
+                  <button type="button" class="characters-filter-pill" data-characters-availability="free">
+                    Liberi
+                  </button>
+                  <button type="button" class="characters-filter-pill" data-characters-availability="engaged">
+                    Impegnati
+                  </button>
+                </div>
               </div>
 
               <div class="characters-search-tools">
-                <button
-                  type="button"
-                  class="characters-search-toggle"
-                  data-characters-search-toggle
-                  aria-expanded="false"
-                  aria-controls="characters-search-panel"
-                  aria-label="Apri ricerca personaggi"
-                >
+                <button type="button" class="characters-search-toggle" data-characters-search-toggle
+                  aria-expanded="false" aria-controls="characters-search-panel" aria-label="Apri ricerca personaggi">
                   <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                 </button>
 
-                <div
-                  id="characters-search-panel"
-                  class="characters-search-panel"
-                  data-characters-search-panel
-                  hidden
-                >
+                <div id="characters-search-panel" class="characters-search-panel" data-characters-search-panel hidden>
                   <label class="characters-search" for="characters-search-input">
                     <span>Cerca per nome</span>
-                    <input
-                      id="characters-search-input"
-                      type="search"
-                      placeholder="Es. Wulfric"
-                      data-characters-search
-                      autocomplete="off"
-                    />
+                    <input id="characters-search-input" type="search" placeholder="Es. Wulfric" data-characters-search
+                      autocomplete="off" />
                   </label>
                 </div>
               </div>
-            </header>
+            </section>
+          </div>
+
+          <div class="characters-roster-shell">
+            <button type="button" class="characters-roster-nav" data-characters-roster-prev
+              aria-label="Scorri personaggi a sinistra">
+              <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            </button>
 
             <div class="characters-roster" data-characters-roster>
               <p class="characters-state">Caricamento personaggi...</p>
             </div>
-          </section>
 
-          <section class="section-card" aria-labelledby="characters-detail-title">
-            <h2 id="characters-detail-title" class="sr-only">Scheda personaggio</h2>
-            <div class="character-detail" data-character-detail>
-              <p class="characters-state">Seleziona un personaggio per visualizzare la scheda.</p>
-            </div>
-          </section>
-        </main>
-      </div>
-    </div>
-
-    <div class="import-modal" data-character-import-modal hidden>
-      <div class="import-modal__backdrop" data-character-import-close></div>
-      <div class="import-modal__panel" role="dialog" aria-modal="true" aria-labelledby="import-title">
-        <h3 id="import-title">Importa personaggio</h3>
-
-        <form class="import-modal__form" data-character-import-form>
-          <label class="import-modal__label" for="character-json-file">JSON personaggio</label>
-          <input
-            id="character-json-file"
-            class="import-modal__input"
-            type="file"
-            accept=".json,application/json"
-            data-character-json-file
-            required
-          />
-
-          <label class="import-modal__label" for="character-portrait-file">Portrait</label>
-          <input
-            id="character-portrait-file"
-            class="import-modal__input"
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-            data-character-portrait-file
-            required
-          />
-
-          <p class="import-modal__status" data-character-import-status aria-live="polite"></p>
-
-          <div class="import-modal__actions">
-            <button type="submit" class="import-modal__btn import-modal__btn--primary" data-character-import-submit>
-              Importa
-            </button>
-            <button type="button" class="import-modal__btn" data-character-import-cancel>
-              Annulla
+            <button type="button" class="characters-roster-nav" data-characters-roster-next
+              aria-label="Scorri personaggi a destra">
+              <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+        </section>
 
-    <script src="scripts/main.js" defer></script>
-    <script src="scripts/character-import.js" defer></script>
-    <script src="scripts/characters.js" defer></script>
-  </body>
+        <section class="section-card" aria-labelledby="characters-detail-title">
+          <h2 id="characters-detail-title" class="sr-only">Scheda personaggio</h2>
+          <div class="character-detail" data-character-detail>
+            <p class="characters-state">Seleziona un personaggio per visualizzare la scheda.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="import-modal" data-character-import-modal hidden>
+    <div class="import-modal__backdrop" data-character-import-close></div>
+    <div class="import-modal__panel" role="dialog" aria-modal="true" aria-labelledby="import-title">
+      <h3 id="import-title">Importa personaggio</h3>
+
+      <form class="import-modal__form" data-character-import-form>
+        <label class="import-modal__label" for="character-json-file">JSON personaggio</label>
+        <input id="character-json-file" class="import-modal__input" type="file" accept=".json,application/json"
+          data-character-json-file required />
+
+        <label class="import-modal__label" for="character-portrait-file">Portrait</label>
+        <input id="character-portrait-file" class="import-modal__input" type="file"
+          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-character-portrait-file />
+
+        <p class="import-modal__status" data-character-import-status aria-live="polite"></p>
+
+        <div class="import-modal__actions">
+          <button type="submit" class="import-modal__btn import-modal__btn--primary" data-character-import-submit>
+            Importa
+          </button>
+          <button type="button" class="import-modal__btn" data-character-import-cancel>
+            Annulla
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="scripts/main.js" defer></script>
+  <script src="scripts/character-import.js" defer></script>
+  <script src="scripts/characters.js" defer></script>
+</body>
+
 </html>

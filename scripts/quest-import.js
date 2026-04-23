@@ -27,7 +27,12 @@
       statusInput: document.querySelector("[data-quest-status-input]"),
       imageInput: document.querySelector("[data-quest-image]"),
       locationInput: document.querySelector("[data-quest-location]"),
+      summaryInput: document.querySelector("[data-quest-summary]"),
+      briefingInput: document.querySelector("[data-quest-briefing]"),
       reportInput: document.querySelector("[data-quest-report]"),
+      objectivePrimaryInput: document.querySelector("[data-quest-objective-primary]"),
+      objectiveSecondaryInput: document.querySelector("[data-quest-objective-secondary]"),
+      notesInput: document.querySelector("[data-quest-notes]"),
       lastSessionInput: document.querySelector("[data-quest-last-session]"),
       nextSessionInput: document.querySelector("[data-quest-next-session]"),
       teamSearchInput: document.querySelector("[data-quest-team-search]"),
@@ -211,7 +216,7 @@
       state.characters = await fetchCharacters();
       renderTeamOptions(elements, state);
     } catch (error) {
-      console.warn("Errore caricamento personaggi per quest:", error);
+      console.warn("Errore caricamento personaggi per missione:", error);
       elements.teamList.innerHTML =
         "<p class=\"quest-empty\">Impossibile caricare i personaggi.</p>";
     } finally {
@@ -360,7 +365,7 @@
     setSubmitting(elements, true);
     setStatus(
       elements,
-      state.mode === QUEST_MODAL_EDIT ? "Aggiornamento quest in corso..." : "Salvataggio quest in corso...",
+      state.mode === QUEST_MODAL_EDIT ? "Aggiornamento missione in corso..." : "Salvataggio missione in corso...",
       "is-pending"
     );
 
@@ -385,7 +390,7 @@
       var slug = readString(result.quest && result.quest.slug, payload.slug);
       setStatus(
         elements,
-        state.mode === QUEST_MODAL_EDIT ? "Quest aggiornata con successo." : "Quest salvata con successo.",
+        state.mode === QUEST_MODAL_EDIT ? "Missione aggiornata con successo." : "Missione salvata con successo.",
         "is-success"
       );
 
@@ -405,7 +410,7 @@
     } catch (error) {
       setStatus(
         elements,
-        "Errore salvataggio quest: " + readString(error && error.message, "errore inatteso."),
+        "Errore salvataggio missione: " + readString(error && error.message, "errore inatteso."),
         "is-error"
       );
     } finally {
@@ -420,11 +425,17 @@
     return {
       title: title,
       slug: slugify(slugValue || title),
+      original_slug: state.mode === QUEST_MODAL_EDIT ? toNullableString(state.originalSlug) : null,
       type: readString(elements.typeInput && elements.typeInput.value, "side"),
       status: readString(elements.statusInput && elements.statusInput.value, "in-corso"),
       image_url: toNullableString(elements.imageInput && elements.imageInput.value),
       location: toNullableString(elements.locationInput && elements.locationInput.value),
+      summary: toNullableString(elements.summaryInput && elements.summaryInput.value),
+      briefing: toNullableString(elements.briefingInput && elements.briefingInput.value),
       report: toNullableString(elements.reportInput && elements.reportInput.value),
+      objective_primary: toNullableString(elements.objectivePrimaryInput && elements.objectivePrimaryInput.value),
+      objective_secondary: toNullableString(elements.objectiveSecondaryInput && elements.objectiveSecondaryInput.value),
+      notes: toNullableString(elements.notesInput && elements.notesInput.value),
       last_session_at: toNullableString(elements.lastSessionInput && elements.lastSessionInput.value),
       next_session_at: toNullableString(elements.nextSessionInput && elements.nextSessionInput.value),
       character_ids: Array.from(state.selectedCharacterIds),
@@ -448,11 +459,11 @@
     state.mode = mode;
 
     if (elements.modalTitle) {
-      elements.modalTitle.textContent = mode === QUEST_MODAL_EDIT ? "Modifica quest" : "Aggiungi quest";
+      elements.modalTitle.textContent = mode === QUEST_MODAL_EDIT ? "Modifica missione" : "Aggiungi missione";
     }
 
     if (elements.submitButton) {
-      elements.submitButton.textContent = mode === QUEST_MODAL_EDIT ? "Aggiorna quest" : "Salva quest";
+      elements.submitButton.textContent = mode === QUEST_MODAL_EDIT ? "Aggiorna missione" : "Salva missione";
     }
   }
 
@@ -484,8 +495,28 @@
       elements.locationInput.value = readString(quest.location, "");
     }
 
+    if (elements.summaryInput) {
+      elements.summaryInput.value = readString(quest.summary, "");
+    }
+
+    if (elements.briefingInput) {
+      elements.briefingInput.value = readString(quest.briefing, "");
+    }
+
     if (elements.reportInput) {
       elements.reportInput.value = readString(quest.report, "");
+    }
+
+    if (elements.objectivePrimaryInput) {
+      elements.objectivePrimaryInput.value = readString(quest.objective_primary, "");
+    }
+
+    if (elements.objectiveSecondaryInput) {
+      elements.objectiveSecondaryInput.value = readString(quest.objective_secondary, "");
+    }
+
+    if (elements.notesInput) {
+      elements.notesInput.value = readString(quest.notes, "");
     }
 
     if (elements.lastSessionInput) {
@@ -497,7 +528,7 @@
     }
 
     state.originalSlug = slug;
-    state.slugLocked = slug !== "" && slug !== slugify(title);
+    state.slugLocked = true;
     state.selectedCharacterIds = new Set(characterIds);
   }
 

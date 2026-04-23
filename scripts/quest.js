@@ -5,7 +5,7 @@
   var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Z2xnYXJpdHh6b3dzaGVuYXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzcxNDQsImV4cCI6MjA5MjM1MzE0NH0.ObDvvWMkddZL8wABKyI-TBi4KgVoYArJQjoOnAmVVe8";
 
   var FALLBACK_QUEST_IMAGE =
-    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 480'><rect width='800' height='480' fill='%23162229'/><rect x='24' y='24' width='752' height='432' fill='none' stroke='%233b5865' stroke-width='2'/><text x='50%25' y='50%25' fill='%2371ddca' font-family='Arial' font-size='28' text-anchor='middle' dominant-baseline='middle'>Immagine quest non disponibile</text></svg>";
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 480'><rect width='800' height='480' fill='%23162229'/><rect x='24' y='24' width='752' height='432' fill='none' stroke='%233b5865' stroke-width='2'/><text x='50%25' y='50%25' fill='%2371ddca' font-family='Arial' font-size='28' text-anchor='middle' dominant-baseline='middle'>Immagine missione non disponibile</text></svg>";
 
   var FALLBACK_TOKEN_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23162229'/><circle cx='32' cy='24' r='12' fill='%234db8a6'/><rect x='14' y='40' width='36' height='16' fill='%233b5865'/></svg>";
@@ -16,6 +16,8 @@
     var elements = {
       container: document.querySelector("[data-quest-page]"),
       slugLabel: document.querySelector("[data-quest-slug]"),
+      pageTitle: document.querySelector("#quest-page-title"),
+      pageSupport: document.querySelector(".quest-page-header .hero-support"),
     };
 
     if (!elements.container) {
@@ -48,22 +50,26 @@
   async function loadQuestPage(elements) {
     var slug = readQuestSlugFromUrl();
 
-    if (elements.slugLabel) {
-      elements.slugLabel.textContent = slug ? "Slug: " + slug : "";
-    }
+    setQuestHeaderState(elements, {
+      title: "Scheda missione",
+      support: "Dossier operativo della missione selezionata, con stato, squadra e aggiornamenti.",
+      slug: slug,
+    });
 
     if (!slug) {
-      renderState(elements.container, "Quest non trovata.");
+      renderState(elements.container, "Missione non trovata.");
+      document.title = "Missioni | Enclave della Gorgone";
       return;
     }
 
-    elements.container.innerHTML = "<p class=\"quest-loading\">Caricamento quest...</p>";
+    elements.container.innerHTML = "<p class=\"quest-loading\">Caricamento missione...</p>";
 
     try {
       var quest = await fetchQuestBySlug(slug);
 
       if (!quest) {
-        renderState(elements.container, "Quest non trovata.");
+        renderState(elements.container, "Missione non trovata.");
+        document.title = "Missioni | Enclave della Gorgone";
         return;
       }
 
@@ -72,10 +78,42 @@
       var characters = await fetchCharactersByIds(characterIds);
 
       renderQuestDetail(elements.container, quest, characters, characterIds);
-      document.title = quest.title + " | Enclave della Gorgone";
+
+      setQuestHeaderState(elements, {
+        title: readString(quest.title, "Scheda missione"),
+        support:
+          readString(quest.summary, "") ||
+          readString(quest.briefing, "") ||
+          "Dossier operativo della missione selezionata.",
+        slug: readString(quest.slug, slug),
+      });
+
+      document.title = readString(quest.title, "Missione") + " | Enclave della Gorgone";
     } catch (error) {
-      console.error("Errore caricamento quest:", error);
-      renderState(elements.container, "Impossibile caricare la quest.");
+      console.error("Errore caricamento missione:", error);
+      renderState(elements.container, "Impossibile caricare la missione.");
+      document.title = "Missioni | Enclave della Gorgone";
+    }
+  }
+
+  function setQuestHeaderState(elements, options) {
+    var titleText = readString(options && options.title, "Scheda missione");
+    var supportText = readString(
+      options && options.support,
+      "Dossier operativo della missione selezionata."
+    );
+    var slugText = readString(options && options.slug, "");
+
+    if (elements.pageTitle) {
+      elements.pageTitle.textContent = titleText;
+    }
+
+    if (elements.pageSupport) {
+      elements.pageSupport.textContent = supportText;
+    }
+
+    if (elements.slugLabel) {
+      elements.slugLabel.textContent = slugText ? "Slug: " + slugText : "";
     }
   }
 
@@ -83,7 +121,25 @@
     var url =
       SUPABASE_URL +
       "/rest/v1/quests?select=" +
-      encodeURIComponent("id,slug,title,type,status,image_url,location,report,last_session_at,next_session_at") +
+      encodeURIComponent(
+        [
+          "id",
+          "slug",
+          "title",
+          "type",
+          "status",
+          "image_url",
+          "location",
+          "summary",
+          "briefing",
+          "report",
+          "objective_primary",
+          "objective_secondary",
+          "notes",
+          "last_session_at",
+          "next_session_at",
+        ].join(",")
+      ) +
       "&slug=eq." +
       encodeURIComponent(slug) +
       "&limit=1";
@@ -170,21 +226,31 @@
     var article = document.createElement("article");
     article.className = "quest-detail";
 
-    var head = document.createElement("div");
-    head.className = "quest-detail-head";
+    var header = document.createElement("div");
+    header.className = "quest-detail-head";
 
-    var top = document.createElement("div");
-    top.className = "quest-detail-head-top";
+    var headerTop = document.createElement("div");
+    headerTop.className = "quest-detail-head-top";
 
-    var title = document.createElement("h2");
-    title.textContent = readString(quest.title, "Quest senza titolo");
-    top.appendChild(title);
+    var meta = document.createElement("div");
+    meta.className = "quest-detail-meta";
+
+    meta.appendChild(createBadge("quest-type", mapQuestType(quest.type)));
+
+    var statusInfo = mapQuestStatus(quest.status);
+    meta.appendChild(createBadge("status " + statusInfo.className, statusInfo.label));
+
+    var location = readString(quest.location, "");
+    if (location) {
+      meta.appendChild(createBadge("quest-location", location));
+    }
 
     var editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "quest-edit-action";
-    editButton.textContent = "Modifica quest";
+    editButton.textContent = "Modifica missione";
     syncQuestEditButtonAccess(editButton);
+
     editButton.addEventListener("click", function onEditClick() {
       if (editButton.disabled) {
         return;
@@ -201,7 +267,12 @@
               status: readString(quest.status, "in-corso"),
               image_url: readString(quest.image_url, ""),
               location: readString(quest.location, ""),
+              summary: readString(quest.summary, ""),
+              briefing: readString(quest.briefing, ""),
               report: readString(quest.report, ""),
+              objective_primary: readString(quest.objective_primary, ""),
+              objective_secondary: readString(quest.objective_secondary, ""),
+              notes: readString(quest.notes, ""),
               last_session_at: readString(quest.last_session_at, ""),
               next_session_at: readString(quest.next_session_at, ""),
             },
@@ -210,66 +281,135 @@
         })
       );
     });
-    top.appendChild(editButton);
 
-    head.appendChild(top);
-
-    var meta = document.createElement("div");
-    meta.className = "quest-detail-meta";
-
-    meta.appendChild(createBadge("quest-type", mapQuestType(quest.type)));
-
-    var statusInfo = mapQuestStatus(quest.status);
-    meta.appendChild(createBadge("status " + statusInfo.className, statusInfo.label));
-
-    var location = readString(quest.location, "");
-    if (location) {
-      meta.appendChild(createBadge("quest-location", location));
-    }
-
-    head.appendChild(meta);
-    article.appendChild(head);
+    headerTop.appendChild(meta);
+    headerTop.appendChild(editButton);
+    header.appendChild(headerTop);
+    article.appendChild(header);
 
     var media = document.createElement("figure");
     media.className = "quest-detail-media";
 
     var image = document.createElement("img");
     image.src = readString(quest.image_url, FALLBACK_QUEST_IMAGE);
-    image.alt = "Immagine della quest " + readString(quest.title, "selezionata");
+    image.alt = "Immagine della missione " + readString(quest.title, "selezionata");
     attachImageFallback(image, FALLBACK_QUEST_IMAGE);
 
     media.appendChild(image);
     article.appendChild(media);
 
-    article.appendChild(buildSection("Rapporto", readString(quest.report, "Rapporto non disponibile.")));
-    article.appendChild(buildSessionSection(quest));
-    article.appendChild(buildTeamSection(characters, characterIds));
+    var layout = document.createElement("div");
+    layout.className = "quest-detail-layout";
 
+    var main = document.createElement("div");
+    main.className = "quest-detail-main";
+
+    var summaryText = readString(quest.summary, "");
+    if (summaryText) {
+      main.appendChild(buildTextSection("Sintesi", summaryText));
+    }
+
+    var briefingText =
+      readString(quest.briefing, "") ||
+      readString(quest.summary, "") ||
+      readString(quest.report, "");
+
+    main.appendChild(
+      buildTextSection("Briefing", briefingText || "Briefing non disponibile.")
+    );
+
+    var reportText = readString(quest.report, "");
+    if (reportText) {
+      main.appendChild(buildTextSection("Ultimo rapporto", reportText));
+    }
+
+    var objectivesSection = buildObjectivesSection(
+      readString(quest.objective_primary, ""),
+      readString(quest.objective_secondary, "")
+    );
+    if (objectivesSection) {
+      main.appendChild(objectivesSection);
+    }
+
+    var notesText = readString(quest.notes, "");
+    if (notesText) {
+      main.appendChild(buildTextSection("Note operative", notesText));
+    }
+
+    layout.appendChild(main);
+
+    var side = document.createElement("aside");
+    side.className = "quest-detail-side";
+
+    side.appendChild(buildMissionDataCard(quest));
+    side.appendChild(buildTeamCard(characters, characterIds));
+
+    layout.appendChild(side);
+
+    article.appendChild(layout);
     container.appendChild(article);
   }
 
-  function buildSection(titleText, bodyText) {
+  function buildTextSection(titleText, bodyText) {
     var section = document.createElement("section");
     section.className = "quest-detail-section";
 
     var title = document.createElement("h3");
     title.textContent = titleText;
-
-    var body = document.createElement("p");
-    body.textContent = bodyText;
-
     section.appendChild(title);
-    section.appendChild(body);
+
+    appendRichText(section, bodyText);
 
     return section;
   }
 
-  function buildSessionSection(quest) {
+  function buildObjectivesSection(primaryText, secondaryText) {
+    if (!primaryText && !secondaryText) {
+      return null;
+    }
+
     var section = document.createElement("section");
     section.className = "quest-detail-section";
 
     var title = document.createElement("h3");
-    title.textContent = "Sessioni";
+    title.textContent = "Obiettivi";
+    section.appendChild(title);
+
+    var wrap = document.createElement("div");
+    wrap.className = "quest-objectives";
+
+    if (primaryText) {
+      wrap.appendChild(buildObjectiveBlock("Obiettivo principale", primaryText));
+    }
+
+    if (secondaryText) {
+      wrap.appendChild(buildObjectiveBlock("Obiettivi secondari", secondaryText));
+    }
+
+    section.appendChild(wrap);
+    return section;
+  }
+
+  function buildObjectiveBlock(labelText, bodyText) {
+    var block = document.createElement("div");
+    block.className = "quest-objective-block";
+
+    var label = document.createElement("span");
+    label.className = "field-label";
+    label.textContent = labelText;
+    block.appendChild(label);
+
+    appendRichText(block, bodyText);
+
+    return block;
+  }
+
+  function buildMissionDataCard(quest) {
+    var section = document.createElement("section");
+    section.className = "quest-detail-section quest-detail-card";
+
+    var title = document.createElement("h3");
+    title.textContent = "Dati missione";
     section.appendChild(title);
 
     var grid = document.createElement("div");
@@ -278,30 +418,17 @@
     grid.appendChild(buildSessionItem("Ultima sessione", formatDate(readString(quest.last_session_at, ""))));
     grid.appendChild(buildSessionItem("Prossima sessione", formatDate(readString(quest.next_session_at, ""))));
 
+    if (readString(quest.location, "")) {
+      grid.appendChild(buildSessionItem("Luogo", readString(quest.location, "")));
+    }
+
     section.appendChild(grid);
     return section;
   }
 
-  function buildSessionItem(labelText, valueText) {
-    var item = document.createElement("div");
-    item.className = "quest-session-item";
-
-    var label = document.createElement("span");
-    label.className = "field-label";
-    label.textContent = labelText;
-
-    var value = document.createElement("p");
-    value.textContent = valueText || "Da pianificare";
-
-    item.appendChild(label);
-    item.appendChild(value);
-
-    return item;
-  }
-
-  function buildTeamSection(characters, characterIds) {
+  function buildTeamCard(characters, characterIds) {
     var section = document.createElement("section");
-    section.className = "quest-detail-section";
+    section.className = "quest-detail-section quest-detail-card";
 
     var title = document.createElement("h3");
     title.textContent = "Squadra assegnata";
@@ -339,6 +466,7 @@
       }
 
       var li = document.createElement("li");
+
       var link = document.createElement("a");
       link.className = "token-link";
       link.href = "characters.html?character=" + encodeURIComponent(slug);
@@ -367,6 +495,66 @@
 
     section.appendChild(list);
     return section;
+  }
+
+  function buildSessionItem(labelText, valueText) {
+    var item = document.createElement("div");
+    item.className = "quest-session-item";
+
+    var label = document.createElement("span");
+    label.className = "field-label";
+    label.textContent = labelText;
+
+    var value = document.createElement("p");
+    value.textContent = valueText || "Da pianificare";
+
+    item.appendChild(label);
+    item.appendChild(value);
+
+    return item;
+  }
+
+  function appendRichText(container, text) {
+    var normalized = normalizeTextBlocks(text);
+
+    if (!normalized.length) {
+      var empty = document.createElement("p");
+      empty.textContent = "Nessun contenuto disponibile.";
+      container.appendChild(empty);
+      return;
+    }
+
+    for (var i = 0; i < normalized.length; i += 1) {
+      var paragraph = document.createElement("p");
+      appendTextWithLineBreaks(paragraph, normalized[i]);
+      container.appendChild(paragraph);
+    }
+  }
+
+  function normalizeTextBlocks(text) {
+    var raw = readString(text, "");
+    if (!raw) {
+      return [];
+    }
+
+    return raw
+      .split(/\n\s*\n/g)
+      .map(function (block) {
+        return block.trim();
+      })
+      .filter(Boolean);
+  }
+
+  function appendTextWithLineBreaks(container, text) {
+    var lines = String(text || "").split("\n");
+
+    for (var i = 0; i < lines.length; i += 1) {
+      if (i > 0) {
+        container.appendChild(document.createElement("br"));
+      }
+
+      container.appendChild(document.createTextNode(lines[i]));
+    }
   }
 
   function extractCharacterIds(relations) {
@@ -420,14 +608,14 @@
 
   function mapQuestType(type) {
     if (type === "main") {
-      return "Quest principale";
+      return "Missione principale";
     }
 
     if (type === "side") {
-      return "Quest secondaria";
+      return "Missione secondaria";
     }
 
-    return "Quest secondaria";
+    return "Missione secondaria";
   }
 
   function mapQuestStatus(status) {
@@ -490,7 +678,7 @@
     button.setAttribute("aria-disabled", String(!isEnabled));
 
     if (!isEnabled) {
-      button.title = "Inserisci il codice Enclave per modificare la quest";
+      button.title = "Inserisci il codice Enclave per modificare la missione";
       return;
     }
 
@@ -545,5 +733,3 @@
     return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
   }
 })();
-
-
