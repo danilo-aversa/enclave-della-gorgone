@@ -18,136 +18,10 @@
   </head>
   <body>
     <div class="app-layout">
-      <aside class="sidebar" aria-label="Navigazione laterale">
-        <a class="sidebar-brand" href="#" aria-label="Enclave della Gorgone">
-          <span class="brand-mark" aria-hidden="true">
-            <img src="assets/logo-enclave-della-gorgone.webp" alt="" />
-          </span>
-          <span>
-            <strong>Enclave della Gorgone</strong>
-            <small>Portale campagna</small>
-          </span>
-        </a>
-
-        <nav class="sidebar-nav" aria-label="Navigazione portale">
-          <section class="sidebar-nav-group" aria-label="Home">
-            <a class="nav-item is-active" href="index.html">
-              <i class="fa-solid fa-compass" aria-hidden="true"></i>
-              <span>Home</span>
-            </a>
-          </section>
-
-          <section class="sidebar-nav-group" aria-label="Enciclopedia">
-            <p class="sidebar-nav-group__title">
-              <i class="fa-solid fa-book-atlas" aria-hidden="true"></i>
-              <span>Enciclopedia</span>
-            </p>
-            <a class="nav-item" href="docs.html?doc=lore/introduzione">
-              <i class="fa-solid fa-landmark" aria-hidden="true"></i>
-              <span>Ambientazione</span>
-            </a>
-            <a class="nav-item" href="docs.html?doc=regole/panoramica">
-              <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
-              <span>Regole</span>
-            </a>
-          </section>
-
-          <section class="sidebar-nav-group" aria-label="Enclave">
-            <p class="sidebar-nav-group__title">
-              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-              <span>Enclave</span>
-            </p>
-            <a class="nav-item" href="characters.html">
-              <i class="fa-solid fa-users" aria-hidden="true"></i>
-              <span>Personaggi</span>
-            </a>
-            <a class="nav-item" href="#missioni">
-              <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
-              <span>Missioni</span>
-            </a>
-            <a class="nav-item" href="docs.html?doc=regole/sessioni-e-quest">
-              <i class="fa-solid fa-scroll" aria-hidden="true"></i>
-              <span>Cronache</span>
-            </a>
-          </section>
-
-          <section class="sidebar-nav-group" aria-label="Organizzazione">
-            <p class="sidebar-nav-group__title">
-              <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
-              <span>Organizzazione</span>
-            </p>
-            <a class="nav-item" href="attendance.html">
-              <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
-              <span>Appello</span>
-            </a>
-            <a class="nav-item" href="#">
-              <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
-              <span>Sessioni</span>
-            </a>
-            <a class="nav-item" href="#">
-              <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
-              <span>Avvisi</span>
-            </a>
-
-            <div class="nav-manage">
-              <button type="button" class="nav-item manage-toggle">
-                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
-                <span>Gestione</span>
-                <i class="fa-solid fa-chevron-right manage-caret" aria-hidden="true"></i>
-              </button>
-              <ul class="manage-menu">
-                <li>
-                  <button
-                    type="button"
-                    class="manage-action"
-                    data-manage-action
-                    data-character-import-action
-                    disabled
-                  >
-                    Aggiungi personaggio
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    class="manage-action"
-                    data-manage-action
-                    data-quest-import-action
-                    disabled
-                  >
-                    Aggiungi missione
-                  </button>
-                </li>
-                <li>
-                  <button type="button" class="manage-action" data-manage-action disabled>
-                    Aggiungi sessione
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </section>
-        </nav>
-
-        <section class="sidebar-access" aria-label="Codice locale">
-          <label class="access-label" for="access-code-input">Codice Identificativo</label>
-          <input
-            id="access-code-input"
-            class="access-input"
-            type="text"
-            autocomplete="off"
-            data-access-input
-            placeholder="Inserisci codice"
-          />
-          <p class="access-status" data-access-status>Codice non inserito</p>
-        </section>
-
-        <a class="btn-vtt" href="#">
-          <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
-          <span>Apri VTT</span>
-        </a>
-      </aside>
+      <aside data-sidebar-container></aside>
 
       <div class="content-shell">
+
         <main class="main-content">
           <section class="hero-banner" aria-labelledby="titolo-home">
             <div class="hero-content">
@@ -184,6 +58,10 @@
           <p>Ultima sincronizzazione: 21 aprile 2026, 16:40</p>
         </footer>
       </div>
+
+      <aside class="profile-rail" aria-label="Profilo giocatore">
+        <div data-profile-widget></div>
+      </aside>
     </div>
 
     <div class="quest-modal" data-quest-modal hidden>
@@ -318,8 +196,12 @@
       </div>
     </div>
 
+    <script src="scripts/layout.js" defer></script>
     <script src="scripts/main.js" defer></script>
     <script src="scripts/quest-import.js" defer></script>
     <script src="scripts/character-import.js" defer></script>
   </body>
 </html>
+
+
+

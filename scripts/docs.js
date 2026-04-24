@@ -487,8 +487,19 @@
       syncDocsTreeToggleState();
     });
 
+    document.addEventListener("enclave:sidebar-ready", function onSidebarReady() {
+      state.elements.groupLinks = document.querySelectorAll("[data-doc-group-link]");
+      if (state.currentEntry) {
+        updatePortalGroupState(state.currentEntry.sectionSlug);
+      }
+    });
+
     window.addEventListener("popstate", function onPopState() {
       loadCurrentDocFromUrl({ replaceOnFallback: false });
+    });
+
+    document.addEventListener("enclave:access-code-updated", function onAccessCodeUpdated() {
+      refreshManageUi();
     });
 
     window.addEventListener("storage", function onStorage(event) {
@@ -5749,3 +5760,6 @@
       .replace(/'/g, "&#039;");
   }
 })();
+
+
+

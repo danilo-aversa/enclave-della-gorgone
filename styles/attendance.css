@@ -3,13 +3,11 @@
   gap: 1rem;
 }
 
-.attendance-identity,
 .attendance-calendar {
   display: grid;
   gap: 1rem;
 }
 
-.attendance-identity__head h2,
 .attendance-calendar__head h2 {
   margin: 0;
   font-size: 1.1rem;
@@ -19,74 +17,27 @@
   letter-spacing: 0.03em;
 }
 
-.attendance-identity__head p {
-  margin: 0.35rem 0 0;
-  color: var(--text-dim);
-  font-size: 0.92rem;
-}
-
-.attendance-code-form__status {
-  margin: 0;
-  padding: 0.6rem 0.72rem;
-  border: 1px solid rgba(59, 88, 101, 0.68);
-  background: rgba(20, 31, 37, 0.9);
-  color: var(--text-dim);
-  font-size: 0.86rem;
-  border-radius: var(--radius-sm);
-}
-
-.attendance-code-form__status.is-valid {
-  color: var(--accent-strong);
-}
-
-.attendance-code-form__status.is-error {
-  color: #e7a2ab;
-}
-
-.attendance-player {
-  display: grid;
-  gap: 0.45rem;
-  padding: 0.6rem 0.72rem;
-  border: 1px solid rgba(59, 88, 101, 0.68);
-  background: rgba(20, 31, 37, 0.9);
-  border-radius: var(--radius-sm);
-}
-
-.attendance-player__name {
-  margin: 0;
-  font-size: 0.92rem;
-  color: var(--text);
-}
-
-.attendance-player__name strong {
-  color: var(--accent-strong);
-}
-
-.attendance-player__characters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.attendance-player__token {
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgba(91, 128, 141, 0.72);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  display: inline-flex;
-}
-
-.attendance-player__token img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
 .attendance-calendar__head {
   display: grid;
   gap: 0.7rem;
+}
+
+.attendance-calendar__profile-status {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.84rem;
+  border-radius: var(--radius-sm);
+}
+
+.attendance-calendar__profile-status.is-valid {
+  color: var(--accent-strong);
+}
+
+.attendance-calendar__profile-status.is-error {
+  color: #e7a2ab;
 }
 
 .attendance-calendar__toolbar {
@@ -229,6 +180,7 @@
 .attendance-day__count {
   font-size: 0.72rem;
   color: #91a8b2;
+  min-height: 1em;
 }
 
 .attendance-day__tokens {
@@ -268,9 +220,77 @@
   color: #e7a2ab;
 }
 
+/* Vista settimana: agenda verticale */
+.attendance-calendar--week .attendance-calendar__surface,
+.attendance-calendar__surface--week {
+  padding: 0.8rem;
+}
+
+.attendance-week-list {
+  display: grid;
+  gap: 0.54rem;
+}
+
+.attendance-day--week {
+  min-height: 94px;
+  grid-template-columns: minmax(170px, 230px) minmax(0, 1fr);
+  gap: 0.95rem;
+  align-items: center;
+  padding: 0.68rem 0.76rem;
+}
+
+.attendance-day__date {
+  display: grid;
+  gap: 0.16rem;
+  padding-right: 0.84rem;
+  border-right: 1px solid rgba(80, 110, 122, 0.5);
+}
+
+.attendance-day__weekday {
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9bb2bb;
+}
+
+.attendance-day__calendar-date {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #e8f1f5;
+}
+
+.attendance-day__body {
+  display: grid;
+  gap: 0.44rem;
+  min-width: 0;
+}
+
+.attendance-day__tokens--week {
+  gap: 0.4rem;
+}
+
+.attendance-day__token--week {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border-color: rgba(102, 146, 161, 0.82);
+}
+
+.attendance-day--week.attendance-day--viable {
+  border-color: rgba(113, 221, 202, 0.96);
+  box-shadow:
+    inset 0 0 0 1px rgba(113, 221, 202, 0.4),
+    0 0 0 1px rgba(113, 221, 202, 0.18);
+}
+
 @media (max-width: 1280px) {
   .attendance-day {
     min-height: 108px;
+  }
+
+  .attendance-day--week {
+    grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+    min-height: 88px;
   }
 }
 
@@ -293,5 +313,23 @@
   .attendance-day__token {
     width: 21px;
     height: 21px;
+  }
+
+  .attendance-day--week {
+    grid-template-columns: 1fr;
+    gap: 0.62rem;
+    padding: 0.62rem;
+  }
+
+  .attendance-day__date {
+    border-right: 0;
+    border-bottom: 1px solid rgba(80, 110, 122, 0.46);
+    padding-right: 0;
+    padding-bottom: 0.4rem;
+  }
+
+  .attendance-day__token--week {
+    width: 30px;
+    height: 30px;
   }
 }

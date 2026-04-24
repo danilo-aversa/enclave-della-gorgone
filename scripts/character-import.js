@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   "use strict";
 
   var IMPORT_ENDPOINT =
@@ -7,11 +7,18 @@
   var SUPABASE_ANON_KEY =
     "2feb795825a5bd8dd7f73a8f45273ba1f0423b091c754083418ceb32d08ccf85";
 
-  document.addEventListener("DOMContentLoaded", initCharacterImportModal);
+  var initialized = false;
 
-  function initCharacterImportModal() {
+  document.addEventListener("DOMContentLoaded", tryInitCharacterImportModal);
+  document.addEventListener("enclave:sidebar-ready", tryInitCharacterImportModal);
+
+  function tryInitCharacterImportModal() {
+    if (initialized) {
+      return;
+    }
+
     var elements = {
-      openButton: document.querySelector("[data-character-import-action]"),
+      openButtons: document.querySelectorAll("[data-character-import-action]"),
       modal: document.querySelector("[data-character-import-modal]"),
       closeBackdrop: document.querySelector("[data-character-import-close]"),
       cancelButton: document.querySelector("[data-character-import-cancel]"),
@@ -22,20 +29,27 @@
       status: document.querySelector("[data-character-import-status]"),
     };
 
-    if (!elements.openButton || !elements.modal || !elements.form) {
-      console.warn("Componenti modal import personaggio non trovati.");
+    if (!elements.modal || !elements.form) {
       return;
     }
 
-    elements.openButton.addEventListener("click", function onOpenClick(event) {
-      event.preventDefault();
+    if (!elements.openButtons || !elements.openButtons.length) {
+      return;
+    }
 
-      if (elements.openButton.disabled) {
-        return;
-      }
+    initialized = true;
 
-      openModal(elements);
-    });
+    for (var i = 0; i < elements.openButtons.length; i += 1) {
+      elements.openButtons[i].addEventListener("click", function onOpenClick(event) {
+        event.preventDefault();
+
+        if (event.currentTarget.disabled) {
+          return;
+        }
+
+        openModal(elements);
+      });
+    }
 
     if (elements.closeBackdrop) {
       elements.closeBackdrop.addEventListener("click", function onBackdropClick() {
@@ -107,7 +121,7 @@
       try {
         actorData = JSON.parse(jsonText);
       } catch (parseError) {
-        throw new Error("Il file JSON non è valido.");
+        throw new Error("Il file JSON non � valido.");
       }
 
       var formData = new FormData();

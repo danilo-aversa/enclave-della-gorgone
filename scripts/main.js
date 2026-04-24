@@ -4,9 +4,6 @@
   var SUPABASE_URL = "https://atglgaritxzowshenaqr.supabase.co";
   var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Z2xnYXJpdHh6b3dzaGVuYXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzcxNDQsImV4cCI6MjA5MjM1MzE0NH0.ObDvvWMkddZL8wABKyI-TBi4KgVoYArJQjoOnAmVVe8";
 
-  var ACCESS_CODE_KEY = "gorgoneAccessCode";
-  var VALID_ACCESS_CODE = "Enclave";
-
   var FALLBACK_QUEST_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 480'><rect width='800' height='480' fill='%23162229'/><rect x='24' y='24' width='752' height='432' fill='none' stroke='%233b5865' stroke-width='2'/><text x='50%25' y='50%25' fill='%2371ddca' font-family='Arial' font-size='28' text-anchor='middle' dominant-baseline='middle'>Immagine missione non disponibile</text></svg>";
 
@@ -16,100 +13,12 @@
   var QUEST_SUMMARY_MAX_LENGTH = 180;
 
   document.addEventListener("DOMContentLoaded", function onReady() {
-    initLocalAccessControls();
     initQuestSection();
 
     document.addEventListener("enclave:quest-updated", function onQuestUpdated() {
       initQuestSection();
     });
   });
-
-  function initLocalAccessControls() {
-    var elements = {
-      input: document.querySelector("[data-access-input]"),
-      status: document.querySelector("[data-access-status]"),
-      manageActions: document.querySelectorAll("[data-manage-action]"),
-    };
-
-    if (!elements.input || !elements.manageActions.length) {
-      console.warn("Controlli accesso locale non trovati.");
-      return;
-    }
-
-    var storedCode = readStoredAccessCode();
-    if (storedCode) {
-      elements.input.value = storedCode;
-    }
-
-    updateManageAccess(storedCode, elements);
-
-    elements.input.addEventListener("input", function onCodeInput() {
-      var code = elements.input.value.trim();
-
-      if (code) {
-        writeStoredAccessCode(code);
-      } else {
-        clearStoredAccessCode();
-      }
-
-      updateManageAccess(code, elements);
-    });
-  }
-
-  function updateManageAccess(code, elements) {
-    var isValid = code === VALID_ACCESS_CODE;
-
-    for (var i = 0; i < elements.manageActions.length; i += 1) {
-      var action = elements.manageActions[i];
-      action.disabled = !isValid;
-      action.setAttribute("aria-disabled", String(!isValid));
-    }
-
-    if (!elements.status) {
-      return;
-    }
-
-    if (isValid) {
-      elements.status.textContent = "Codice valido: Gestione attiva";
-      elements.status.classList.add("is-valid");
-      return;
-    }
-
-    elements.status.classList.remove("is-valid");
-
-    if (!code) {
-      elements.status.textContent = "Codice non inserito";
-      return;
-    }
-
-    elements.status.textContent = "Codice non valido";
-  }
-
-  function readStoredAccessCode() {
-    try {
-      return localStorage.getItem(ACCESS_CODE_KEY) || "";
-    } catch (error) {
-      console.warn("Impossibile leggere il codice locale:", error);
-      return "";
-    }
-  }
-
-  function writeStoredAccessCode(code) {
-    try {
-      localStorage.setItem(ACCESS_CODE_KEY, code);
-    } catch (error) {
-      console.warn("Impossibile salvare il codice locale:", error);
-    }
-  }
-
-  function clearStoredAccessCode() {
-    try {
-      localStorage.removeItem(ACCESS_CODE_KEY);
-    } catch (error) {
-      console.warn("Impossibile cancellare il codice locale:", error);
-    }
-  }
-
   async function initQuestSection() {
     var questList = document.querySelector("[data-quest-list]");
 
@@ -574,3 +483,4 @@
     return element;
   }
 })();
+

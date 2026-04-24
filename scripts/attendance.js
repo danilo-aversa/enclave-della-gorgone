@@ -6,7 +6,6 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Z2xnYXJpdHh6b3dzaGVuYXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzcxNDQsImV4cCI6MjA5MjM1MzE0NH0.ObDvvWMkddZL8wABKyI-TBi4KgVoYArJQjoOnAmVVe8";
 
   var ACCESS_CODE_KEY = "gorgoneAccessCode";
-  var RESOLVE_PLAYER_ENDPOINT = SUPABASE_URL + "/functions/v1/resolve-player";
   var UPSERT_AVAILABILITY_ENDPOINT = SUPABASE_URL + "/functions/v1/upsert-availability";
 
   var FALLBACK_PORTRAIT =
@@ -26,20 +25,15 @@
     playerCharacters: [],
     isLoading: false,
     isSaving: false,
-    resolveRequestId: 0,
   };
 
   var dom = {};
-  var codeInputDebounceTimer = null;
 
   document.addEventListener("DOMContentLoaded", initAttendancePage);
 
   function initAttendancePage() {
-    dom.accessInput = document.querySelector("[data-access-input]");
+    dom.calendarSection = document.querySelector(".attendance-calendar");
     dom.playerStatus = document.querySelector("[data-attendance-player-status]");
-    dom.playerWrap = document.querySelector("[data-attendance-player]");
-    dom.playerName = document.querySelector("[data-attendance-player-name]");
-    dom.playerCharacters = document.querySelector("[data-attendance-player-characters]");
 
     dom.viewButtons = document.querySelectorAll("[data-attendance-view]");
     dom.prevButton = document.querySelector("[data-attendance-prev]");
@@ -54,27 +48,29 @@
     }
 
     bindEvents();
-    syncFromSidebarAccessCode();
+    syncProfileFromLayout();
     loadCalendarRange();
   }
 
   function bindEvents() {
-    if (dom.accessInput) {
-      dom.accessInput.addEventListener("input", function onAccessInput() {
-        scheduleResolveFromAccessInput();
-      });
+    document.addEventListener("enclave:player-resolved", function onPlayerResolved(event) {
+      var detail = event && event.detail ? event.detail : null;
+      applyResolvedPlayer(detail);
+      renderCalendar();
+    });
 
-      dom.accessInput.addEventListener("change", function onAccessChange() {
-        scheduleResolveFromAccessInput(true);
-      });
-    }
+    document.addEventListener("enclave:player-cleared", function onPlayerCleared() {
+      clearPlayerState();
+      renderCalendar();
+    });
 
     window.addEventListener("storage", function onStorage(event) {
       if (event.key !== ACCESS_CODE_KEY) {
         return;
       }
 
-      syncFromSidebarAccessCode();
+      syncProfileFromLayout();
+      renderCalendar();
     });
 
     for (var i = 0; i < dom.viewButtons.length; i += 1) {
@@ -128,87 +124,40 @@
     });
   }
 
-  function scheduleResolveFromAccessInput(isImmediate) {
-    if (codeInputDebounceTimer) {
-      clearTimeout(codeInputDebounceTimer);
-      codeInputDebounceTimer = null;
-    }
+  function syncProfileFromLayout() {
+    var profileState =
+      window.EnclaveLayout && typeof window.EnclaveLayout.getProfileState === "function"
+        ? window.EnclaveLayout.getProfileState()
+        : null;
 
-    if (isImmediate) {
-      syncFromSidebarAccessCode();
+    if (profileState && profileState.player) {
+      applyResolvedPlayer(profileState);
       return;
     }
 
-    codeInputDebounceTimer = setTimeout(function onDebouncedResolve() {
-      syncFromSidebarAccessCode();
-    }, 250);
+    clearPlayerState();
   }
 
-  function syncFromSidebarAccessCode() {
-    var code = readAccessCodeFromSidebar();
-
-    if (!code) {
+  function applyResolvedPlayer(detail) {
+    if (!detail || !detail.player) {
       clearPlayerState();
-      setPlayerStatus("Inserisci un codice giocatore valido nella sidebar per attivare il calendario.", "");
-      setFeedback("", "");
-      renderCalendar();
       return;
     }
 
-    if (code === state.playerCode && state.player) {
-      return;
-    }
+    state.player = detail.player;
+    state.playerCharacters = Array.isArray(detail.characters) ? detail.characters : [];
+    state.playerCode = readString(detail.code, "") || readAccessCode();
 
-    resolvePlayer(code);
-  }
-
-  async function resolvePlayer(code) {
-    var requestId = state.resolveRequestId + 1;
-    state.resolveRequestId = requestId;
-
-    setPlayerStatus("Riconoscimento giocatore in corso...", "");
-
-    try {
-      var payload = await postJson(RESOLVE_PLAYER_ENDPOINT, { player_code: code });
-
-      if (requestId !== state.resolveRequestId) {
-        return;
-      }
-
-      var isValid = payload && payload.success === true && payload.player;
-
-      if (!isValid) {
-        clearPlayerState();
-        setPlayerStatus("Codice giocatore non valido. Calendario in sola lettura.", "error");
-        renderCalendar();
-        return;
-      }
-
-      state.playerCode = code;
-      state.player = payload.player;
-      state.playerCharacters = Array.isArray(payload.characters) ? payload.characters : [];
-
-      setPlayerStatus("Giocatore riconosciuto.", "valid");
-      renderPlayerSummary();
-      setFeedback("", "");
-      renderCalendar();
-    } catch (error) {
-      if (requestId !== state.resolveRequestId) {
-        return;
-      }
-
-      console.error("Errore resolve-player:", error);
-      clearPlayerState();
-      setPlayerStatus("Impossibile verificare il codice in questo momento.", "error");
-      renderCalendar();
-    }
+    var label = readString(state.player.display_name, "Giocatore");
+    setPlayerStatus("Profilo attivo: " + label + ". Clicca un giorno per aggiornare.", "valid");
+    setFeedback("", "");
   }
 
   function clearPlayerState() {
     state.playerCode = "";
     state.player = null;
     state.playerCharacters = [];
-    renderPlayerSummary();
+    setPlayerStatus("Accedi dal profilo per segnare le disponibilita.", "");
   }
 
   async function loadCalendarRange() {
@@ -286,6 +235,12 @@
       return;
     }
 
+    var playerCode = state.playerCode || readAccessCode();
+    if (!playerCode) {
+      setPlayerStatus("Accedi dal profilo per segnare le disponibilita.", "error");
+      return;
+    }
+
     var wasAvailable = hasPlayerAvailabilityOn(isoDate);
 
     state.isSaving = true;
@@ -293,11 +248,11 @@
 
     try {
       if (!wasAvailable) {
-        await saveAvailabilityState(isoDate, "available");
+        await saveAvailabilityState(playerCode, isoDate, "available");
         await loadCalendarRange();
         setFeedback("Disponibilita aggiornata.", "success");
       } else {
-        var removed = await removeAvailabilityState(isoDate);
+        var removed = await removeAvailabilityState(playerCode, isoDate);
         await loadCalendarRange();
 
         if (removed || !hasPlayerAvailabilityOn(isoDate)) {
@@ -314,9 +269,9 @@
     }
   }
 
-  async function saveAvailabilityState(isoDate, availabilityType) {
+  async function saveAvailabilityState(playerCode, isoDate, availabilityType) {
     var payload = await postJson(UPSERT_AVAILABILITY_ENDPOINT, {
-      player_code: state.playerCode,
+      player_code: playerCode,
       available_on: isoDate,
       availability_type: availabilityType,
       note: "",
@@ -327,8 +282,8 @@
     }
   }
 
-  async function removeAvailabilityState(isoDate) {
-    await saveAvailabilityState(isoDate, "unavailable");
+  async function removeAvailabilityState(playerCode, isoDate) {
+    await saveAvailabilityState(playerCode, isoDate, "unavailable");
     await loadCalendarRange();
 
     if (!hasPlayerAvailabilityOn(isoDate)) {
@@ -380,6 +335,7 @@
       return;
     }
 
+    syncViewModeClasses();
     dom.surface.classList.add("is-loading");
     dom.surface.textContent = "";
 
@@ -394,6 +350,7 @@
       return;
     }
 
+    syncViewModeClasses();
     dom.surface.classList.remove("is-loading");
     dom.surface.textContent = "";
 
@@ -408,9 +365,19 @@
       return;
     }
 
+    syncViewModeClasses();
     dom.surface.classList.remove("is-loading");
     dom.surface.textContent = "";
 
+    if (state.viewMode === "week") {
+      renderWeekAgenda();
+      return;
+    }
+
+    renderMonthGrid();
+  }
+
+  function renderMonthGrid() {
     var weekdays = document.createElement("div");
     weekdays.className = "attendance-weekdays";
 
@@ -424,7 +391,7 @@
     var grid = document.createElement("div");
     grid.className = "attendance-grid";
 
-    var days = buildDisplayedDays(state.cursor, state.viewMode);
+    var days = buildDisplayedDays(state.cursor, "month");
     var todayIso = toISODate(getTodayUTC());
 
     for (var d = 0; d < days.length; d += 1) {
@@ -473,7 +440,7 @@
 
       var count = document.createElement("span");
       count.className = "attendance-day__count";
-      count.textContent = characterEntries.length ? characterEntries.length + " disp." : "0 disp.";
+      count.textContent = characterEntries.length ? characterEntries.length + " disp." : "";
 
       head.appendChild(dayNumber);
       head.appendChild(count);
@@ -505,6 +472,111 @@
 
     dom.surface.appendChild(weekdays);
     dom.surface.appendChild(grid);
+  }
+
+  function renderWeekAgenda() {
+    var list = document.createElement("div");
+    list.className = "attendance-week-list";
+
+    var days = buildDisplayedDays(state.cursor, "week");
+    var todayIso = toISODate(getTodayUTC());
+
+    for (var d = 0; d < days.length; d += 1) {
+      var day = days[d];
+      var isoDate = toISODate(day.date);
+      var dayRows = state.rowsByDate.get(isoDate) || [];
+      var characterEntries = collectUniqueCharacterEntries(dayRows);
+      var playerAvailable = hasPlayerAvailabilityOn(isoDate);
+      var isViable = characterEntries.length >= 3;
+
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "attendance-day attendance-day--week";
+      button.setAttribute("data-attendance-day", isoDate);
+
+      if (isoDate === todayIso) {
+        button.classList.add("attendance-day--today");
+      }
+
+      if (isViable) {
+        button.classList.add("attendance-day--viable");
+      }
+
+      if (playerAvailable) {
+        button.classList.add("attendance-day--mine");
+      }
+
+      if (canInteractWithCalendar()) {
+        button.classList.add("attendance-day--interactive");
+      } else {
+        button.disabled = true;
+      }
+
+      button.title = formatFullDate(day.date);
+
+      var dateCol = document.createElement("div");
+      dateCol.className = "attendance-day__date";
+
+      var weekday = document.createElement("span");
+      weekday.className = "attendance-day__weekday";
+      weekday.textContent = formatWeekdayLabel(day.date);
+
+      var calendarDate = document.createElement("span");
+      calendarDate.className = "attendance-day__calendar-date";
+      calendarDate.textContent = formatDayMonth(day.date);
+
+      dateCol.appendChild(weekday);
+      dateCol.appendChild(calendarDate);
+      button.appendChild(dateCol);
+
+      var bodyCol = document.createElement("div");
+      bodyCol.className = "attendance-day__body";
+
+      var head = document.createElement("div");
+      head.className = "attendance-day__head";
+
+      var count = document.createElement("span");
+      count.className = "attendance-day__count";
+      count.textContent = characterEntries.length ? characterEntries.length + " disponibili" : "";
+      head.appendChild(count);
+      bodyCol.appendChild(head);
+
+      if (characterEntries.length) {
+        var tokens = document.createElement("div");
+        tokens.className = "attendance-day__tokens attendance-day__tokens--week";
+
+        for (var t = 0; t < characterEntries.length; t += 1) {
+          var tokenWrap = document.createElement("span");
+          tokenWrap.className = "attendance-day__token attendance-day__token--week";
+
+          var img = document.createElement("img");
+          img.src = readString(characterEntries[t].portrait_url, FALLBACK_PORTRAIT);
+          img.alt = readString(characterEntries[t].character_name, "Personaggio disponibile");
+          img.title = img.alt;
+          attachImageFallback(img, FALLBACK_PORTRAIT);
+
+          tokenWrap.appendChild(img);
+          tokens.appendChild(tokenWrap);
+        }
+
+        bodyCol.appendChild(tokens);
+      }
+
+      button.appendChild(bodyCol);
+      list.appendChild(button);
+    }
+
+    dom.surface.appendChild(list);
+  }
+
+  function syncViewModeClasses() {
+    if (dom.calendarSection) {
+      dom.calendarSection.classList.toggle("attendance-calendar--week", state.viewMode === "week");
+    }
+
+    if (dom.surface) {
+      dom.surface.classList.toggle("attendance-calendar__surface--week", state.viewMode === "week");
+    }
   }
 
   function collectUniqueCharacterEntries(rows) {
@@ -544,7 +616,7 @@
   }
 
   function canInteractWithCalendar() {
-    return Boolean(state.player && state.playerCode);
+    return Boolean(state.player);
   }
 
   function updateViewButtons() {
@@ -579,48 +651,6 @@
     }
 
     loadCalendarRange();
-  }
-
-  function renderPlayerSummary() {
-    if (!dom.playerWrap || !dom.playerName || !dom.playerCharacters) {
-      return;
-    }
-
-    if (!state.player) {
-      dom.playerWrap.hidden = true;
-      dom.playerName.textContent = "";
-      dom.playerCharacters.textContent = "";
-      return;
-    }
-
-    dom.playerWrap.hidden = false;
-
-    var label = readString(state.player.display_name, "Giocatore");
-    dom.playerName.textContent = "Giocatore riconosciuto: " + label;
-
-    dom.playerCharacters.textContent = "";
-
-    if (!state.playerCharacters.length) {
-      return;
-    }
-
-    for (var i = 0; i < state.playerCharacters.length; i += 1) {
-      var character = state.playerCharacters[i] || {};
-      var token = document.createElement("span");
-      token.className = "attendance-player__token";
-
-      var img = document.createElement("img");
-      img.src =
-        readString(character.portrait_url, "") ||
-        readString(character.token_url, "") ||
-        FALLBACK_PORTRAIT;
-      img.alt = readString(character.name, "Personaggio");
-      img.title = img.alt;
-      attachImageFallback(img, FALLBACK_PORTRAIT);
-
-      token.appendChild(img);
-      dom.playerCharacters.appendChild(token);
-    }
   }
 
   function setPlayerStatus(message, kind) {
@@ -796,6 +826,23 @@
     }).format(date);
   }
 
+  function formatWeekdayLabel(date) {
+    var value = new Intl.DateTimeFormat("it-IT", {
+      weekday: "long",
+      timeZone: "UTC",
+    }).format(date);
+
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  function formatDayMonth(date) {
+    return new Intl.DateTimeFormat("it-IT", {
+      day: "2-digit",
+      month: "long",
+      timeZone: "UTC",
+    }).format(date);
+  }
+
   async function postJson(url, payload) {
     var response = await fetch(url, {
       method: "POST",
@@ -838,21 +885,10 @@
     return String(errorText);
   }
 
-  function readAccessCodeFromSidebar() {
-    var code = "";
-
-    if (dom.accessInput) {
-      code = readString(dom.accessInput.value, "");
-    }
-
-    if (code) {
-      return code;
-    }
-
+  function readAccessCode() {
     try {
       return readString(localStorage.getItem(ACCESS_CODE_KEY), "");
-    } catch (error) {
-      console.warn("Impossibile leggere il codice locale:", error);
+    } catch (_error) {
       return "";
     }
   }

@@ -12,9 +12,15 @@
   var FALLBACK_TOKEN_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23162229'/><circle cx='32' cy='24' r='12' fill='%234db8a6'/><rect x='14' y='40' width='36' height='16' fill='%233b5865'/></svg>";
 
-  document.addEventListener("DOMContentLoaded", initQuestImportModal);
+  var initialized = false;
 
-  function initQuestImportModal() {
+  document.addEventListener("DOMContentLoaded", tryInitQuestImportModal);
+  document.addEventListener("enclave:sidebar-ready", tryInitQuestImportModal);
+
+  function tryInitQuestImportModal() {
+    if (initialized) {
+      return;
+    }
     var elements = {
       openButtons: document.querySelectorAll("[data-quest-import-action]"),
       modal: document.querySelector("[data-quest-modal]"),
@@ -45,6 +51,12 @@
     if (!elements.modal || !elements.form) {
       return;
     }
+
+    if (!elements.openButtons || !elements.openButtons.length) {
+      return;
+    }
+
+    initialized = true;
 
     var state = {
       characters: [],
@@ -667,3 +679,4 @@
     return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
   }
 })();
+

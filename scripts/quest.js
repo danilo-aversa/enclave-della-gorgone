@@ -26,6 +26,13 @@
 
     loadQuestPage(elements);
 
+    document.addEventListener("enclave:access-code-updated", function onAccessCodeUpdated() {
+      var editButton = document.querySelector(".quest-edit-action");
+      if (editButton) {
+        syncQuestEditButtonAccess(editButton);
+      }
+    });
+
     document.addEventListener("enclave:quest-updated", function onQuestUpdated(event) {
       var updatedSlug = readString(event && event.detail && event.detail.slug, "");
       var previousSlug = readString(event && event.detail && event.detail.previousSlug, "");
@@ -733,3 +740,4 @@
     return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
   }
 })();
+
