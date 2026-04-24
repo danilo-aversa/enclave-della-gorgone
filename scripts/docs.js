@@ -68,6 +68,7 @@
       prevNext: document.querySelector("[data-docs-prev-next]"),
       treeToggle: document.querySelector("[data-docs-tree-toggle]"),
       reorderToggle: document.querySelector("[data-docs-reorder-toggle]"),
+      treeControls: document.querySelector(".docs-tree__controls"),
       treePanel: document.querySelector(".docs-tree"),
       groupLinks: document.querySelectorAll("[data-doc-group-link]"),
       metaSection: document.querySelector("[data-docs-meta-section]"),
@@ -126,6 +127,7 @@
     syncDocsTreeToggleState();
     syncManageAccessState();
     syncEditActionVisibility();
+    syncTreeControlsVisibility();
     syncReorderToggleUi();
 
     try {
@@ -500,6 +502,18 @@
 
     document.addEventListener("enclave:access-code-updated", function onAccessCodeUpdated() {
       refreshManageUi();
+    });
+    document.addEventListener("enclave:manage-access-changed", function onManageAccessChanged(event) {
+      var detail = event && event.detail ? event.detail : null;
+      var enabled = detail && typeof detail.enabled === "boolean" ? detail.enabled : null;
+      refreshManageUi(enabled);
+    });
+
+    document.addEventListener("enclave:layout-ready", function onLayoutReady() {
+      var enabled = readManageAccessFromLayout();
+      if (typeof enabled === "boolean") {
+        refreshManageUi(enabled);
+      }
     });
 
     window.addEventListener("storage", function onStorage(event) {
@@ -1117,6 +1131,14 @@
     button.setAttribute("aria-pressed", canUse && state.reorderMode ? "true" : "false");
 
     setIconButtonLabel(button, canUse && state.reorderMode ? "Disattiva riordino" : "Attiva riordino");
+  }
+
+  function syncTreeControlsVisibility() {
+    if (!state.elements || !state.elements.treeControls) {
+      return;
+    }
+
+    state.elements.treeControls.hidden = !state.isManageUnlocked;
   }
 
   function normalizeReorderParentSlug(value) {
@@ -1815,8 +1837,9 @@
     }
   }
 
-  function syncManageAccessState() {
+  function syncManageAccessState(forcedEnabled) {
     var accessCode = "";
+    var layoutManageEnabled = null;
 
     try {
       accessCode = localStorage.getItem(ACCESS_CODE_KEY) || "";
@@ -1824,16 +1847,72 @@
       accessCode = "";
     }
 
-    state.isManageUnlocked = accessCode === VALID_ACCESS_CODE;
+    if (typeof forcedEnabled === "boolean") {
+      state.isManageUnlocked = forcedEnabled;
+    } else {
+      layoutManageEnabled = readManageAccessFromLayout();
+      if (typeof layoutManageEnabled === "boolean") {
+        state.isManageUnlocked = layoutManageEnabled;
+      } else {
+        state.isManageUnlocked = accessCode === VALID_ACCESS_CODE;
+      }
+    }
+
     if (!state.isManageUnlocked) {
       state.reorderMode = false;
     }
 
     updateAccessPanelUi(accessCode);
+    syncTreeControlsVisibility();
     syncReorderToggleUi();
   }
 
-  function refreshManageUi() {
+  function readManageAccessFromLayout() {
+    if (!window.EnclaveLayout || typeof window.EnclaveLayout.getProfileState !== "function") {
+      return null;
+    }
+
+    var profileState = window.EnclaveLayout.getProfileState();
+    var code = readString(profileState && profileState.code, "");
+
+    if (code === VALID_ACCESS_CODE) {
+      return true;
+    }
+
+    if (!code || !profileState || !profileState.player) {
+      return false;
+    }
+
+    return hasWikiManagePermission(profileState.player);
+  }
+
+  function hasWikiManagePermission(player) {
+    if (!player || typeof player !== "object") {
+      return false;
+    }
+
+    return (
+      isTruthyManageValue(player.can_manage_wiki) ||
+      isTruthyManageValue(player.can_manage_admin) ||
+      isTruthyManageValue(player.can_manage) ||
+      isTruthyManageValue(player.is_admin)
+    );
+  }
+
+  function isTruthyManageValue(value) {
+    if (value === true || value === 1) {
+      return true;
+    }
+
+    if (typeof value === "string") {
+      var normalized = value.trim().toLowerCase();
+      return normalized === "true" || normalized === "1" || normalized === "yes";
+    }
+
+    return false;
+  }
+
+  function refreshManageUi(forcedEnabled) {
     var wasUnlocked = state.isManageUnlocked;
     var docFromUrl = normalizeDocPath(readDocParam());
     var requestedHiddenDoc =
@@ -1842,8 +1921,9 @@
       !!state.index.pageMap &&
       !state.index.pageMap.has(docFromUrl);
 
-    syncManageAccessState();
+    syncManageAccessState(forcedEnabled);
     syncEditActionVisibility();
+    syncTreeControlsVisibility();
     syncReorderToggleUi();
     renderDocsTree();
 

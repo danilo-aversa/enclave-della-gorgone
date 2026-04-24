@@ -1,0 +1,89 @@
+[
+  {
+    "id": "enclave-main",
+    "type": "enclave",
+    "title": "Isola della Gorgone",
+    "x": 3908,
+    "y": 1197,
+    "status": "active",
+    "visibility": "public",
+    "description": "Quartier generale dell’Enclave."
+  },
+  {
+    "id": "mission-01",
+    "type": "mission",
+    "title": "Ricognizione a Nord",
+    "x": 4020,
+    "y": 1257,
+    "status": "open",
+    "urgency": 2,
+    "visibility": "public",
+    "description": "Missione di esplorazione.",
+    "tags": ["Missione"]
+  },
+  {
+    "id": "mission-02",
+    "type": "mission",
+    "title": "Recupero reliquia a Est",
+    "x": 3992,
+    "y": 983,
+    "status": "open",
+    "urgency": 3,
+    "visibility": "public",
+    "description": "Recupero di un artefatto instabile.",
+    "tags": ["Missione", "Recupero"],
+    "risk": "Medio"
+  },
+  {
+    "id": "fracture-01",
+    "type": "fracture",
+    "title": "Frattura Minore",
+    "x": 4598,
+    "y": 1303,
+    "status": "unstable",
+    "urgency": 4,
+    "visibility": "public",
+    "description": "Distorsioni locali rilevate.",
+    "tags": ["Frattura"]
+  },
+  {
+    "id": "fracture-02",
+    "type": "fracture",
+    "title": "Frattura Espansiva",
+    "x": 4145,
+    "y": 1924,
+    "status": "expanding",
+    "urgency": 5,
+    "visibility": "public",
+    "description": "La realtà si sta degradando rapidamente.",
+    "tags": ["Frattura", "Emergenza"],
+    "risk": "Alto"
+  },
+  {
+    "id": "rumor-01",
+    "type": "rumor",
+    "title": "Voci su un culto",
+    "x": 4000,
+    "y": 1300,
+    "visibility": "public",
+    "description": "Strane attività segnalate nei villaggi."
+  },
+  {
+    "id": "treasure-01",
+    "type": "treasure",
+    "title": "Cassa sepolta",
+    "x": 4600,
+    "y": 500,
+    "visibility": "public",
+    "description": "Possibile tesoro nascosto."
+  },
+  {
+    "id": "mystery-01",
+    "type": "mystery",
+    "title": "Struttura sconosciuta",
+    "x": 4700,
+    "y": 1200,
+    "visibility": "public",
+    "description": "Edificio non catalogato."
+  }
+]

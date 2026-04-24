@@ -6,6 +6,14 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Z2xnYXJpdHh6b3dzaGVuYXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzcxNDQsImV4cCI6MjA5MjM1MzE0NH0.ObDvvWMkddZL8wABKyI-TBi4KgVoYArJQjoOnAmVVe8";
 
   var SIDEBAR_PARTIAL_PATH = "partials/sidebar.html";
+  function readSidebarPartialPath() {
+    var container = document.querySelector("[data-sidebar-container]");
+    return (
+      (container && container.getAttribute("data-sidebar-partial")) ||
+      SIDEBAR_PARTIAL_PATH
+    );
+  }
+
   var ACCESS_CODE_KEY = "gorgoneAccessCode";
   var ADMIN_CODE = "Enclave";
   var RESOLVE_PLAYER_ENDPOINT = SUPABASE_URL + "/functions/v1/resolve-player";
@@ -65,8 +73,12 @@
   });
 
   async function bootstrapLayout() {
-    dom.sidebarContainers = Array.prototype.slice.call(document.querySelectorAll("[data-sidebar-container]"));
-    dom.profileContainers = Array.prototype.slice.call(document.querySelectorAll("[data-profile-widget]"));
+    dom.sidebarContainers = Array.prototype.slice.call(
+      document.querySelectorAll("[data-sidebar-container]"),
+    );
+    dom.profileContainers = Array.prototype.slice.call(
+      document.querySelectorAll("[data-profile-widget]"),
+    );
 
     if (dom.sidebarContainers.length) {
       await injectSidebarPartial();
@@ -95,14 +107,16 @@
     var response;
 
     try {
-      response = await fetch(SIDEBAR_PARTIAL_PATH, { cache: "no-store" });
+      response = await fetch(readSidebarPartialPath(), { cache: "no-store" });
     } catch (error) {
       console.warn("Impossibile caricare la sidebar condivisa:", error);
       return;
     }
 
     if (!response.ok) {
-      console.warn("Impossibile caricare la sidebar condivisa (" + response.status + ").");
+      console.warn(
+        "Impossibile caricare la sidebar condivisa (" + response.status + ").",
+      );
       return;
     }
 
@@ -110,6 +124,35 @@
 
     for (var i = 0; i < dom.sidebarContainers.length; i += 1) {
       dom.sidebarContainers[i].innerHTML = html;
+      rewriteSidebarLinks(dom.sidebarContainers[i]);
+    }
+  }
+
+  function rewriteSidebarLinks(container) {
+    var prefix = container.getAttribute("data-sidebar-link-prefix") || "";
+
+    if (!prefix) {
+      return;
+    }
+
+    var links = container.querySelectorAll("a[href]");
+
+    for (var i = 0; i < links.length; i += 1) {
+      var href = links[i].getAttribute("href");
+
+      if (
+        !href ||
+        href.charAt(0) === "#" ||
+        href.indexOf("http://") === 0 ||
+        href.indexOf("https://") === 0 ||
+        href.indexOf("mailto:") === 0 ||
+        href.indexOf("../") === 0 ||
+        href.charAt(0) === "/"
+      ) {
+        continue;
+      }
+
+      links[i].setAttribute("href", prefix + href);
     }
   }
 
@@ -151,7 +194,9 @@
     dom.status = dom.profileRoot.querySelector("[data-profile-status]");
     dom.name = dom.profileRoot.querySelector("[data-profile-name]");
     dom.tokens = dom.profileRoot.querySelector("[data-profile-trigger-tokens]");
-    dom.popoverTokens = dom.profileRoot.querySelector("[data-profile-popover-tokens]");
+    dom.popoverTokens = dom.profileRoot.querySelector(
+      "[data-profile-popover-tokens]",
+    );
     dom.profileMeta = dom.profileRoot.querySelector("[data-profile-meta]");
 
     if (dom.trigger) {
@@ -266,11 +311,13 @@
 
     if (code === ADMIN_CODE) {
       clearResolvedPlayerState(true);
+      state.lastResolvedCode = code;
       setProfileStatus("Codice gestione attivo.", "is-valid");
       if (dom.profileMeta) {
         dom.profileMeta.hidden = false;
         dom.profileMeta.textContent = "Gestione amministrativa abilitata";
       }
+      syncManageAccessControls();
       return;
     }
 
@@ -284,6 +331,7 @@
       state.loading = false;
       clearResolvedPlayerState(true);
       setProfileStatus("Impossibile verificare il codice.", "is-error");
+      syncManageAccessControls();
       return;
     }
 
@@ -292,11 +340,14 @@
     if (!payload || payload.success !== true || !payload.player) {
       clearResolvedPlayerState(true);
       setProfileStatus("Codice non valido.", "is-error");
+      syncManageAccessControls();
       return;
     }
 
     state.player = payload.player;
-    state.characters = Array.isArray(payload.characters) ? payload.characters : [];
+    state.characters = Array.isArray(payload.characters)
+      ? payload.characters
+      : [];
     state.lastResolvedCode = code;
     renderProfileSummary();
 
@@ -307,6 +358,7 @@
     }
 
     dispatchPlayerResolved(code);
+    syncManageAccessControls();
   }
 
   function clearResolvedPlayerState(dispatchClearEvent) {
@@ -338,7 +390,9 @@
 
     dom.name.textContent = readString(state.player.display_name, "Profilo");
     dom.profileMeta.hidden = false;
-    dom.profileMeta.textContent = "Codice giocatore valido";
+    dom.profileMeta.textContent = hasAdminPlayerPermission(state.player)
+      ? "Gestione amministrativa abilitata"
+      : "Codice giocatore valido";
 
     if (!state.characters.length) {
       dom.popoverTokens.hidden = true;
@@ -353,8 +407,16 @@
         FALLBACK_TOKEN_IMAGE;
       var alt = readString(character.name, "Personaggio");
 
-      dom.tokens.appendChild(createTokenImage(imageSrc, alt, "profile-widget__token profile-widget__token--small"));
-      dom.popoverTokens.appendChild(createTokenImage(imageSrc, alt, "profile-widget__token"));
+      dom.tokens.appendChild(
+        createTokenImage(
+          imageSrc,
+          alt,
+          "profile-widget__token profile-widget__token--small",
+        ),
+      );
+      dom.popoverTokens.appendChild(
+        createTokenImage(imageSrc, alt, "profile-widget__token"),
+      );
     }
 
     dom.popoverTokens.hidden = false;
@@ -380,7 +442,7 @@
   }
 
   function syncManageAccessControls() {
-    var isEnabled = readStoredAccessCode() === ADMIN_CODE;
+    var isEnabled = isManageAccessEnabled();
     var actions = document.querySelectorAll("[data-manage-action]");
 
     for (var i = 0; i < actions.length; i += 1) {
@@ -391,13 +453,61 @@
     document.dispatchEvent(
       new CustomEvent("enclave:manage-access-changed", {
         detail: { enabled: isEnabled },
-      })
+      }),
     );
+  }
+
+  function isManageAccessEnabled() {
+    var storedCode = readStoredAccessCode();
+
+    if (storedCode === ADMIN_CODE) {
+      return true;
+    }
+
+    if (
+      !storedCode ||
+      !state.player ||
+      !hasAdminPlayerPermission(state.player)
+    ) {
+      return false;
+    }
+
+    return state.lastResolvedCode === storedCode;
+  }
+
+  function hasAdminPlayerPermission(player) {
+    if (!player || typeof player !== "object") {
+      return false;
+    }
+
+    return (
+      isTruthyPermission(player.can_manage_wiki) ||
+      isTruthyPermission(player.can_manage_admin) ||
+      isTruthyPermission(player.can_manage) ||
+      isTruthyPermission(player.is_admin)
+    );
+  }
+
+  function isTruthyPermission(value) {
+    if (value === true || value === 1) {
+      return true;
+    }
+
+    if (typeof value === "string") {
+      var normalized = value.trim().toLowerCase();
+      return (
+        normalized === "true" || normalized === "1" || normalized === "yes"
+      );
+    }
+
+    return false;
   }
 
   function setActiveNavItem() {
     var activeKeys = readActiveKeysForPage();
-    var links = document.querySelectorAll("[data-sidebar-container] [data-active-for]");
+    var links = document.querySelectorAll(
+      "[data-sidebar-container] [data-active-for]",
+    );
 
     for (var i = 0; i < links.length; i += 1) {
       var link = links[i];
@@ -424,7 +534,10 @@
     keys.add(pageKey);
 
     if (pageKey === "docs") {
-      var docKey = readString(new URLSearchParams(window.location.search).get("doc"), "").toLowerCase();
+      var docKey = readString(
+        new URLSearchParams(window.location.search).get("doc"),
+        "",
+      ).toLowerCase();
       if (docKey.indexOf("lore/") === 0) {
         keys.add("docs-lore");
       }
@@ -507,7 +620,7 @@
           player: state.player,
           characters: state.characters.slice(),
         },
-      })
+      }),
     );
   }
 
@@ -519,7 +632,7 @@
     document.dispatchEvent(
       new CustomEvent("enclave:access-code-updated", {
         detail: { code: state.code || "" },
-      })
+      }),
     );
   }
 
@@ -561,16 +674,8 @@
   }
 
   function readString(value, fallback) {
-    return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
+    return typeof value === "string" && value.trim() !== ""
+      ? value.trim()
+      : fallback;
   }
 })();
-
-
-
-
-
-
-
-
-
-

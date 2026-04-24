@@ -91,7 +91,7 @@ body > * {
 
 .app-layout {
   width: 100%;
-  margin: 1rem 0 1.6rem;
+  margin: 1rem 0 0;
   padding: 0 1rem;
   display: grid;
   grid-template-columns: minmax(250px, 1fr) minmax(0, 1200px) minmax(250px, 1fr);
@@ -421,11 +421,12 @@ body > * {
 .profile-rail {
   grid-column: 3;
   position: sticky;
-  top: 1rem;
+  top: 0;
   align-self: start;
   display: flex;
   justify-content: flex-end;
   z-index: 110;
+  width: 100%;
 }
 
 .main-content {
@@ -441,7 +442,7 @@ body > * {
   overflow: hidden;
   background-image:
     linear-gradient(100deg, rgba(9, 14, 17, 0.88) 0%, rgba(10, 16, 20, 0.62) 45%, rgba(10, 16, 20, 0.74) 100%),
-    url("/assets/images/sage.webp");
+    url("../assets/images/sage.webp");
   background-size: cover;
   background-position: center 45%;
 }
@@ -1579,9 +1580,14 @@ body > * {
   position: relative;
 }
 
+.data-profile-widget {
+  width: 100%;
+}
+
 .profile-widget__trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.45rem;
   border: 1px solid rgba(59, 92, 106, 0.84);
   border-radius: var(--radius-sm);
@@ -1592,6 +1598,7 @@ body > * {
   font-weight: 600;
   padding: 0.38rem 0.58rem;
   cursor: pointer;
+  width: 100%;
 }
 
 .profile-widget__trigger:hover,
@@ -1609,11 +1616,12 @@ body > * {
   display: inline-flex;
   align-items: center;
   gap: 0.24rem;
+  margin-left: auto;
 }
 
 .profile-widget__token {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border: 1px solid rgba(73, 109, 122, 0.78);
   border-radius: 999px;
   object-fit: cover;
@@ -1621,8 +1629,8 @@ body > * {
 }
 
 .profile-widget__token--small {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
 .profile-widget__popover {
