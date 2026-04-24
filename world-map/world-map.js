@@ -11,6 +11,18 @@
   var MAP_MIN_TILE_ZOOM = -4;
   var MAP_MAX_TILE_ZOOM = 0;
 
+  var SUPABASE_URL = "https://atglgaritxzowshenaqr.supabase.co";
+  var SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Z2xnYXJpdHh6b3dzaGVuYXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzcxNDQsImV4cCI6MjA5MjM1MzE0NH0.ObDvvWMkddZL8wABKyI-TBi4KgVoYArJQjoOnAmVVe8";
+  var SAVE_WORLD_MAP_ITEM_ENDPOINT = SUPABASE_URL + "/functions/v1/save-world-map-item";
+  var MAP_ADMIN_CODES = ["Enclave", "danilo-a7k2"];
+  var WORLD_MAP_MARKERS_ENDPOINT =
+    SUPABASE_URL +
+    "/rest/v1/world_map_markers?select=*&visibility=eq.public&order=updated_at.desc";
+  var WORLD_MAP_OVERLAYS_ENDPOINT =
+    SUPABASE_URL +
+    "/rest/v1/world_map_overlays?select=*&visibility=eq.public&order=updated_at.desc";
+
   var layerGroups = {};
   var zoomManagedLayers = [];
   var markersIndex = [];
@@ -51,6 +63,8 @@
       bounceAtZoomLimits: false,
     });
 
+    window.__worldMapInstance = map;
+
     var baseLayer = createMapBaseLayer(bounds);
     baseLayer.addTo(map);
     lockMapToImageBounds(map, bounds);
@@ -70,6 +84,7 @@
     bindCoordinateReadout(map);
     bindMapDraftTools(map);
     bindMapEditor(map);
+    bindMapPermissionState();
     bindZoomVisibility(map);
     updateZoomVisibility(map);
     updateLayerDockState(map);
@@ -310,9 +325,9 @@
       visibility: m.visibility || "public",
       description: m.description || "",
       tags: Array.isArray(m.tags) ? m.tags : [],
-      lastUpdate: m.lastUpdate || null,
-      missionLink: m.missionLink || null,
-      assignedGroup: m.assignedGroup || null,
+      lastUpdate: m.lastUpdate || m.last_update || null,
+      missionLink: m.missionLink || m.mission_link || null,
+      assignedGroup: m.assignedGroup || m.assigned_group || null,
       reward: m.reward || null,
       risk: m.risk || null,
     };
@@ -320,8 +335,7 @@
 
   async function loadMarkers(map) {
     try {
-      var res = await fetch("data/world-map-markers.json");
-      var data = await res.json();
+      var data = await loadMapCollection(WORLD_MAP_MARKERS_ENDPOINT, "data/world-map-markers.json");
 
       data.forEach(function (raw) {
         var m = normalizeMarker(raw);
@@ -364,6 +378,48 @@
     }
   }
 
+  async function loadMapCollection(supabaseEndpoint, fallbackPath) {
+    var supabaseData = await loadMapCollectionFromSupabase(supabaseEndpoint);
+
+    if (supabaseData.length) {
+      return supabaseData;
+    }
+
+    return loadMapCollectionFromJson(fallbackPath);
+  }
+
+  async function loadMapCollectionFromSupabase(endpoint) {
+    try {
+      var response = await fetch(endpoint, {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: "Bearer " + SUPABASE_ANON_KEY,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Lettura Supabase non riuscita (" + response.status + ").");
+      }
+
+      var payload = await response.json();
+      return Array.isArray(payload) ? payload : [];
+    } catch (error) {
+      console.warn("Dati mappa Supabase non disponibili, uso JSON locale:", error);
+      return [];
+    }
+  }
+
+  async function loadMapCollectionFromJson(path) {
+    var response = await fetch(path);
+
+    if (!response.ok) {
+      throw new Error("JSON locale non trovato: " + path);
+    }
+
+    var payload = await response.json();
+    return Array.isArray(payload) ? payload : [];
+  }
+
   function normalizeOverlay(o) {
     return {
       id: o.id || "",
@@ -381,8 +437,7 @@
 
   async function loadOverlays(map) {
     try {
-      var res = await fetch("data/world-map-overlays.json");
-      var data = await res.json();
+      var data = await loadMapCollection(WORLD_MAP_OVERLAYS_ENDPOINT, "data/world-map-overlays.json");
 
       data.forEach(function (raw) {
         var o = normalizeOverlay(raw);
@@ -576,11 +631,23 @@
           escapeHtml(item.missionLink) +
           '">Apri missione</a>'
         : "") +
+      buildDetailActionsMarkup() +
+      "</article>";
+  }
+
+  function buildDetailActionsMarkup() {
+    if (!canManageMap()) {
+      return "";
+    }
+
+    return (
       '<div class="world-map-detail__actions">' +
       '<button type="button" class="world-map-detail__btn" data-world-map-edit-selected>Modifica</button>' +
+      '<button type="button" class="world-map-detail__btn" data-world-map-save-selected>Salva</button>' +
+      '<button type="button" class="world-map-detail__btn" data-world-map-delete-selected>Elimina</button>' +
       '<button type="button" class="world-map-detail__btn" data-world-map-copy-selected-json>Copia JSON</button>' +
-      "</div>" +
-      "</article>";
+      "</div>"
+    );
   }
 
   function createMarkerIcon(type) {
@@ -724,6 +791,32 @@
     }
 
     updateLayerDockState(map);
+  }
+
+  async function reloadWorldMapData(map) {
+    if (!map) {
+      return;
+    }
+
+    clearSelection();
+    clearWorldMapDataLayers();
+
+    await Promise.all([loadMarkers(map), loadOverlays(map)]);
+
+    updateZoomVisibility(map);
+    updateLayerDockState(map);
+  }
+
+  function clearWorldMapDataLayers() {
+    Object.keys(layerGroups).forEach(function (key) {
+      if (layerGroups[key] && typeof layerGroups[key].clearLayers === "function") {
+        layerGroups[key].clearLayers();
+      }
+    });
+
+    zoomManagedLayers.length = 0;
+    markersIndex.length = 0;
+    mapSearchIndex.length = 0;
   }
 
   function syncSelectedDockLayer(layer) {
@@ -969,8 +1062,10 @@
     detailPanel.addEventListener("click", function onDetailClick(event) {
       var editButton = event.target.closest("[data-world-map-edit-selected]");
       var copyButton = event.target.closest("[data-world-map-copy-selected-json]");
+      var saveButton = event.target.closest("[data-world-map-save-selected]");
+      var deleteButton = event.target.closest("[data-world-map-delete-selected]");
 
-      if (!selectedLayer || !selectedLayer._worldMapData) {
+      if (!selectedLayer || !selectedLayer._worldMapData || !canManageMap()) {
         return;
       }
 
@@ -981,22 +1076,56 @@
 
       if (copyButton) {
         copySelectedLayerJson(copyButton, selectedLayer);
+        return;
+      }
+
+      if (saveButton) {
+        saveSelectedLayerToSupabase(saveButton, selectedLayer);
+        return;
+      }
+
+      if (deleteButton) {
+        softDeleteSelectedLayer(deleteButton, selectedLayer);
       }
     });
 
     floatingPanel.addEventListener("submit", function onEditorSubmit(event) {
       var form = event.target.closest("[data-world-map-editor-form]");
 
-      if (!form || !selectedLayer) {
+      if (!form || !selectedLayer || !canManageMap()) {
         return;
       }
 
       event.preventDefault();
       applyEditorForm(map, floatingPanel, selectedLayer, form);
     });
+
+    floatingPanel.addEventListener("click", function onEditorPanelClick(event) {
+      var saveButton = event.target.closest("[data-world-map-save-selected]");
+      var deleteButton = event.target.closest("[data-world-map-delete-selected]");
+
+      if (!selectedLayer || !selectedLayer._worldMapData || !canManageMap()) {
+        return;
+      }
+
+      if (saveButton) {
+        event.preventDefault();
+        saveSelectedLayerToSupabase(saveButton, selectedLayer);
+        return;
+      }
+
+      if (deleteButton) {
+        event.preventDefault();
+        softDeleteSelectedLayer(deleteButton, selectedLayer);
+      }
+    });
   }
 
   function openSelectedEditor(panel, layer) {
+    if (!canManageMap()) {
+      return;
+    }
+
     var data = layer._worldMapData || {};
     var kind = layer._worldMapKind || "marker";
     var json = buildLayerJson(data, kind);
@@ -1021,31 +1150,130 @@
 
     return (
       '<article class="world-map-marker-draft__card world-map-editor-card">' +
-      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi">×</button>' +
+      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
       '<p class="world-map-marker-draft__eyebrow">Editor ' +
       escapeHtml(isOverlay ? "overlay" : "marker") +
       "</p>" +
       '<form class="world-map-editor-form" data-world-map-editor-form>' +
       buildEditorField("id", "ID", data.id || "") +
-      buildEditorField("type", "Tipo", data.type || "location") +
+      buildEditorSelect("type", "Tipo", data.type || "location", getEditorTypeOptions(isOverlay)) +
       buildEditorField("title", "Titolo", data.title || "") +
       (isOverlay
-        ? buildEditorField("color", "Colore", data.color || "#7b3ff2") +
+        ? buildEditorColorField("color", "Colore", data.color || "#7b3ff2") +
           buildEditorField("opacity", "Opacità", data.opacity != null ? String(data.opacity) : "0.24") +
           buildEditorTextarea("points", "Punti", JSON.stringify(data.points || [], null, 2))
         : buildEditorField("x", "X", String(data.x || 0)) +
           buildEditorField("y", "Y", String(data.y || 0)) +
           buildEditorField("urgency", "Urgenza", data.urgency != null ? String(data.urgency) : "")) +
-      buildEditorField("status", "Stato", data.status || "") +
+      buildEditorSelect("status", "Stato", data.status || "", getEditorStatusOptions()) +
+      buildEditorSelect("visibility", "Visibilità", data.visibility || "public", getEditorVisibilityOptions()) +
       buildEditorField("risk", "Rischio", data.risk || "") +
       buildEditorTextarea("description", "Descrizione", data.description || "") +
       buildEditorField("tags", "Tag", tags) +
-      '<div class="world-map-marker-draft__actions">' +
-      '<button type="submit" class="world-map-marker-draft__copy">Applica</button>' +
-      '<button type="button" class="world-map-marker-draft__copy" data-world-map-copy-draft-json>Copia JSON</button>' +
+      '<div class="world-map-marker-draft__actions world-map-marker-draft__actions--editor">' +
+      '<button type="submit" class="world-map-context-action world-map-context-action--primary"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Applica</span></button>' +
+      '<button type="button" class="world-map-context-action world-map-context-action--primary" data-world-map-save-selected><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Salva</span></button>' +
+      '<button type="button" class="world-map-context-action" data-world-map-copy-draft-json>' +
+      '<i class="fa-solid fa-copy" aria-hidden="true"></i>' +
+      '<span>Copia JSON</span>' +
+      '</button>' +
+      '<button type="button" class="world-map-context-action world-map-context-action--danger" data-world-map-delete-selected><i class="fa-solid fa-trash" aria-hidden="true"></i><span>Elimina</span></button>' +
       "</div>" +
       "</form>" +
       "</article>"
+    );
+  }
+
+  function getEditorTypeOptions(isOverlay) {
+    if (isOverlay) {
+      return [
+        ["domain", "Dominio"],
+        ["fracture-zone", "Zona di Frattura"],
+        ["war-zone", "Zona di Guerra"],
+        ["corruption", "Corruzione"],
+        ["influence", "Influenza"],
+        ["route", "Rotta"],
+        ["border", "Confine"],
+        ["unknown-zone", "Zona Ignota"],
+      ];
+    }
+
+    return [
+      ["enclave", "Enclave"],
+      ["mission", "Missione"],
+      ["rumor", "Rumor"],
+      ["fracture", "Frattura"],
+      ["treasure", "Tesoro"],
+      ["war", "Guerra"],
+      ["mystery", "Mistero"],
+      ["location", "Luogo"],
+    ];
+  }
+
+  function getEditorStatusOptions() {
+    return [
+      ["", "Nessuno"],
+      ["open", "Aperta"],
+      ["active", "Attiva"],
+      ["inactive", "Inattiva"],
+      ["unstable", "Instabile"],
+      ["expanding", "In espansione"],
+      ["resolved", "Risolta"],
+      ["hidden", "Nascosta"],
+    ];
+  }
+
+  function getEditorVisibilityOptions() {
+    return [
+      ["public", "Pubblica"],
+      ["discovered", "Scoperta"],
+      ["hidden", "Nascosta"],
+      ["dm-only", "Solo DM"],
+    ];
+  }
+
+  function buildEditorSelect(name, label, value, options) {
+    return (
+      '<label class="world-map-editor-form__field">' +
+      '<span>' +
+      escapeHtml(label) +
+      "</span>" +
+      '<select name="' +
+      escapeHtml(name) +
+      '">' +
+      options
+        .map(function (option) {
+          var optionValue = option[0];
+          var optionLabel = option[1];
+
+          return (
+            '<option value="' +
+            escapeHtml(optionValue) +
+            '"' +
+            (optionValue === value ? " selected" : "") +
+            ">" +
+            escapeHtml(optionLabel) +
+            "</option>"
+          );
+        })
+        .join("") +
+      "</select>" +
+      "</label>"
+    );
+  }
+
+  function buildEditorColorField(name, label, value) {
+    return (
+      '<label class="world-map-editor-form__field world-map-editor-form__field--color">' +
+      '<span>' +
+      escapeHtml(label) +
+      "</span>" +
+      '<input type="color" name="' +
+      escapeHtml(name) +
+      '" value="' +
+      escapeHtml(value) +
+      '" />' +
+      "</label>"
     );
   }
 
@@ -1088,6 +1316,7 @@
     data.type = readFormString(formData, "type", data.type || "location");
     data.title = readFormString(formData, "title", data.title || "Senza titolo");
     data.status = readNullableFormString(formData, "status");
+    data.visibility = readFormString(formData, "visibility", data.visibility || "public");
     data.risk = readNullableFormString(formData, "risk");
     data.description = readFormString(formData, "description", "");
     data.tags = parseTags(readFormString(formData, "tags", ""));
@@ -1146,6 +1375,196 @@
     }
 
     return JSON.stringify(payload, null, 2);
+  }
+
+  async function softDeleteSelectedLayer(button, layer) {
+    var originalText = button.textContent;
+
+    if (!canManageMap()) {
+      button.textContent = "Permesso negato";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1300);
+      return;
+    }
+
+    if (!layer || !layer._worldMapData) {
+      return;
+    }
+
+    var confirmed = window.confirm("Nascondere questo elemento dalla mappa pubblica?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    layer._worldMapData.visibility = "hidden";
+    await saveSelectedLayerToSupabase(button, layer, {
+      successLabel: "Eliminato",
+    });
+  }
+
+  async function saveSelectedLayerToSupabase(button, layer, options) {
+    var originalText = button.textContent;
+
+    if (!canManageMap()) {
+      button.textContent = "Permesso negato";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1300);
+      return;
+    }
+
+    if (!layer || !layer._worldMapData) {
+      return;
+    }
+
+    var profile = readWorldMapProfileState();
+    var playerCode = profile.code || "";
+
+    if (!playerCode) {
+      button.textContent = "Codice mancante";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1300);
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Salvo...";
+
+    try {
+      var payload = await postWorldMapItem(playerCode, layer._worldMapKind || "marker", layer._worldMapData);
+
+      if (!payload || payload.success !== true) {
+        throw new Error(readString(payload && payload.error, "Salvataggio non riuscito."));
+      }
+
+      await reloadWorldMapData(window.__worldMapInstance);
+
+      button.textContent = options.successLabel || "Salvato";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+        button.disabled = false;
+      }, 1200);
+    } catch (error) {
+      button.textContent = "Errore";
+      console.warn("Errore salvataggio mappa:", error);
+      window.setTimeout(function () {
+        button.textContent = originalText;
+        button.disabled = false;
+      }, 1600);
+    }
+  }
+
+  async function postWorldMapItem(playerCode, kind, item) {
+    var response = await fetch(SAVE_WORLD_MAP_ITEM_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: "Bearer " + SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        player_code: playerCode,
+        kind: kind,
+        item: item,
+      }),
+    });
+
+    var payload = await parseJsonResponse(response);
+
+    if (!response.ok) {
+      throw new Error(readString(payload && payload.error, "Richiesta non riuscita."));
+    }
+
+    return payload;
+  }
+
+  function readWorldMapProfileState() {
+    if (window.EnclaveLayout && typeof window.EnclaveLayout.getProfileState === "function") {
+      return window.EnclaveLayout.getProfileState() || {};
+    }
+
+    return {};
+  }
+
+  function canManageMap() {
+    var profile = readWorldMapProfileState();
+    var code = readString(profile.code, "");
+    var player = profile.player || {};
+    var role = readString(player.role, "").toLowerCase();
+
+    return (
+      MAP_ADMIN_CODES.indexOf(code) !== -1 ||
+      role === "admin" ||
+      isTruthyPermission(player.can_manage_map) ||
+      isTruthyPermission(player.can_manage_admin) ||
+      isTruthyPermission(player.can_manage) ||
+      isTruthyPermission(player.is_admin)
+    );
+  }
+
+  function isTruthyPermission(value) {
+    if (value === true || value === 1) {
+      return true;
+    }
+
+    if (typeof value === "string") {
+      var normalized = value.trim().toLowerCase();
+      return normalized === "true" || normalized === "1" || normalized === "yes";
+    }
+
+    return false;
+  }
+
+  function bindMapPermissionState() {
+    syncMapPermissionState();
+
+    document.addEventListener("enclave:player-resolved", function () {
+      syncMapPermissionState();
+      if (selectedLayer && selectedLayer._worldMapData) {
+        showDetail(selectedLayer._worldMapData);
+      }
+    });
+
+    document.addEventListener("enclave:player-cleared", function () {
+      hideDraftPanelBySelector();
+      syncMapPermissionState();
+      if (selectedLayer && selectedLayer._worldMapData) {
+        showDetail(selectedLayer._worldMapData);
+      }
+    });
+  }
+
+  function syncMapPermissionState() {
+    document.documentElement.classList.toggle("can-manage-map", canManageMap());
+    document.documentElement.classList.toggle("cannot-manage-map", !canManageMap());
+  }
+
+  function hideDraftPanelBySelector() {
+    var panel = document.querySelector("[data-world-map-marker-draft]");
+    if (panel) {
+      hideDraftPanel(panel);
+    }
+  }
+
+  async function parseJsonResponse(response) {
+    var text = await response.text();
+
+    if (!text) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function readString(value, fallback) {
+    return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
   }
 
   async function copySelectedLayerJson(button, layer) {
@@ -1232,6 +1651,10 @@
     });
 
     map.on("click", function onMapDraftClick(event) {
+      if (!canManageMap()) {
+        return;
+      }
+
       if (!overlayDraft.active) {
         return;
       }
@@ -1247,6 +1670,10 @@
     });
 
     map.on("dblclick", function onMapDraftDoubleClick(event) {
+      if (!canManageMap()) {
+        return;
+      }
+
       if (!overlayDraft.active) {
         return;
       }
@@ -1258,10 +1685,27 @@
       });
     });
 
+    document.addEventListener("pointerdown", function onDocumentPointerDown(event) {
+      if (panel.hidden) {
+        return;
+      }
+
+      if (panel.contains(event.target)) {
+        return;
+      }
+
+      if (overlayDraft.active) {
+        return;
+      }
+
+      hideDraftPanel(panel);
+    });
+
     panel.addEventListener("click", function onPanelClick(event) {
       var markerButton = event.target.closest("[data-world-map-draft-marker]");
       var overlayButton = event.target.closest("[data-world-map-draft-overlay]");
       var copyButton = event.target.closest("[data-world-map-copy-draft-json]");
+      var copyCoordsButton = event.target.closest("[data-world-map-copy-coordinates]");
       var closeButton = event.target.closest("[data-world-map-draft-close]");
 
       if (closeButton) {
@@ -1270,12 +1714,25 @@
         return;
       }
 
+      if (copyCoordsButton) {
+        copyDraftCoordinates(panel, copyCoordsButton);
+        return;
+      }
+
       if (markerButton) {
+        if (!canManageMap()) {
+          return;
+        }
+
         showMarkerDraftPanel(panel, readDraftCoords(panel), readDraftScreenPoint(panel));
         return;
       }
 
       if (overlayButton) {
+        if (!canManageMap()) {
+          return;
+        }
+
         startOverlayDraft(map, panel, overlayDraft, readDraftCoords(panel), readDraftScreenPoint(panel));
         return;
       }
@@ -1308,16 +1765,28 @@
     panel.dataset.draftJson = "";
     panel.innerHTML =
       '<article class="world-map-marker-draft__card">' +
-      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi">×</button>' +
-      '<p class="world-map-marker-draft__eyebrow">Nuovo elemento</p>' +
+      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
+      '<p class="world-map-marker-draft__eyebrow">Mappa</p>' +
       '<p class="world-map-marker-draft__coords">X ' +
       coords.x +
       " / Y " +
       coords.y +
       "</p>" +
       '<div class="world-map-marker-draft__actions">' +
-      '<button type="button" class="world-map-marker-draft__copy" data-world-map-draft-marker>Marker</button>' +
-      '<button type="button" class="world-map-marker-draft__copy" data-world-map-draft-overlay>Overlay</button>' +
+      '<button type="button" class="world-map-context-action" data-world-map-copy-coordinates>' +
+      '<i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>' +
+      '<span>Copia coordinate</span>' +
+      '</button>' +
+      (canManageMap()
+        ? '<button type="button" class="world-map-context-action world-map-context-action--admin" data-world-map-draft-marker>' +
+          '<i class="fa-solid fa-location-dot" aria-hidden="true"></i>' +
+          '<span>Nuovo marker</span>' +
+          '</button>' +
+          '<button type="button" class="world-map-context-action world-map-context-action--admin" data-world-map-draft-overlay>' +
+          '<i class="fa-solid fa-draw-polygon" aria-hidden="true"></i>' +
+          '<span>Nuovo overlay</span>' +
+          '</button>'
+        : "") +
       "</div>" +
       "</article>";
 
@@ -1335,7 +1804,7 @@
     panel.dataset.draftJson = json;
     panel.innerHTML =
       '<article class="world-map-marker-draft__card">' +
-      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi">×</button>' +
+      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
       '<p class="world-map-marker-draft__eyebrow">Nuovo marker</p>' +
       '<p class="world-map-marker-draft__coords">X ' +
       coords.x +
@@ -1345,7 +1814,10 @@
       '<pre class="world-map-marker-draft__code">' +
       escapeHtml(json) +
       "</pre>" +
-      '<button type="button" class="world-map-marker-draft__copy" data-world-map-copy-draft-json>Copia JSON</button>' +
+      '<button type="button" class="world-map-context-action" data-world-map-copy-draft-json>' +
+      '<i class="fa-solid fa-copy" aria-hidden="true"></i>' +
+      '<span>Copia JSON</span>' +
+      '</button>' +
       "</article>";
 
     positionFloatingPanel(panel, screenPoint);
@@ -1393,7 +1865,7 @@
     panel.hidden = false;
     panel.innerHTML =
       '<article class="world-map-marker-draft__card">' +
-      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi">×</button>' +
+      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
       '<p class="world-map-marker-draft__eyebrow">Nuovo overlay</p>' +
       '<p class="world-map-marker-draft__coords">Punti: ' +
       overlayDraft.points.length +
@@ -1401,7 +1873,10 @@
       '<pre class="world-map-marker-draft__code">' +
       escapeHtml(json) +
       "</pre>" +
-      '<button type="button" class="world-map-marker-draft__copy" data-world-map-copy-draft-json>Copia JSON</button>' +
+      '<button type="button" class="world-map-context-action" data-world-map-copy-draft-json>' +
+      '<i class="fa-solid fa-copy" aria-hidden="true"></i>' +
+      '<span>Copia JSON</span>' +
+      '</button>' +
       "</article>";
 
     positionFloatingPanel(panel, screenPoint);
@@ -1412,7 +1887,7 @@
     panel.dataset.draftJson = "";
     panel.innerHTML =
       '<article class="world-map-marker-draft__card">' +
-      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi">×</button>' +
+      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
       '<p class="world-map-marker-draft__eyebrow">Disegna overlay</p>' +
       '<p class="world-map-marker-draft__coords">Punti: ' +
       overlayDraft.points.length +
@@ -1475,6 +1950,25 @@
       null,
       2
     );
+  }
+
+  async function copyDraftCoordinates(panel, button) {
+    var coords = readDraftCoords(panel);
+    var originalText = button.textContent;
+    var text = "X " + coords.x + " / Y " + coords.y;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = "Copiate";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1100);
+    } catch (_error) {
+      button.textContent = "Copia fallita";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1400);
+    }
   }
 
   async function copyDraftJson(panel, button) {

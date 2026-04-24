@@ -364,10 +364,11 @@
 
 .world-map-marker-draft__card {
   position: relative;
-  border: 1px solid rgba(113, 221, 202, 0.45);
+  border: 1px solid rgba(83, 126, 142, 0.5);
   border-radius: var(--radius-lg);
   background: rgba(14, 23, 28, 0.94);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.5);
   padding: 0.75rem;
 }
 
@@ -375,6 +376,10 @@
   position: absolute;
   top: 0.4rem;
   right: 0.45rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
 }
 
 .world-map-marker-draft__eyebrow {
@@ -415,8 +420,8 @@
 
 .world-map-marker-draft__actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.45rem;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
 }
 
 .world-map-detail__actions {
@@ -442,8 +447,95 @@
 }
 
 .world-map-editor-form__field input,
-.world-map-editor-form__field textarea {
+.world-map-editor-form__field textarea,
+.world-map-editor-form__field select {
   width: 100%;
+  min-height: 34px;
+  border: 1px solid rgba(80, 120, 130, 0.42);
+  border-radius: var(--radius-sm);
+  background: rgba(20, 32, 38, 0.88);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.42rem 0.5rem;
+  outline: none;
+}
+
+.world-map-editor-form__field textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.world-map-editor-form__field input:focus,
+.world-map-editor-form__field textarea:focus,
+.world-map-editor-form__field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(113, 221, 202, 0.12);
+}
+
+.world-map-editor-form__field select {
+  cursor: pointer;
+}
+
+.world-map-editor-form__field--color input[type="color"] {
+  height: 38px;
+  padding: 0.18rem;
+  cursor: pointer;
+}
+
+.world-map-marker-draft__actions--editor {
+  margin-top: 0.25rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(83, 126, 142, 0.3);
+}
+
+.world-map-context-action--primary {
+  color: var(--accent-strong);
+}
+
+.world-map-context-action--danger {
+  color: #f1a5a5;
+  border-color: rgba(220, 90, 90, 0.35);
+}
+
+.world-map-context-action--danger:hover {
+  border-color: rgba(220, 90, 90, 0.75);
+  color: #ffd0d0;
+  background: rgba(70, 28, 32, 0.82);
+}
+
+.world-map-context-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.48rem 0.6rem;
+  border: 1px solid rgba(80, 120, 130, 0.42);
+  border-radius: var(--radius-sm);
+  background: rgba(20, 32, 38, 0.88);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  justify-content: flex-start;
+  min-height: 34px;
+}
+
+.world-map-context-action i {
+  width: 1.1rem;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.world-map-context-action:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  background: rgba(24, 44, 48, 0.95);
+}
+
+.world-map-context-action--admin {
+  color: #f1d5a5;
 }
 
 /* =========================
