@@ -1,0 +1,297 @@
+﻿.attendance-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.attendance-identity,
+.attendance-calendar {
+  display: grid;
+  gap: 1rem;
+}
+
+.attendance-identity__head h2,
+.attendance-calendar__head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-family: var(--font-title-demi);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.attendance-identity__head p {
+  margin: 0.35rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+}
+
+.attendance-code-form__status {
+  margin: 0;
+  padding: 0.6rem 0.72rem;
+  border: 1px solid rgba(59, 88, 101, 0.68);
+  background: rgba(20, 31, 37, 0.9);
+  color: var(--text-dim);
+  font-size: 0.86rem;
+  border-radius: var(--radius-sm);
+}
+
+.attendance-code-form__status.is-valid {
+  color: var(--accent-strong);
+}
+
+.attendance-code-form__status.is-error {
+  color: #e7a2ab;
+}
+
+.attendance-player {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.6rem 0.72rem;
+  border: 1px solid rgba(59, 88, 101, 0.68);
+  background: rgba(20, 31, 37, 0.9);
+  border-radius: var(--radius-sm);
+}
+
+.attendance-player__name {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.attendance-player__name strong {
+  color: var(--accent-strong);
+}
+
+.attendance-player__characters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.attendance-player__token {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(91, 128, 141, 0.72);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: inline-flex;
+}
+
+.attendance-player__token img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.attendance-calendar__head {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.attendance-calendar__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.attendance-view-switch,
+.attendance-nav {
+  display: inline-flex;
+  gap: 0.34rem;
+}
+
+.attendance-view-switch__btn,
+.attendance-nav__btn {
+  border: 1px solid rgba(58, 86, 99, 0.85);
+  background: rgba(20, 32, 38, 0.92);
+  color: var(--text-dim);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  line-height: 1;
+  padding: 0.5rem 0.66rem;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.attendance-view-switch__btn.is-active {
+  border-color: rgba(95, 167, 154, 0.96);
+  color: var(--text);
+  background: rgba(30, 50, 57, 0.96);
+}
+
+.attendance-view-switch__btn:hover,
+.attendance-view-switch__btn:focus-visible,
+.attendance-nav__btn:hover,
+.attendance-nav__btn:focus-visible {
+  border-color: rgba(95, 167, 154, 0.92);
+  color: var(--text);
+  background: rgba(33, 53, 61, 0.96);
+}
+
+.attendance-calendar__range {
+  margin: 0;
+  color: #9db4be;
+  font-size: 0.9rem;
+}
+
+.attendance-calendar__surface {
+  border: 1px solid rgba(56, 84, 96, 0.84);
+  background: rgba(17, 27, 32, 0.88);
+  border-radius: var(--radius-sm);
+  padding: 0.56rem;
+  min-height: 420px;
+}
+
+.attendance-calendar__surface.is-loading {
+  display: grid;
+  place-items: center;
+}
+
+.attendance-weekdays,
+.attendance-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.46rem;
+}
+
+.attendance-weekdays {
+  margin-bottom: 0.46rem;
+}
+
+.attendance-weekday {
+  margin: 0;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #8fa8b2;
+  padding: 0.22rem 0.12rem;
+}
+
+.attendance-day {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid rgba(57, 86, 99, 0.8);
+  background: rgba(21, 33, 39, 0.92);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  padding: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  cursor: default;
+}
+
+.attendance-day--interactive {
+  cursor: pointer;
+}
+
+.attendance-day--interactive:hover,
+.attendance-day--interactive:focus-visible {
+  border-color: rgba(86, 139, 156, 0.94);
+  background: rgba(27, 43, 50, 0.94);
+}
+
+.attendance-day--today {
+  border-color: rgba(120, 181, 203, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(120, 181, 203, 0.35);
+}
+
+.attendance-day--other {
+  opacity: 0.64;
+}
+
+.attendance-day--viable {
+  border-color: rgba(113, 221, 202, 0.84);
+  box-shadow: inset 0 0 0 1px rgba(113, 221, 202, 0.3);
+}
+
+.attendance-day--mine {
+  background: linear-gradient(180deg, rgba(32, 54, 60, 0.96), rgba(23, 38, 45, 0.94));
+}
+
+.attendance-day__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.attendance-day__number {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.attendance-day__count {
+  font-size: 0.72rem;
+  color: #91a8b2;
+}
+
+.attendance-day__tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.attendance-day__token {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(91, 128, 141, 0.72);
+  overflow: hidden;
+  display: inline-flex;
+}
+
+.attendance-day__token img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.attendance-calendar__feedback {
+  margin: 0;
+  min-height: 1.3rem;
+  color: #9db4be;
+  font-size: 0.86rem;
+}
+
+.attendance-calendar__feedback.is-success {
+  color: var(--accent-strong);
+}
+
+.attendance-calendar__feedback.is-error {
+  color: #e7a2ab;
+}
+
+@media (max-width: 1280px) {
+  .attendance-day {
+    min-height: 108px;
+  }
+}
+
+@media (max-width: 960px) {
+  .attendance-calendar__toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .attendance-weekdays,
+  .attendance-grid {
+    gap: 0.32rem;
+  }
+
+  .attendance-day {
+    min-height: 96px;
+    padding: 0.4rem;
+  }
+
+  .attendance-day__token {
+    width: 21px;
+    height: 21px;
+  }
+}

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Appello | Enclave della Gorgone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Uncial+Antiqua&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles/styles.css" />
+    <link rel="stylesheet" href="styles/attendance.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar" aria-label="Navigazione laterale">
+        <a class="sidebar-brand" href="index.html" aria-label="Enclave della Gorgone">
+          <span class="brand-mark" aria-hidden="true">
+            <img src="assets/logo-enclave-della-gorgone.webp" alt="" />
+          </span>
+          <span>
+            <strong>Enclave della Gorgone</strong>
+            <small>Portale campagna</small>
+          </span>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Navigazione portale">
+          <section class="sidebar-nav-group" aria-label="Home">
+            <a class="nav-item" href="index.html">
+              <i class="fa-solid fa-compass" aria-hidden="true"></i>
+              <span>Home</span>
+            </a>
+          </section>
+
+          <section class="sidebar-nav-group" aria-label="Enciclopedia">
+            <p class="sidebar-nav-group__title">
+              <i class="fa-solid fa-book-atlas" aria-hidden="true"></i>
+              <span>Enciclopedia</span>
+            </p>
+            <a class="nav-item" href="docs.html?doc=lore/introduzione">
+              <i class="fa-solid fa-landmark" aria-hidden="true"></i>
+              <span>Ambientazione</span>
+            </a>
+            <a class="nav-item" href="docs.html?doc=regole/panoramica">
+              <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+              <span>Regole</span>
+            </a>
+          </section>
+
+          <section class="sidebar-nav-group" aria-label="Enclave">
+            <p class="sidebar-nav-group__title">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              <span>Enclave</span>
+            </p>
+            <a class="nav-item" href="characters.html">
+              <i class="fa-solid fa-users" aria-hidden="true"></i>
+              <span>Personaggi</span>
+            </a>
+            <a class="nav-item" href="index.html#missioni">
+              <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
+              <span>Missioni</span>
+            </a>
+            <a class="nav-item" href="docs.html?doc=regole/sessioni-e-quest">
+              <i class="fa-solid fa-scroll" aria-hidden="true"></i>
+              <span>Cronache</span>
+            </a>
+          </section>
+
+          <section class="sidebar-nav-group" aria-label="Organizzazione">
+            <p class="sidebar-nav-group__title">
+              <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
+              <span>Organizzazione</span>
+            </p>
+            <a class="nav-item is-active" href="attendance.html">
+              <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+              <span>Appello</span>
+            </a>
+            <a class="nav-item" href="#">
+              <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+              <span>Sessioni</span>
+            </a>
+            <a class="nav-item" href="#">
+              <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+              <span>Avvisi</span>
+            </a>
+
+            <div class="nav-manage">
+              <button type="button" class="nav-item manage-toggle">
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                <span>Gestione</span>
+                <i class="fa-solid fa-chevron-right manage-caret" aria-hidden="true"></i>
+              </button>
+              <ul class="manage-menu">
+                <li>
+                  <button type="button" class="manage-action" data-manage-action disabled>
+                    Aggiungi personaggio
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="manage-action" data-manage-action disabled>
+                    Aggiungi missione
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="manage-action" data-manage-action disabled>
+                    Aggiungi sessione
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </nav>
+
+        <section class="sidebar-access" aria-label="Codice locale">
+          <label class="access-label" for="access-code-input">Codice Identificativo</label>
+          <input
+            id="access-code-input"
+            class="access-input"
+            type="text"
+            autocomplete="off"
+            data-access-input
+            placeholder="Inserisci codice"
+          />
+          <p class="access-note">Le azioni di Gestione richiedono un codice valido.</p>
+          <p class="access-status" data-access-status>Codice non inserito</p>
+        </section>
+
+        <a class="btn-vtt" href="#">
+          <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+          <span>Apri VTT</span>
+        </a>
+      </aside>
+
+      <div class="content-shell">
+        <main class="main-content attendance-page" aria-live="polite">
+          <section class="section-card quest-page-header" aria-labelledby="attendance-page-title">
+            <div class="quest-page-header__top">
+              <div class="quest-page-header__copy">
+                <p class="quest-page-eyebrow">Organizzazione</p>
+                <h1 id="attendance-page-title">Appello</h1>
+                <p class="hero-support">Calendario disponibilità dei membri dell'Enclave.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-card attendance-identity" aria-labelledby="attendance-identity-title">
+            <div class="attendance-identity__head">
+              <h2 id="attendance-identity-title">Profilo giocatore</h2>
+              <p>Usa il Codice Identificativo nella sidebar per attivare l'appello.</p>
+            </div>
+
+            <p class="attendance-code-form__status" data-attendance-player-status aria-live="polite">
+              Inserisci un codice giocatore valido nella sidebar per attivare il calendario.
+            </p>
+
+            <section class="attendance-player" data-attendance-player hidden aria-label="Giocatore riconosciuto">
+              <p class="attendance-player__name" data-attendance-player-name></p>
+              <div class="attendance-player__characters" data-attendance-player-characters></div>
+            </section>
+          </section>
+
+          <section class="section-card attendance-calendar" aria-labelledby="attendance-calendar-title">
+            <div class="attendance-calendar__head">
+              <h2 id="attendance-calendar-title">Calendario disponibilità</h2>
+
+              <div class="attendance-calendar__toolbar">
+                <div class="attendance-view-switch" role="group" aria-label="Vista calendario">
+                  <button type="button" class="attendance-view-switch__btn is-active" data-attendance-view="month">
+                    Mese
+                  </button>
+                  <button type="button" class="attendance-view-switch__btn" data-attendance-view="week">
+                    Settimana
+                  </button>
+                </div>
+
+                <div class="attendance-nav" role="group" aria-label="Navigazione calendario">
+                  <button type="button" class="attendance-nav__btn" data-attendance-prev>
+                    <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                    <span class="sr-only">Periodo precedente</span>
+                  </button>
+                  <button type="button" class="attendance-nav__btn" data-attendance-today>Oggi</button>
+                  <button type="button" class="attendance-nav__btn" data-attendance-next>
+                    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    <span class="sr-only">Periodo successivo</span>
+                  </button>
+                </div>
+              </div>
+
+              <p class="attendance-calendar__range" data-attendance-range>Caricamento periodo...</p>
+            </div>
+
+            <div class="attendance-calendar__surface" data-attendance-surface>
+              <p class="quest-loading" data-attendance-loading>Caricamento disponibilità...</p>
+            </div>
+            <p class="attendance-calendar__feedback" data-attendance-feedback aria-live="polite"></p>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="scripts/main.js" defer></script>
+    <script src="scripts/attendance.js" defer></script>
+  </body>
+</html>

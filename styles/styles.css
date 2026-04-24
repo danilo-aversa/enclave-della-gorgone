@@ -613,6 +613,7 @@ body > * {
   border-radius: var(--radius-sm);
   overflow: hidden;
   min-height: 154px;
+  height: 200px;
 }
 
 .quest-media img {
