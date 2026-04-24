@@ -18,8 +18,8 @@ Questa sezione raccoglie i riferimenti narrativi usati durante la campagna.
 | Voce | Sintesi |
 | --- | --- |
 | Teatro operativo | Costa meridionale |
-| Minaccia primaria | Instabilit‡ delle fratture |
-| Priorit‡ | Mappatura e contenimento |
+| Minaccia primaria | Instabilit√† delle fratture |
+| Priorit√† | Mappatura e contenimento |
 
 ---
 
