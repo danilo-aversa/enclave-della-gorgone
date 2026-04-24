@@ -1,7 +1,7 @@
 # Trama e Fratture
 
 Le fratture sono varchi instabili che alterano tempo, spazio e memoria locale.
-Negli ultimi cicli, l'attivit‡ si Ë concentrata su tre nodi costieri.
+Negli ultimi cicli, l'attivit√† si √® concentrata su tre nodi costieri.
 
 ## Cronologia recente
 
@@ -26,5 +26,5 @@ Negli ultimi cicli, l'attivit‡ si Ë concentrata su tre nodi costieri.
 ```text
 1. Isolare il perimetro.
 2. Registrare segni e variazioni ambientali.
-3. Ritirarsi se la stabilit‡ scende sotto soglia.
+3. Ritirarsi se la stabilit√† scende sotto soglia.
 ```

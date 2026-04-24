@@ -14,13 +14,13 @@ Questa pagina resta un riferimento rapido condiviso.
 | Azione | Effetto |
 | --- | --- |
 | Attacco | Tiro per colpire e danno |
-| Movimento | Riposizionamento entro velocit‡ |
+| Movimento | Riposizionamento entro velocit√† |
 | Interazione | Uso rapido oggetto o leva ambientale |
 
 ## Condizioni e note
 
 - Gli effetti temporanei devono indicare durata chiara.
-- Le coperture modificano la difficolt‡ del tiro.
+- Le coperture modificano la difficolt√† del tiro.
 - In caso di dubbio, prevale la chiarezza sul dettaglio.
 
 ## Chiusura scena
