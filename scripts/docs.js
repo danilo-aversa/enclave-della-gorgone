@@ -17,6 +17,104 @@
   var INTERNAL_LINK_RESULT_LIMIT = 12;
   var MEDIA_LIBRARY_RESULT_LIMIT = 60;
   var REORDER_SORT_STEP = 10;
+  var WIKI_CHECKLIST_STORAGE_PREFIX = "gorgoneWikiChecklist:";
+  var DOCS_TREE_COLLAPSE_STORAGE_KEY = "gorgoneDocsTreeCollapsed";
+  var WIKI_BOX_TYPES = {
+    info: { label: "Info", icon: "fa-solid fa-circle-info" },
+    note: { label: "Nota", icon: "fa-solid fa-note-sticky" },
+    warning: { label: "Attenzione", icon: "fa-solid fa-triangle-exclamation" },
+    success: { label: "Successo", icon: "fa-solid fa-circle-check" },
+    danger: { label: "Pericolo", icon: "fa-solid fa-skull-crossbones" },
+  };
+  var WIKI_BOX_ICON_CHOICES = [
+    "fa-solid fa-circle-info",
+    "fa-solid fa-note-sticky",
+    "fa-solid fa-triangle-exclamation",
+    "fa-solid fa-circle-check",
+    "fa-solid fa-skull-crossbones",
+    "fa-solid fa-lightbulb",
+    "fa-solid fa-book-open",
+    "fa-solid fa-scroll",
+    "fa-solid fa-eye",
+    "fa-solid fa-eye-slash",
+    "fa-solid fa-shield-halved",
+    "fa-solid fa-gavel",
+    "fa-solid fa-landmark",
+    "fa-solid fa-compass",
+    "fa-solid fa-map-location-dot",
+    "fa-solid fa-location-dot",
+    "fa-solid fa-dungeon",
+    "fa-solid fa-door-open",
+    "fa-solid fa-key",
+    "fa-solid fa-lock",
+    "fa-solid fa-unlock",
+    "fa-solid fa-wand-magic-sparkles",
+    "fa-solid fa-fire",
+    "fa-solid fa-droplet",
+    "fa-solid fa-leaf",
+    "fa-solid fa-moon",
+    "fa-solid fa-sun",
+    "fa-solid fa-star",
+    "fa-solid fa-bolt",
+    "fa-solid fa-heart",
+    "fa-solid fa-skull",
+    "fa-solid fa-dragon",
+    "fa-solid fa-crow",
+    "fa-solid fa-spider",
+    "fa-solid fa-flask",
+    "fa-solid fa-vial",
+    "fa-solid fa-coins",
+    "fa-solid fa-gem",
+    "fa-solid fa-scroll-torah",
+    "fa-solid fa-user-shield",
+  ];
+  var EDITOR_MARKDOWN_CONTEXT_ACTIONS = [
+    { action: "h1", icon: "fa-solid fa-heading", label: "Titolo H1" },
+    { action: "h2", icon: "fa-solid fa-heading", label: "Titolo H2" },
+    { action: "h3", icon: "fa-solid fa-text-height", label: "Titolo H3" },
+    { separator: true },
+    { action: "bold", icon: "fa-solid fa-bold", label: "Grassetto" },
+    { action: "italic", icon: "fa-solid fa-italic", label: "Corsivo" },
+    { action: "inline-code", icon: "fa-solid fa-code", label: "Codice inline" },
+    { separator: true },
+    { action: "ul", icon: "fa-solid fa-list-ul", label: "Lista puntata" },
+    { action: "ol", icon: "fa-solid fa-list-ol", label: "Lista numerata" },
+    { action: "checklist", icon: "fa-solid fa-square-check", label: "Checklist" },
+    { action: "quote", icon: "fa-solid fa-quote-left", label: "Citazione" },
+    { action: "box", icon: "fa-solid fa-square-caret-right", label: "Box" },
+    { action: "stepper", icon: "fa-solid fa-list-ol", label: "Stepper" },
+    { action: "expandable", icon: "fa-solid fa-square-caret-down", label: "Expandable" },
+    { action: "columns", icon: "fa-solid fa-table-columns", label: "Columns" },
+    { action: "table", icon: "fa-solid fa-table", label: "Tabella" },
+    { action: "divider", icon: "fa-solid fa-minus", label: "Divisore" },
+    { separator: true },
+    { action: "link", icon: "fa-solid fa-link", label: "Link" },
+    { action: "internal-link", icon: "fa-solid fa-book-bookmark", label: "Link interno" },
+    { action: "tooltip", icon: "fa-solid fa-circle-info", label: "Tooltip" },
+    { action: "image", icon: "fa-solid fa-image", label: "Immagine" },
+    { action: "text-color", icon: "fa-solid fa-palette", label: "Colore testo" },
+    { action: "code-block", icon: "fa-solid fa-file-code", label: "Blocco codice" },
+  ];
+  var EDITOR_BLOCK_INSERT_ACTIONS = [
+    { action: "h1", icon: "fa-solid fa-heading", label: "Titolo H1" },
+    { action: "h2", icon: "fa-solid fa-heading", label: "Titolo H2" },
+    { action: "h3", icon: "fa-solid fa-text-height", label: "Titolo H3" },
+    { separator: true },
+    { action: "ul", icon: "fa-solid fa-list-ul", label: "Lista puntata" },
+    { action: "ol", icon: "fa-solid fa-list-ol", label: "Lista numerata" },
+    { action: "checklist", icon: "fa-solid fa-square-check", label: "Checklist" },
+    { action: "quote", icon: "fa-solid fa-quote-left", label: "Citazione" },
+    { action: "box", icon: "fa-solid fa-square-caret-right", label: "Box" },
+    { action: "stepper", icon: "fa-solid fa-list-ol", label: "Stepper" },
+    { action: "expandable", icon: "fa-solid fa-square-caret-down", label: "Expandable" },
+    { action: "columns", icon: "fa-solid fa-table-columns", label: "Columns" },
+    { action: "table", icon: "fa-solid fa-table", label: "Tabella" },
+    { action: "divider", icon: "fa-solid fa-minus", label: "Divisore" },
+    { action: "image", icon: "fa-solid fa-image", label: "Immagine" },
+    { separator: true },
+    { action: "inline-code", icon: "fa-solid fa-code", label: "Codice inline" },
+    { action: "code-block", icon: "fa-solid fa-file-code", label: "Blocco codice" },
+  ];
 
   var state = {
     index: null,
@@ -29,6 +127,8 @@
     tocRafId: 0,
     tocScrollHandler: null,
     tocResizeHandler: null,
+    outlineSpine: null,
+    outlineHeadings: [],
     activeTocId: "",
     isManageUnlocked: false,
     isEditorOpen: false,
@@ -36,15 +136,60 @@
     imageUploading: false,
     publishToggleBusy: false,
     editorMode: "edit",
+    editorViewMode: "editor",
+    editorSourceMode: "visual",
     editorSlugManual: false,
+    editorFreshTimer: 0,
     searchQuery: "",
     internalLinkQuery: "",
     internalLinkSelection: null,
+    visualInternalLinkSelection: null,
+    linkSelection: null,
+    visualLinkSelection: null,
+    editorLinkPanel: null,
     colorSelection: null,
+    visualColorSelection: null,
+    boxSelection: null,
+    boxTitle: "",
+    visualBoxSelection: null,
+    editorBoxPicker: null,
+    editorBoxIconPicker: null,
+    boxIconTargetElement: null,
+    tooltipSelection: null,
+    visualTooltipSelection: null,
+    imagePickerSelection: null,
+    visualImageSelection: null,
+    imagePickerQuery: "",
+    imagePickerExternalUrl: "",
+    imagePickerAlt: "",
+    imagePickerLayout: "full",
+    imagePickerWidthValue: "100",
+    imagePickerWidthUnit: "%",
+    imagePickerTargetElement: null,
+    editorImagePicker: null,
+    editorContextSelection: null,
+    editorContextMenu: null,
+    editorContextMenuMode: "full",
+    visualBlockControls: null,
+    visualBlockTarget: null,
+    visualBlockDrag: null,
+    visualBlockCloseTimer: 0,
+    editorTableControls: null,
+    editorTableMenu: null,
+    editorTableContext: null,
+    editorTableDrag: null,
+    editorColumnsPanel: null,
+    editorColumnsContext: null,
     reorderSaving: false,
     reorderDrag: null,
     reorderMode: false,
     reorderStatusTimer: 0,
+    treeContextEntryKey: "",
+    treeContextMode: "",
+    treeContextGroup: null,
+    treeContextIcon: null,
+    treeIconPicker: null,
+    treeCollapsedKeys: null,
     mediaLibraryItems: null,
     mediaLibraryQuery: "",
     mediaLibrarySelection: null,
@@ -56,6 +201,25 @@
     editorHistoryPendingSnapshot: null,
     editorHistoryRestoring: false,
     editorHistoryLimit: 120,
+    wikiColorChoices: [
+      { value: "sage", label: "Sage" },
+      { value: "sea", label: "Sea" },
+      { value: "teal", label: "Teal" },
+      { value: "moss", label: "Moss" },
+      { value: "amber", label: "Amber" },
+      { value: "ochre", label: "Ochre" },
+      { value: "slate", label: "Slate" },
+      { value: "stone", label: "Stone" },
+      { value: "plum", label: "Plum" },
+      { value: "rose", label: "Rose" },
+      { value: "clay", label: "Clay Red" },
+      { value: "copper", label: "Copper" },
+      { value: "indigo", label: "Indigo" },
+      { value: "olive", label: "Olive" },
+      { value: "ash", label: "Ash" },
+    ],
+    wikiTooltipActive: null,
+    wikiTooltipBubble: null,
   };
 
   document.addEventListener("DOMContentLoaded", initDocsPage);
@@ -81,6 +245,9 @@
       editorForm: document.querySelector("[data-docs-editor-form]"),
       editorTitle: document.querySelector("[data-docs-editor-title]"),
       editorStatus: document.querySelector("[data-docs-editor-status]"),
+      editorTabs: document.querySelector("[data-docs-editor-tabs]"),
+      editorTabButtons: document.querySelectorAll("[data-docs-editor-tab]"),
+      editorPanes: document.querySelectorAll("[data-docs-editor-pane]"),
       editorSubmit: document.querySelector("[data-docs-editor-submit]"),
       editorClose: document.querySelectorAll("[data-docs-editor-close]"),
       editorImageFile: document.querySelector("[data-docs-image-file]"),
@@ -95,10 +262,18 @@
       editorParentSelect: document.querySelector("[data-docs-parent-select]"),
       editorMarkdownToolbar: document.querySelector("[data-docs-md-toolbar]"),
       editorContentMd: document.querySelector("[data-docs-content-md]"),
+      editorVisualTabs: document.querySelector("[data-docs-visual-tabs]"),
+      editorVisualTabButtons: document.querySelectorAll("[data-docs-visual-tab]"),
+      editorVisualEditor: document.querySelector("[data-docs-visual-editor]"),
       editorInternalLinkPanel: document.querySelector("[data-docs-internal-link-panel]"),
       editorInternalLinkInput: document.querySelector("[data-docs-internal-link-input]"),
       editorInternalLinkResults: document.querySelector("[data-docs-internal-link-results]"),
       editorColorPicker: document.querySelector("[data-docs-color-picker]"),
+      editorTooltipPanel: document.querySelector("[data-docs-tooltip-editor]"),
+      editorTooltipVisible: document.querySelector("[data-docs-tooltip-visible]"),
+      editorTooltipText: document.querySelector("[data-docs-tooltip-text]"),
+      editorTooltipApply: document.querySelector("[data-docs-tooltip-apply]"),
+      editorTooltipCancel: document.querySelector("[data-docs-tooltip-cancel]"),
       accessToggle: document.querySelector("[data-docs-access-toggle]"),
       accessPanel: document.querySelector("[data-docs-access-panel]"),
       accessInput: document.querySelector("[data-docs-access-input]"),
@@ -107,12 +282,18 @@
       searchResults: document.querySelector("[data-docs-search-results]"),
       searchClear: document.querySelector("[data-docs-search-clear]"),
       treeReorderStatus: document.querySelector("[data-docs-reorder-status]"),
+      treeContextMenu: document.querySelector("[data-docs-tree-context-menu]"),
+      treeContextNew: document.querySelector("[data-docs-tree-context-new]"),
+      treeContextEdit: document.querySelector("[data-docs-tree-context-edit]"),
+      treeContextToggle: document.querySelector("[data-docs-tree-context-toggle]"),
+      treeContextSubpage: document.querySelector("[data-docs-tree-context-subpage]"),
+      treeContextGroupPage: document.querySelector("[data-docs-tree-context-group-page]"),
+      treeContextIcon: document.querySelector("[data-docs-tree-context-icon]"),
     };
 
     if (
       !elements.tree ||
       !elements.content ||
-      !elements.toc ||
       !elements.prevNext ||
       !elements.metaSection ||
       !elements.metaTitle ||
@@ -122,7 +303,9 @@
     }
 
     state.elements = elements;
+    repairEditorMarkdownTextarea();
 
+    ensureDocsTreeContextEnhancements();
     bindUIEvents();
     syncDocsTreeToggleState();
     syncManageAccessState();
@@ -140,8 +323,127 @@
       renderCriticalError("Impossibile caricare la documentazione.");
     }
   }
+  function repairEditorMarkdownTextarea() {
+    if (!state.elements || !state.elements.editorForm) {
+      return;
+    }
+
+    var form = state.elements.editorForm;
+    var existingField = form.elements.namedItem("content_md");
+
+    if (existingField && String(existingField.tagName || "").toLowerCase() === "textarea") {
+      state.elements.editorContentMd = existingField;
+      return;
+    }
+
+    var textarea = document.createElement("textarea");
+    textarea.name = "content_md";
+    textarea.rows = 16;
+    textarea.required = true;
+    textarea.setAttribute("data-docs-content-md", "");
+
+    if (!document.getElementById("docs-editor-content-md")) {
+      textarea.id = "docs-editor-content-md";
+    }
+
+    var placeholderNode = findEditorTextNode(form, "$1");
+    if (placeholderNode && placeholderNode.parentNode) {
+      placeholderNode.parentNode.replaceChild(textarea, placeholderNode);
+      state.elements.editorContentMd = textarea;
+      return;
+    }
+
+    var tooltipPanel = form.querySelector("[data-docs-tooltip-editor]");
+    if (tooltipPanel && tooltipPanel.parentNode) {
+      tooltipPanel.parentNode.insertBefore(textarea, tooltipPanel.nextSibling);
+      state.elements.editorContentMd = textarea;
+      return;
+    }
+
+    var contentWrap = form.querySelector(".docs-editor-form__content-wrap");
+    if (contentWrap) {
+      contentWrap.appendChild(textarea);
+      state.elements.editorContentMd = textarea;
+      return;
+    }
+
+    form.appendChild(textarea);
+    state.elements.editorContentMd = textarea;
+  }
+
+  function findEditorTextNode(root, text) {
+    if (!root || !text || !document.createTreeWalker) {
+      return null;
+    }
+
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    var node = walker.nextNode();
+
+    while (node) {
+      if (String(node.nodeValue || "").trim() === text) {
+        return node;
+      }
+
+      node = walker.nextNode();
+    }
+
+    return null;
+  }
+
+  function ensureDocsTreeContextEnhancements() {
+    if (!state.elements || !state.elements.treeContextMenu) {
+      return;
+    }
+
+    if (!state.elements.treeContextSubpage) {
+      var subpageButton = document.createElement("button");
+      subpageButton.type = "button";
+      subpageButton.className = "docs-tree-context__action";
+      subpageButton.setAttribute("data-docs-tree-context-subpage", "");
+      subpageButton.setAttribute("role", "menuitem");
+      subpageButton.innerHTML = '<i class="fa-solid fa-turn-down" aria-hidden="true"></i><span>Aggiungi sottopagina</span>';
+      state.elements.treeContextMenu.appendChild(subpageButton);
+      state.elements.treeContextSubpage = subpageButton;
+    }
+
+    if (!state.elements.treeContextGroupPage) {
+      var groupPageButton = document.createElement("button");
+      groupPageButton.type = "button";
+      groupPageButton.className = "docs-tree-context__action";
+      groupPageButton.setAttribute("data-docs-tree-context-group-page", "");
+      groupPageButton.setAttribute("role", "menuitem");
+      groupPageButton.innerHTML = '<i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i><span>Aggiungi pagina</span>';
+      state.elements.treeContextMenu.appendChild(groupPageButton);
+      state.elements.treeContextGroupPage = groupPageButton;
+    }
+
+    if (!state.elements.treeContextIcon) {
+      var iconButton = document.createElement("button");
+      iconButton.type = "button";
+      iconButton.className = "docs-tree-context__action";
+      iconButton.setAttribute("data-docs-tree-context-icon", "");
+      iconButton.setAttribute("role", "menuitem");
+      iconButton.innerHTML = '<i class="fa-solid fa-icons" aria-hidden="true"></i><span>Assegna icona</span>';
+      state.elements.treeContextMenu.appendChild(iconButton);
+      state.elements.treeContextIcon = iconButton;
+    }
+  }
+
   function bindUIEvents() {
+    ensureEditorMarkdownContextMenu();
+    ensureEditorBoxPicker();
+    ensureEditorImagePicker();
+    ensureEditorMarkdownToolbarEnhancements();
+    ensureVisualEditor();
     state.elements.tree.addEventListener("click", function onTreeClick(event) {
+      var collapseToggle = event.target.closest("[data-docs-tree-collapse]");
+      if (collapseToggle && state.elements.tree.contains(collapseToggle)) {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleDocsTreeCollapsed(collapseToggle.getAttribute("data-docs-tree-collapse"));
+        return;
+      }
+
       var link = event.target.closest("a[data-doc-link]");
       if (!link) {
         return;
@@ -154,6 +456,13 @@
         setDocsTreeExpanded(false);
       }
     });
+
+    
+    if (state.elements.treePanel) {
+      state.elements.treePanel.addEventListener("contextmenu", function onTreePanelContextMenu(event) {
+        handleDocsTreeContextMenu(event);
+      });
+    }
 
     state.elements.tree.addEventListener("dragstart", function onTreeDragStart(event) {
       handleDocsTreeDragStart(event);
@@ -181,6 +490,31 @@
       openDocByKey(link.getAttribute("data-doc-link"), { historyMode: "push" });
     });
 
+    if (state.elements.content) {
+      state.elements.content.addEventListener("change", function onWikiChecklistChange(event) {
+        handleWikiChecklistChange(event);
+      });
+
+      state.elements.content.addEventListener("click", function onWikiTooltipClick(event) {
+        handleWikiTooltipClick(event);
+      });
+
+      state.elements.content.addEventListener("mouseover", function onWikiTooltipHoverIn(event) {
+        handleWikiTooltipMouseOver(event);
+      });
+
+      state.elements.content.addEventListener("mouseout", function onWikiTooltipHoverOut(event) {
+        handleWikiTooltipMouseOut(event);
+      });
+
+      state.elements.content.addEventListener("focusin", function onWikiTooltipFocusIn(event) {
+        handleWikiTooltipFocusIn(event);
+      });
+
+      state.elements.content.addEventListener("focusout", function onWikiTooltipFocusOut(event) {
+        handleWikiTooltipFocusOut(event);
+      });
+    }
     if (state.elements.searchInput) {
       state.elements.searchInput.addEventListener("input", function onSearchInput(event) {
         state.searchQuery = readString(event.target.value, "");
@@ -268,6 +602,58 @@
       });
     }
 
+    if (state.elements.treeContextNew) {
+      state.elements.treeContextNew.addEventListener("click", function onTreeContextNewClick(event) {
+        event.preventDefault();
+        closeDocsTreeContextMenu();
+        openEditorForCreate();
+      });
+    }
+
+    if (state.elements.treeContextEdit) {
+      state.elements.treeContextEdit.addEventListener("click", function onTreeContextEditClick(event) {
+        event.preventDefault();
+        var entry = getTreeContextEntry();
+        closeDocsTreeContextMenu();
+        openEditorForEntry(entry);
+      });
+    }
+
+    if (state.elements.treeContextToggle) {
+      state.elements.treeContextToggle.addEventListener("click", function onTreeContextToggleClick(event) {
+        event.preventDefault();
+        var entry = getTreeContextEntry();
+        closeDocsTreeContextMenu();
+        togglePublishForEntry(entry);
+      });
+    }
+
+    if (state.elements.treeContextSubpage) {
+      state.elements.treeContextSubpage.addEventListener("click", function onTreeContextSubpageClick(event) {
+        event.preventDefault();
+        var entry = getTreeContextEntry();
+        closeDocsTreeContextMenu();
+        openEditorForSubpage(entry);
+      });
+    }
+
+    if (state.elements.treeContextGroupPage) {
+      state.elements.treeContextGroupPage.addEventListener("click", function onTreeContextGroupPageClick(event) {
+        event.preventDefault();
+        var group = getTreeContextGroup();
+        closeDocsTreeContextMenu();
+        openEditorForGroupPage(group);
+      });
+    }
+
+    if (state.elements.treeContextIcon) {
+      state.elements.treeContextIcon.addEventListener("click", function onTreeContextIconClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        openDocsTreeIconPickerFromContext();
+      });
+    }
+
     if (state.elements.accessToggle) {
       state.elements.accessToggle.addEventListener("click", function onAccessToggleClick(event) {
         event.stopPropagation();
@@ -305,6 +691,16 @@
       });
     }
 
+    if (state.elements.editorTabButtons && state.elements.editorTabButtons.length) {
+      for (var tb = 0; tb < state.elements.editorTabButtons.length; tb += 1) {
+        state.elements.editorTabButtons[tb].addEventListener("click", function onEditorTabClick(event) {
+          var button = event.currentTarget;
+          var mode = readString(button && button.getAttribute("data-docs-editor-tab"), "editor");
+          setEditorViewMode(mode);
+        });
+      }
+    }
+
     if (state.elements.editorMarkdownToolbar) {
       state.elements.editorMarkdownToolbar.addEventListener("mousedown", function onMarkdownToolbarMouseDown(event) {
         var button = event.target.closest("button[data-md-action]");
@@ -324,6 +720,22 @@
         event.preventDefault();
         applyMarkdownToolbarAction(button.getAttribute("data-md-action"));
       });
+
+      state.elements.editorMarkdownToolbar.addEventListener("change", function onMarkdownToolbarChange(event) {
+        var select = event.target && event.target.closest ? event.target.closest("select[data-md-block-style]") : null;
+        if (!select || select.disabled) {
+          return;
+        }
+
+        var action = readString(select.value, "");
+        select.value = "";
+
+        if (!action) {
+          return;
+        }
+
+        applyMarkdownToolbarAction(action);
+      });
     }
 
     if (state.elements.editorContentMd) {
@@ -338,18 +750,52 @@
       state.elements.editorContentMd.addEventListener("keydown", function onEditorMarkdownKeydown(event) {
         handleEditorMarkdownShortcut(event);
       });
+
+      state.elements.editorContentMd.addEventListener("contextmenu", function onEditorMarkdownContextMenu(event) {
+        handleEditorMarkdownContextMenu(event);
+      });
     }
 
+    ensureEditorColorPickerChoices();
+
     if (state.elements.editorColorPicker) {
-      state.elements.editorColorPicker.addEventListener("click", function onColorChoiceClick(event) {
-        var button = event.target.closest("button[data-docs-color-choice]");
+      state.elements.editorColorPicker.addEventListener("click", function onColorPickerClick(event) {
+        var button = event.target.closest("[data-docs-color-choice]");
         if (!button || button.disabled) {
           return;
         }
 
         event.preventDefault();
+
+        if (button.hasAttribute("data-docs-color-clear")) {
+          clearColoredText();
+          return;
+        }
+
         insertColoredText(button.getAttribute("data-docs-color-choice"));
       });
+    }
+
+    if (state.elements.editorTooltipApply) {
+      state.elements.editorTooltipApply.addEventListener("click", function onTooltipApplyClick(event) {
+        event.preventDefault();
+        applyTooltipEditorSelection();
+      });
+    }
+
+    if (state.elements.editorTooltipCancel) {
+      state.elements.editorTooltipCancel.addEventListener("click", function onTooltipCancelClick(event) {
+        event.preventDefault();
+        closeTooltipEditor({ restoreTextareaFocus: true });
+      });
+    }
+
+    if (state.elements.editorTooltipVisible) {
+      state.elements.editorTooltipVisible.addEventListener("keydown", handleTooltipEditorKeydown);
+    }
+
+    if (state.elements.editorTooltipText) {
+      state.elements.editorTooltipText.addEventListener("keydown", handleTooltipEditorKeydown);
     }
     if (state.elements.editorImageUpload) {
       state.elements.editorImageUpload.addEventListener("click", function onImageUploadClick() {
@@ -456,8 +902,53 @@
         return;
       }
 
-      if (isInternalLinkPickerOpen()) {
-        closeInternalLinkPicker({ restoreTextareaFocus: true });
+      if (isWikiTooltipOpen()) {
+        closeWikiTooltip();
+        return;
+      }
+
+      if (isEditorColumnsPanelOpen()) {
+        closeEditorColumnsPanel();
+        return;
+      }
+
+      if (isEditorTableMenuOpen()) {
+        closeEditorTableMenu();
+        return;
+      }
+
+      if (isEditorMarkdownContextMenuOpen()) {
+        closeEditorMarkdownContextMenu({ restoreTextareaFocus: true });
+        return;
+      }
+
+      if (isTooltipEditorOpen()) {
+        closeTooltipEditor({ restoreTextareaFocus: true });
+        return;
+      }
+
+      if (isLinkEditorOpen()) {
+        closeLinkEditor({ restoreTextareaFocus: true });
+        return;
+      }
+
+      if (isEditorImagePickerOpen()) {
+        closeEditorImagePicker({ restoreTextareaFocus: true });
+        return;
+      }
+
+      if (isDocsTreeIconPickerOpen()) {
+        closeDocsTreeIconPicker();
+        return;
+      }
+
+      if (isEditorBoxIconPickerOpen()) {
+        closeEditorBoxIconPicker({ restoreFocus: true });
+        return;
+      }
+
+      if (isEditorBoxPickerOpen()) {
+        closeEditorBoxPicker({ restoreFocus: true });
         return;
       }
 
@@ -468,6 +959,11 @@
 
       if (isMediaLibraryPanelOpen()) {
         closeMediaLibraryPanel({ restoreTextareaFocus: true });
+        return;
+      }
+
+      if (isDocsTreeContextMenuOpen()) {
+        closeDocsTreeContextMenu();
         return;
       }
 
@@ -487,7 +983,60 @@
 
     window.addEventListener("resize", function onResize() {
       syncDocsTreeToggleState();
+      closeDocsTreeContextMenu();
+      closeDocsTreeIconPicker();
+      closeEditorMarkdownContextMenu();
+      closeLinkEditor();
+      closeInternalLinkPicker();
+      closeTooltipEditor();
+      closeEditorImagePicker();
+      closeEditorBoxPicker();
+      closeEditorBoxIconPicker();
+      closeEditorBoxIconPicker();
+      closeDocsTreeIconPicker();
+      closeVisualBlockControls();
+      closeVisualTableControls();
+      closeEditorTableMenu();
+      closeEditorColumnsPanel();
+      clearVisualBlockDragState();
+      closeWikiTooltip();
     });
+
+    window.addEventListener("scroll", function onDocsScroll(event) {
+      closeDocsTreeContextMenu();
+      closeEditorMarkdownContextMenu();
+
+      if (isLinkEditorOpen() && !isEventInsideLinkEditor(event && event.target)) {
+        closeLinkEditor();
+      }
+
+      if (isInternalLinkPickerOpen() && !isEventInsideInternalLinkPicker(event && event.target)) {
+        closeInternalLinkPicker();
+      }
+
+      if (isTooltipEditorOpen() && !isEventInsideTooltipEditor(event && event.target)) {
+        closeTooltipEditor();
+      }
+
+      if (isEditorImagePickerOpen() && !isEventInsideEditorImagePicker(event && event.target)) {
+        closeEditorImagePicker();
+      }
+
+      if (isEditorBoxPickerOpen() && !isEventInsideEditorBoxPicker(event && event.target)) {
+        closeEditorBoxPicker();
+      }
+
+      if (isEditorBoxIconPickerOpen() && !isEventInsideEditorBoxIconPicker(event && event.target)) {
+        closeEditorBoxIconPicker();
+      }
+
+      closeVisualBlockControls();
+      closeVisualTableControls();
+      closeEditorTableMenu();
+      closeEditorColumnsPanel();
+      clearVisualBlockDragState();
+      closeWikiTooltip();
+    }, true);
 
     document.addEventListener("enclave:sidebar-ready", function onSidebarReady() {
       state.elements.groupLinks = document.querySelectorAll("[data-doc-group-link]");
@@ -536,6 +1085,34 @@
       refreshManageUi();
     });
 
+    document.addEventListener("click", function onDocsTreeContextOutsideClick(event) {
+      if (!isDocsTreeContextMenuOpen()) {
+        return;
+      }
+
+      if (state.elements.treeContextMenu && state.elements.treeContextMenu.contains(event.target)) {
+        return;
+      }
+
+      if (isEventInsideDocsTreeIconPicker(event.target)) {
+        return;
+      }
+
+      closeDocsTreeContextMenu();
+    });
+
+    document.addEventListener("click", function onDocsTreeIconPickerOutsideClick(event) {
+      if (!isDocsTreeIconPickerOpen()) {
+        return;
+      }
+
+      if (isEventInsideDocsTreeIconPicker(event.target)) {
+        return;
+      }
+
+      closeDocsTreeIconPicker();
+    });
+
     document.addEventListener("click", function onDocumentClick(event) {
       if (!isAccessPanelOpen()) {
         return;
@@ -558,6 +1135,42 @@
       setAccessPanelOpen(false);
     });
 
+    document.addEventListener("click", function onEditorColumnsPanelOutsideClick(event) {
+      if (!isEditorColumnsPanelOpen()) {
+        return;
+      }
+
+      if (isEventInsideEditorColumnsUi(event.target)) {
+        return;
+      }
+
+      closeEditorColumnsPanel();
+    });
+
+    document.addEventListener("click", function onEditorTableMenuOutsideClick(event) {
+      if (!isEditorTableMenuOpen()) {
+        return;
+      }
+
+      if (isEventInsideEditorTableUi(event.target)) {
+        return;
+      }
+
+      closeEditorTableMenu();
+    });
+
+    document.addEventListener("click", function onEditorMarkdownContextOutsideClick(event) {
+      if (!isEditorMarkdownContextMenuOpen()) {
+        return;
+      }
+
+      if (isEventInsideEditorMarkdownContextMenu(event.target)) {
+        return;
+      }
+
+      closeEditorMarkdownContextMenu();
+    });
+
     document.addEventListener("click", function onInternalLinkPanelOutsideClick(event) {
       if (!isInternalLinkPickerOpen()) {
         return;
@@ -568,6 +1181,54 @@
       }
 
       closeInternalLinkPicker();
+    });
+
+    document.addEventListener("click", function onLinkEditorOutsideClick(event) {
+      if (!isLinkEditorOpen()) {
+        return;
+      }
+
+      if (isEventInsideLinkEditor(event.target)) {
+        return;
+      }
+
+      closeLinkEditor();
+    });
+
+    document.addEventListener("click", function onEditorBoxPickerOutsideClick(event) {
+      if (!isEditorBoxPickerOpen()) {
+        return;
+      }
+
+      if (isEventInsideEditorBoxPicker(event.target)) {
+        return;
+      }
+
+      closeEditorBoxPicker();
+    });
+
+    document.addEventListener("click", function onEditorBoxIconPickerOutsideClick(event) {
+      if (!isEditorBoxIconPickerOpen()) {
+        return;
+      }
+
+      if (isEventInsideEditorBoxIconPicker(event.target)) {
+        return;
+      }
+
+      closeEditorBoxIconPicker();
+    });
+
+    document.addEventListener("click", function onEditorImagePickerOutsideClick(event) {
+      if (!isEditorImagePickerOpen()) {
+        return;
+      }
+
+      if (isEventInsideEditorImagePicker(event.target)) {
+        return;
+      }
+
+      closeEditorImagePicker();
     });
 
     document.addEventListener("click", function onColorPickerOutsideClick(event) {
@@ -581,6 +1242,42 @@
 
       closeColorPicker();
     });
+
+    document.addEventListener("click", function onTooltipEditorOutsideClick(event) {
+      if (!isTooltipEditorOpen()) {
+        return;
+      }
+
+      if (isEventInsideTooltipEditor(event.target)) {
+        return;
+      }
+
+      closeTooltipEditor();
+    });
+    document.addEventListener("dragover", function onDocumentVisualBlockDragOver(event) {
+      handleVisualTableDragOver(event);
+      handleVisualEditorDragOver(event);
+    });
+
+    document.addEventListener("drop", function onDocumentVisualBlockDrop(event) {
+      if (state.editorTableDrag) {
+        handleVisualTableDrop(event);
+      }
+
+      if (state.visualBlockDrag) {
+        handleVisualEditorDrop(event);
+      }
+    });
+
+    document.addEventListener("dragend", function onDocumentVisualBlockDragEnd() {
+      clearVisualTableDragState();
+      clearVisualBlockDragState();
+    });
+
+    window.addEventListener("blur", function onWindowVisualBlockDragBlur() {
+      clearVisualBlockDragState();
+    });
+
     document.addEventListener("click", function onMediaLibraryOutsideClick(event) {
       if (!isMediaLibraryPanelOpen()) {
         return;
@@ -592,6 +1289,777 @@
 
       closeMediaLibraryPanel();
     });
+    document.addEventListener("click", function onWikiTooltipOutsideClick(event) {
+      if (!isWikiTooltipOpen()) {
+        return;
+      }
+
+      if (isEventInsideWikiTooltip(event.target)) {
+        return;
+      }
+
+      closeWikiTooltip();
+    });
+  }
+
+  function ensureVisualEditor() {
+    if (!state.elements || !state.elements.editorForm) {
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    if (!state.elements.editorVisualTabs) {
+      var tabs = document.createElement("div");
+      tabs.className = "docs-editor-visual-tabs";
+      tabs.setAttribute("data-docs-visual-tabs", "");
+      tabs.setAttribute("role", "tablist");
+      tabs.setAttribute("aria-label", "Modalita contenuto");
+
+      var visualButton = createVisualModeButton("visual", "Visuale", true);
+      var markdownButton = createVisualModeButton("html", "HTML", false);
+      tabs.appendChild(visualButton);
+      tabs.appendChild(markdownButton);
+
+      var toolbar = state.elements.editorMarkdownToolbar;
+      var contentWrap = textarea.closest(".docs-editor-form__content-wrap") || textarea.parentNode;
+      if (toolbar) {
+        tabs.classList.add("docs-editor-visual-tabs--toolbar");
+        toolbar.insertBefore(tabs, toolbar.firstChild);
+      } else if (contentWrap) {
+        contentWrap.insertBefore(tabs, contentWrap.firstChild);
+      }
+
+      state.elements.editorVisualTabs = tabs;
+      state.elements.editorVisualTabButtons = tabs.querySelectorAll("[data-docs-visual-tab]");
+    }
+
+    if (!state.elements.editorVisualEditor) {
+      var visualEditor = document.createElement("div");
+      visualEditor.className = "docs-visual-editor";
+      visualEditor.setAttribute("data-docs-visual-editor", "");
+      visualEditor.setAttribute("contenteditable", "true");
+      visualEditor.setAttribute("role", "textbox");
+      visualEditor.setAttribute("aria-multiline", "true");
+      visualEditor.setAttribute("aria-label", "Editor visuale contenuto wiki");
+
+      textarea.parentNode.insertBefore(visualEditor, textarea);
+      state.elements.editorVisualEditor = visualEditor;
+
+      visualEditor.addEventListener("beforeinput", function onVisualEditorBeforeInput(event) {
+        rememberVisualEditorHistoryBeforeNativeInput(event);
+      });
+
+      visualEditor.addEventListener("input", function onVisualEditorInput(event) {
+        commitVisualEditorHistoryAfterNativeInput(event);
+
+        if (state.editorSourceMode === "visual") {
+          setEditorStatus("", "");
+        }
+      });
+
+      visualEditor.addEventListener("keydown", function onVisualEditorKeydown(event) {
+        if (handleVisualEditorBoxDeletionKeydown(event)) {
+          return;
+        }
+
+        handleVisualEditorShortcut(event);
+      });
+
+      visualEditor.addEventListener("contextmenu", function onVisualEditorContextMenu(event) {
+        handleVisualEditorContextMenu(event);
+      });
+
+      visualEditor.addEventListener("click", function onVisualEditorClick(event) {
+        handleVisualStepperClick(event);
+        handleVisualColumnsClick(event);
+        handleVisualTableClick(event);
+        handleVisualEditorClick(event);
+      });
+
+      visualEditor.addEventListener("mousemove", function onVisualEditorMouseMove(event) {
+        handleVisualTableMouseMove(event);
+        handleVisualEditorMouseMove(event);
+      });
+
+      visualEditor.addEventListener("mouseleave", function onVisualEditorMouseLeave() {
+        scheduleVisualBlockControlsClose();
+        scheduleVisualTableControlsClose();
+      });
+
+      visualEditor.addEventListener("dragover", function onVisualEditorDragOver(event) {
+        handleVisualEditorDragOver(event);
+      });
+
+      visualEditor.addEventListener("drop", function onVisualEditorDrop(event) {
+        handleVisualEditorDrop(event);
+      });
+
+      visualEditor.addEventListener("dragend", function onVisualEditorDragEnd() {
+        clearVisualBlockDragState();
+      });
+    }
+
+    if (state.elements.editorVisualTabButtons && state.elements.editorVisualTabButtons.length) {
+      for (var i = 0; i < state.elements.editorVisualTabButtons.length; i += 1) {
+        state.elements.editorVisualTabButtons[i].addEventListener("click", function onVisualModeClick(event) {
+          var mode = readString(event.currentTarget.getAttribute("data-docs-visual-tab"), "visual");
+          setEditorSourceMode(mode);
+        });
+      }
+    }
+
+    setEditorSourceMode(state.editorSourceMode || "visual", { skipSync: true });
+  }
+
+  function createVisualModeButton(mode, label, isActive) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "docs-editor-visual-tabs__btn" + (isActive ? " is-active" : "");
+    button.setAttribute("data-docs-visual-tab", mode);
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", isActive ? "true" : "false");
+    button.textContent = label;
+    return button;
+  }
+
+  function isVisualEditorMode() {
+    return state.editorSourceMode === "visual" && !!(state.elements && state.elements.editorVisualEditor);
+  }
+
+  function setEditorSourceMode(mode, options) {
+    var normalized = mode === "html" || mode === "markdown" ? "html" : "visual";
+    var opts = options || {};
+    var previous = state.editorSourceMode;
+
+    if (!opts.skipSync && previous === "visual" && normalized === "html") {
+      syncVisualEditorToMarkdown();
+    }
+
+    state.editorSourceMode = normalized;
+
+    if (!opts.skipSync && normalized === "visual") {
+      syncMarkdownToVisualEditor();
+    }
+
+    syncEditorSourceModeUi();
+  }
+
+  function syncEditorSourceModeUi() {
+    if (!state.elements) {
+      return;
+    }
+
+    var isVisual = state.editorSourceMode !== "html";
+
+    if (state.elements.editorVisualEditor) {
+      state.elements.editorVisualEditor.hidden = !isVisual;
+    }
+
+    if (state.elements.editorContentMd) {
+      state.elements.editorContentMd.hidden = isVisual;
+    }
+
+    if (state.elements.editorVisualTabButtons && state.elements.editorVisualTabButtons.length) {
+      for (var i = 0; i < state.elements.editorVisualTabButtons.length; i += 1) {
+        var button = state.elements.editorVisualTabButtons[i];
+        var active = readString(button.getAttribute("data-docs-visual-tab"), "visual") === state.editorSourceMode;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+      }
+    }
+  }
+
+  function syncMarkdownToVisualEditor() {
+    if (!state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    var source = textarea ? String(textarea.value || "") : "";
+    state.elements.editorVisualEditor.innerHTML = storedContentToVisualEditorHtml(source);
+    prepareVisualEditorDomForEditing(state.elements.editorVisualEditor);
+  }
+
+  function syncVisualEditorToMarkdown() {
+    if (!state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    textarea.value = visualEditorDomToHtml(state.elements.editorVisualEditor);
+  }
+
+  function storedContentToVisualEditorHtml(sourceValue) {
+    var source = String(sourceValue || "").trim();
+    if (!source) {
+      return "<p><br></p>";
+    }
+
+    if (isLegacyMarkdownContent(source)) {
+      try {
+        return renderMarkdown(source);
+      } catch (_legacyError) {
+        return "<p>" + escapeInlineHtmlText(source) + "</p>";
+      }
+    }
+
+    if (isStoredHtmlContent(source)) {
+      return normalizeStoredHtmlContent(source);
+    }
+
+    try {
+      return renderMarkdown(source);
+    } catch (_error) {
+      return "<p>" + escapeInlineHtmlText(source) + "</p>";
+    }
+  }
+
+  function markdownToVisualEditorHtml(markdown) {
+    return storedContentToVisualEditorHtml(markdown);
+  }
+
+  function visualEditorDomToHtml(root) {
+    if (!root) {
+      return "";
+    }
+
+    var clone = root.cloneNode(true);
+    cleanVisualHtmlForStorage(clone);
+    return clone.innerHTML.trim();
+  }
+
+  function prepareVisualEditorDomForEditing(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    ensureVisualEditorStepperAddButtons(root);
+
+    var images = root.querySelectorAll(".wiki-image");
+    for (var i = 0; i < images.length; i += 1) {
+      images[i].setAttribute("contenteditable", "false");
+    }
+
+    var boxIcons = root.querySelectorAll(".wiki-box__icon");
+    for (var iconIndex = 0; iconIndex < boxIcons.length; iconIndex += 1) {
+      boxIcons[iconIndex].setAttribute("contenteditable", "false");
+      boxIcons[iconIndex].setAttribute("title", "Cambia icona");
+      boxIcons[iconIndex].setAttribute("data-tooltip", "Cambia icona");
+    }
+
+    var checklistInputs = root.querySelectorAll("input[data-wiki-check-id]");
+    for (var checkIndex = 0; checkIndex < checklistInputs.length; checkIndex += 1) {
+      checklistInputs[checkIndex].setAttribute("contenteditable", "false");
+      checklistInputs[checkIndex].setAttribute("type", "checkbox");
+    }
+  }
+
+  function cleanVisualHtmlForStorage(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    var stepperAddButtons = root.querySelectorAll("[data-wiki-stepper-add]");
+    for (var stepperAddIndex = 0; stepperAddIndex < stepperAddButtons.length; stepperAddIndex += 1) {
+      stepperAddButtons[stepperAddIndex].remove();
+    }
+
+    var anchors = root.querySelectorAll(".docs-heading-anchor");
+    for (var anchorIndex = 0; anchorIndex < anchors.length; anchorIndex += 1) {
+      anchors[anchorIndex].remove();
+    }
+
+    var all = root.querySelectorAll("*");
+    for (var i = 0; i < all.length; i += 1) {
+      var element = all[i];
+      element.removeAttribute("contenteditable");
+      element.removeAttribute("aria-describedby");
+      element.classList.remove("is-open", "is-visual-drop-before", "is-visual-drop-after", "is-visual-block-dragging");
+
+        if (element.classList && element.classList.contains("wiki-image")) {
+        var imageData = readWikiImageDataFromNode(element);
+        if (imageData && imageData.width) {
+          element.setAttribute("data-wiki-image-width", imageData.width);
+          element.style.setProperty("--wiki-image-width", imageData.width);
+        }
+      }
+
+      if (String(element.tagName || "").toLowerCase() === "input" && element.getAttribute("data-wiki-check-id")) {
+        element.setAttribute("type", "checkbox");
+        element.removeAttribute("checked");
+      }
+    }
+  }
+
+  function visualEditorDomToMarkdown(root) {
+    if (!root) {
+      return "";
+    }
+
+    var lineFeed = String.fromCharCode(10);
+    var blocks = [];
+
+    for (var i = 0; i < root.childNodes.length; i += 1) {
+      var block = serializeVisualBlock(root.childNodes[i]);
+      if (block) {
+        blocks.push(block);
+      }
+    }
+
+    if (!blocks.length) {
+      return serializeVisualInline(root).trim();
+    }
+
+    return collapseMarkdownBlankLines(blocks.join(lineFeed + lineFeed)).trim();
+  }
+
+  function collapseMarkdownBlankLines(value) {
+    var lineFeed = String.fromCharCode(10);
+    var lines = String(value || "").split(lineFeed);
+    var output = [];
+    var blankCount = 0;
+
+    for (var i = 0; i < lines.length; i += 1) {
+      var line = lines[i];
+      if (!String(line || "").trim()) {
+        blankCount += 1;
+        if (blankCount <= 1) {
+          output.push("");
+        }
+        continue;
+      }
+
+      blankCount = 0;
+      output.push(line);
+    }
+
+    return output.join(lineFeed);
+  }
+
+  function serializeVisualBlock(node) {
+    if (!node) {
+      return "";
+    }
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      return readString(node.nodeValue, "");
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+
+    var lineFeed = String.fromCharCode(10);
+    var tag = String(node.tagName || "").toLowerCase();
+
+    if (node.classList && node.classList.contains("wiki-box")) {
+      return serializeVisualWikiBox(node);
+    }
+
+    if (node.classList && node.classList.contains("wiki-image") && node.classList.contains("wiki-image--full")) {
+      return serializeVisualImage(node);
+    }
+
+    if (node.querySelector) {
+      var nestedWikiBox = node.querySelector(".wiki-box");
+      if (nestedWikiBox && !readString(serializeVisualInlineWithoutSpecialBlocks(node), "")) {
+        return serializeVisualWikiBox(nestedWikiBox);
+      }
+
+      var nestedFullImage = node.querySelector(".wiki-image--full");
+      if (nestedFullImage && !readString(serializeVisualInlineWithoutSpecialBlocks(node), "")) {
+        return serializeVisualImage(nestedFullImage);
+      }
+    }
+
+    if (tag === "h1" || tag === "h2" || tag === "h3") {
+      var level = Number(tag.slice(1));
+      return Array(level + 1).join("#") + " " + serializeVisualInline(node).trim();
+    }
+
+    if (tag === "p" || tag === "div") {
+      return serializeVisualInline(node).trim();
+    }
+
+    if (tag === "ul" || tag === "ol") {
+      return serializeVisualList(node, tag === "ol");
+    }
+
+    if (tag === "blockquote") {
+      return serializeVisualInline(node).trim().split(lineFeed).map(function (line) {
+        return "> " + line;
+      }).join(lineFeed);
+    }
+
+    if (tag === "pre") {
+      return "```text" + lineFeed + readString(node.textContent, "") + lineFeed + "```";
+    }
+
+    if (tag === "hr") {
+      return "---";
+    }
+
+    if (tag === "img") {
+      return serializeVisualImage(node);
+    }
+
+    return serializeVisualInline(node).trim();
+  }
+
+  function serializeVisualList(list, isOrdered) {
+    var lineFeed = String.fromCharCode(10);
+    var items = [];
+    var children = list.children || [];
+
+    for (var i = 0; i < children.length; i += 1) {
+      if (String(children[i].tagName || "").toLowerCase() !== "li") {
+        continue;
+      }
+
+      items.push((isOrdered ? String(items.length + 1) + ". " : "- ") + serializeVisualInline(children[i]).trim());
+    }
+
+    return items.join(lineFeed);
+  }
+
+  function serializeVisualWikiBox(node) {
+    var lineFeed = String.fromCharCode(10);
+    var type = "info";
+    var keys = Object.keys(WIKI_BOX_TYPES);
+
+    for (var i = 0; i < keys.length; i += 1) {
+      if (node.classList.contains("wiki-box--" + keys[i])) {
+        type = keys[i];
+        break;
+      }
+    }
+
+    var content = node.querySelector(".wiki-box__content") || node;
+    var titleNode = content.querySelector(".wiki-box__title");
+    var title = titleNode ? serializeVisualInline(titleNode).trim() : "";
+    var contentBlocks = [];
+
+    for (var childIndex = 0; childIndex < content.childNodes.length; childIndex += 1) {
+      var child = content.childNodes[childIndex];
+      if (child === titleNode) {
+        continue;
+      }
+
+      var block = serializeVisualBlock(child);
+      if (block) {
+        contentBlocks.push(block);
+      }
+    }
+
+    return ":::box " + type + (title ? " " + title : "") + lineFeed + contentBlocks.join(lineFeed + lineFeed) + lineFeed + ":::";
+  }
+
+  function serializeVisualInline(node) {
+    if (!node) {
+      return "";
+    }
+
+    var output = "";
+    for (var i = 0; i < node.childNodes.length; i += 1) {
+      output += serializeVisualInlineNode(node.childNodes[i]);
+    }
+
+    return output;
+  }
+
+  function serializeVisualInlineWithoutWikiBoxes(node) {
+    return serializeVisualInlineWithoutSpecialBlocks(node);
+  }
+
+  function serializeVisualInlineWithoutSpecialBlocks(node) {
+    if (!node) {
+      return "";
+    }
+
+    var output = "";
+    for (var i = 0; i < node.childNodes.length; i += 1) {
+      var child = node.childNodes[i];
+      if (
+        child.nodeType === Node.ELEMENT_NODE &&
+        child.classList &&
+        (child.classList.contains("wiki-box") || child.classList.contains("wiki-image--full"))
+      ) {
+        continue;
+      }
+
+      output += serializeVisualInlineNode(child);
+    }
+
+    return output;
+  }
+
+  function serializeVisualInlineNode(node) {
+    if (!node) {
+      return "";
+    }
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      return String(node.nodeValue || "");
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+
+    var lineFeed = String.fromCharCode(10);
+    var tag = String(node.tagName || "").toLowerCase();
+    var text = serializeVisualInline(node);
+
+    if (tag === "br") {
+      return lineFeed;
+    }
+
+    if (tag === "strong" || tag === "b") {
+      return "**" + text + "**";
+    }
+
+    if (tag === "em" || tag === "i") {
+      return "*" + text + "*";
+    }
+
+    if (tag === "code") {
+      return "`" + readString(node.textContent, text) + "`";
+    }
+
+    if (tag === "a") {
+      return "[" + text + "](" + readString(node.getAttribute("href"), "#") + ")";
+    }
+
+    if (tag === "img" || (node.classList && node.classList.contains("wiki-image"))) {
+      return serializeVisualImage(node);
+    }
+
+    if (node.classList && node.classList.contains("wiki-tooltip")) {
+      return buildTooltipShortcode(text || readString(node.textContent, "testo visibile"), readString(node.getAttribute("data-tooltip"), ""));
+    }
+
+    if (node.classList && node.classList.contains("wiki-color")) {
+      var colorClass = readWikiColorClass(node);
+      return '<span class="wiki-color ' + colorClass + '">' + escapeInlineHtmlText(text) + "</span>";
+    }
+
+    return text;
+  }
+
+  function serializeVisualImage(node) {
+    var imageData = readWikiImageDataFromNode(node);
+    if (!imageData || !imageData.src) {
+      return "";
+    }
+
+    return buildWikiImageHtml(imageData.src, imageData.alt, imageData.layout, imageData.width);
+  }
+
+  function readWikiImageDataFromNode(node) {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+      return null;
+    }
+
+    var element = node;
+    var image = null;
+
+    if (String(element.tagName || "").toLowerCase() === "img") {
+      image = element;
+    } else if (element.querySelector) {
+      image = element.querySelector("img");
+    }
+
+    if (!image) {
+      return null;
+    }
+
+    var wrapper = image.closest ? image.closest(".wiki-image") : null;
+    var layout = wrapper && wrapper.classList && wrapper.classList.contains("wiki-image--inline") ? "inline" : "full";
+    var width = readString(image.getAttribute("data-wiki-image-width"), "");
+
+    if (!width && wrapper) {
+      width = readString(wrapper.getAttribute("data-wiki-image-width"), "");
+    }
+
+    if (!width && wrapper && wrapper.style) {
+      width = readString(wrapper.style.getPropertyValue("--wiki-image-width"), "");
+    }
+
+    return {
+      src: readString(image.getAttribute("src"), ""),
+      alt: readString(image.getAttribute("alt"), "Immagine"),
+      layout: layout,
+      width: normalizeWikiImageWidth(width, layout),
+    };
+  }
+
+  function createWikiBlockId(prefix) {
+    return prefix + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  function buildWikiChecklistHtml(items) {
+    var listId = createWikiBlockId("checklist");
+    var rows = Array.isArray(items) && items.length ? items : ["Prima voce"];
+    var html = '<ul class="wiki-checklist" data-wiki-checklist-id="' + escapeInlineHtmlText(listId) + '">';
+
+    for (var i = 0; i < rows.length; i += 1) {
+      var checkId = listId + "-" + String(i + 1);
+      html += '<li class="wiki-checklist__item">' +
+        '<label class="wiki-checkitem">' +
+        '<input type="checkbox" data-wiki-check-id="' + escapeInlineHtmlText(checkId) + '">' +
+        '<span>' + escapeInlineHtmlText(rows[i]) + '</span>' +
+        '</label>' +
+        '</li>';
+    }
+
+    html += "</ul>";
+    return html;
+  }
+
+  function buildWikiStepperHtml(steps) {
+    var rows = Array.isArray(steps) && steps.length ? steps : [{ title: "Passo", body: "Descrizione." }];
+    var html = '<div class="wiki-stepper">';
+
+    for (var i = 0; i < rows.length; i += 1) {
+      var step = rows[i] || {};
+      html += '<section class="wiki-step">' +
+        '<div class="wiki-step__rail" aria-hidden="true">' +
+        '<span class="wiki-step__number">' + String(i + 1) + '</span>' +
+        '</div>' +
+        '<div class="wiki-step__body">' +
+        '<h3>' + escapeInlineHtmlText(readString(step.title, "Passo " + String(i + 1))) + '</h3>' +
+        '<p>' + escapeInlineHtmlText(readString(step.body, "Descrizione del passaggio.")) + '</p>' +
+        '</div>' +
+        '</section>';
+    }
+
+    html += "</div>";
+    return html;
+  }
+
+  function buildWikiExpandableHtml(title, body) {
+    return '<details class="wiki-expandable">' +
+      '<summary class="wiki-expandable__summary">' +
+      '<span class="wiki-expandable__title">' + escapeInlineHtmlText(readString(title, "Titolo expandable")) + '</span>' +
+      '<span class="wiki-expandable__chevron" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></span>' +
+      '</summary>' +
+      '<div class="wiki-expandable__content"><p>' + escapeInlineHtmlText(readString(body, "Contenuto nascosto espandibile.")) + '</p></div>' +
+      '</details>';
+  }
+
+  function buildWikiColumnsHtml(columns) {
+    var count = Math.max(2, Math.min(Number(columns) || 2, 3));
+    var html = '<div class="wiki-columns wiki-columns--' + String(count) + '" data-wiki-columns="' + String(count) + '">';
+
+    for (var i = 0; i < count; i += 1) {
+      html += '<div class="wiki-column"><p>Contenuto colonna ' + String(i + 1) + '.</p></div>';
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  function buildWikiTableHtml(rows, columns) {
+    var rowCount = Math.max(1, Math.min(Number(rows) || 3, 12));
+    var columnCount = Math.max(1, Math.min(Number(columns) || 3, 8));
+    var html = '<table class="wiki-table"><thead><tr>';
+
+    for (var c = 0; c < columnCount; c += 1) {
+      html += '<th>Colonna ' + String(c + 1) + '</th>';
+    }
+
+    html += '</tr></thead><tbody>';
+
+    for (var r = 0; r < rowCount; r += 1) {
+      html += '<tr>';
+      for (var cell = 0; cell < columnCount; cell += 1) {
+        html += '<td>Dato</td>';
+      }
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    return html;
+  }
+
+  function buildWikiImageHtml(src, altText, layout, width) {
+    var imageLayout = normalizeWikiImageLayout(layout);
+    var imageWidth = normalizeWikiImageWidth(width, imageLayout);
+    var safeSrc = escapeInlineHtmlText(src);
+    var safeAlt = escapeInlineHtmlText(altText || "Immagine");
+    var safeWidth = escapeInlineHtmlText(imageWidth);
+    var className = imageLayout === "inline" ? "wiki-image wiki-image--inline" : "wiki-image wiki-image--full";
+    var tagName = imageLayout === "inline" ? "span" : "figure";
+
+    return "<" + tagName + " class=\"" + className + "\" contenteditable=\"false\" data-wiki-image-layout=\"" + imageLayout + "\" data-wiki-image-width=\"" + safeWidth + "\" style=\"--wiki-image-width: " + safeWidth + ";\"><img src=\"" + safeSrc + "\" alt=\"" + safeAlt + "\" data-wiki-image-width=\"" + safeWidth + "\"></" + tagName + ">";
+  }
+
+  function normalizeWikiImageLayout(value) {
+    return readString(value, "full") === "inline" ? "inline" : "full";
+  }
+
+  function normalizeWikiImageWidthUnit(value) {
+    return readString(value, "%") === "px" ? "px" : "%";
+  }
+
+  function normalizeWikiImageWidth(value, layout) {
+    var raw = readString(value, "");
+    var imageLayout = normalizeWikiImageLayout(layout);
+
+    if (!raw) {
+      return imageLayout === "inline" ? "320px" : "100%";
+    }
+
+    var match = raw.match(/^([0-9]+(?:\.[0-9]+)?)(px|%)?$/);
+    if (!match) {
+      return imageLayout === "inline" ? "320px" : "100%";
+    }
+
+    var amount = Number(match[1]);
+    var unit = normalizeWikiImageWidthUnit(match[2] || "%");
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return imageLayout === "inline" ? "320px" : "100%";
+    }
+
+    if (unit === "%") {
+      amount = Math.max(1, Math.min(amount, 100));
+    } else {
+      amount = Math.max(24, Math.min(amount, 1800));
+    }
+
+    return String(Math.round(amount * 100) / 100) + unit;
+  }
+
+  function splitWikiImageWidth(width, layout) {
+    var normalized = normalizeWikiImageWidth(width, layout);
+    var match = normalized.match(/^([0-9]+(?:\.[0-9]+)?)(px|%)$/);
+    return {
+      value: match ? match[1] : layout === "inline" ? "320" : "100",
+      unit: match ? match[2] : layout === "inline" ? "px" : "%",
+    };
+  }
+
+  function readWikiColorClass(node) {
+    if (!node || !node.classList) {
+      return "wiki-color-sage";
+    }
+
+    for (var i = 0; i < node.classList.length; i += 1) {
+      var value = String(node.classList[i] || "");
+      if (value.indexOf("wiki-color-") === 0 && value !== "wiki-color") {
+        return value;
+      }
+    }
+
+    return "wiki-color-sage";
   }
 
   function isMediaLibraryPanelOpen() {
@@ -639,6 +2107,7 @@
     }
 
     closeInternalLinkPicker();
+    closeTooltipEditor();
 
     state.elements.editorMediaPanel.hidden = false;
 
@@ -1064,7 +2533,7 @@
     }
 
     var altText = readString(state.elements && state.elements.editorImageAlt && state.elements.editorImageAlt.value, "Immagine");
-    var markdownImage = "![" + escapeMarkdownAltText(altText) + "](" + escapeMarkdownUrl(item.publicUrl) + ")";
+    var markdownImage = buildWikiImageHtml(item.publicUrl, altText, "full", "100%");
 
     insertMarkdownInEditor(markdownImage);
     setMediaLibraryStatus("Immagine inserita nel contenuto.", "success");
@@ -1891,12 +3360,21 @@
       return false;
     }
 
-    return (
+    if (
       isTruthyManageValue(player.can_manage_wiki) ||
+      isTruthyManageValue(player.canManageWiki) ||
       isTruthyManageValue(player.can_manage_admin) ||
+      isTruthyManageValue(player.canManageAdmin) ||
       isTruthyManageValue(player.can_manage) ||
-      isTruthyManageValue(player.is_admin)
-    );
+      isTruthyManageValue(player.canManage) ||
+      isTruthyManageValue(player.is_admin) ||
+      isTruthyManageValue(player.isAdmin)
+    ) {
+      return true;
+    }
+
+    var role = readString(player.role, "").trim().toLowerCase();
+    return role === "admin" || role === "gm";
   }
 
   function isTruthyManageValue(value) {
@@ -1906,7 +3384,16 @@
 
     if (typeof value === "string") {
       var normalized = value.trim().toLowerCase();
-      return normalized === "true" || normalized === "1" || normalized === "yes";
+      return (
+        normalized === "true" ||
+        normalized === "1" ||
+        normalized === "yes" ||
+        normalized === "y" ||
+        normalized === "t" ||
+        normalized === "si" ||
+        normalized === "on" ||
+        normalized === "enabled"
+      );
     }
 
     return false;
@@ -2100,6 +3587,48 @@
     }
   }
 
+  function setEditorViewMode(mode) {
+    var normalized = mode === "metadata" ? "metadata" : "editor";
+    state.editorViewMode = normalized;
+
+    if (!state.elements) {
+      return;
+    }
+
+    if (state.elements.editorTabButtons && state.elements.editorTabButtons.length) {
+      for (var i = 0; i < state.elements.editorTabButtons.length; i += 1) {
+        var button = state.elements.editorTabButtons[i];
+        var isActive = readString(button.getAttribute("data-docs-editor-tab"), "") === normalized;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-selected", isActive ? "true" : "false");
+        button.setAttribute("tabindex", isActive ? "0" : "-1");
+      }
+    }
+
+    if (state.elements.editorPanes && state.elements.editorPanes.length) {
+      for (var pIndex = 0; pIndex < state.elements.editorPanes.length; pIndex += 1) {
+        var pane = state.elements.editorPanes[pIndex];
+        var paneMode = readString(pane.getAttribute("data-docs-editor-pane"), "editor");
+        pane.hidden = paneMode !== normalized;
+      }
+    }
+
+    if (normalized !== "editor") {
+      closeEditorMarkdownContextMenu();
+      closeLinkEditor();
+      closeInternalLinkPicker();
+      closeColorPicker();
+      closeTooltipEditor();
+      closeEditorImagePicker();
+      closeEditorBoxIconPicker();
+      closeMediaLibraryPanel();
+    }
+  }
+
+  function resetEditorViewMode() {
+    setEditorViewMode("editor");
+  }
+
   function openEditorForCreate() {
     if (!state.isManageUnlocked || !state.elements || !state.elements.editorForm) {
       return;
@@ -2112,24 +3641,60 @@
     openEditorModal();
   }
 
+  function openEditorForSubpage(parentEntry) {
+    if (!state.isManageUnlocked || !parentEntry || !state.elements || !state.elements.editorForm) {
+      return;
+    }
+
+    setEditorMode("create");
+    fillEditorFormDefaults();
+    prefillEditorFormForSubpage(parentEntry);
+    resetEditorImageUploadUi();
+    setEditorStatus("", "");
+    openEditorModal();
+  }
+
+  function openEditorForGroupPage(group) {
+    if (!state.isManageUnlocked || !group || !state.elements || !state.elements.editorForm) {
+      return;
+    }
+
+    setEditorMode("create");
+    fillEditorFormDefaults();
+    prefillEditorFormForGroupPage(group);
+    resetEditorImageUploadUi();
+    setEditorStatus("", "");
+    openEditorModal();
+  }
+
   function openEditorForCurrentEntry() {
-    if (!state.isManageUnlocked || !state.currentEntry || !state.elements || !state.elements.editorForm) {
+    openEditorForEntry(state.currentEntry);
+  }
+
+  function openEditorForEntry(entry) {
+    if (!state.isManageUnlocked || !entry || !state.elements || !state.elements.editorForm) {
       return;
     }
 
     setEditorMode("edit");
-    fillEditorForm(state.currentEntry);
+    fillEditorForm(entry);
     resetEditorImageUploadUi();
     setEditorStatus("", "");
     openEditorModal();
   }
 
   async function toggleCurrentEntryPublishState() {
-    if (!state.isManageUnlocked || !state.currentEntry || state.publishToggleBusy) {
+    await togglePublishForEntry(state.currentEntry);
+  }
+
+  async function togglePublishForEntry(entry) {
+    if (!state.isManageUnlocked || !entry || state.publishToggleBusy) {
       return;
     }
 
-    var current = state.currentEntry;
+    var current = entry;
+    var isCurrentEntry = !!(state.currentEntry && state.currentEntry.docKey === current.docKey);
+    var currentDocKey = state.currentEntry ? state.currentEntry.docKey : "";
     var nextPublished = !(current.isPublished !== false);
     var confirmText = nextPublished
       ? "Vuoi pubblicare questa pagina?"
@@ -2139,30 +3704,7 @@
       return;
     }
 
-    var payload = {
-      section: readString(current.sectionSlug, ""),
-      slug: normalizeDocPath(readString(current.rawSlug, current.docKey || "")),
-      title: readString(current.title, "Documento"),
-      nav_group: toNullableString(current.navGroup),
-      nav_group_order:
-        Number.isFinite(current.navGroupOrder) && current.navGroupOrder !== Number.MAX_SAFE_INTEGER
-          ? current.navGroupOrder
-          : 0,
-      nav_group_icon: toNullableString(current.navGroupIcon),
-      nav_label: toNullableString(current.navLabel),
-      page_icon: toNullableString(current.pageIcon),
-      parent_slug: toNullablePath(current.parentSlug),
-      sort_order:
-        Number.isFinite(current.sortOrder) && current.sortOrder !== Number.MAX_SAFE_INTEGER
-          ? current.sortOrder
-          : 0,
-      depth: Math.max(0, toDepth(current.depth)),
-      is_published: nextPublished,
-      excerpt: toNullableString(current.excerpt),
-      content_md: String(current.contentMd || ""),
-      previous_section: readString(current.sectionSlug, ""),
-      previous_slug: normalizeDocPath(readString(current.rawSlug, current.docKey || "")),
-    };
+    var payload = buildPublishPayload(current, nextPublished);
 
     setPublishToggleBusyState(true);
 
@@ -2171,12 +3713,16 @@
       var savedDocKey = resolveSavedDocKey(payload, result);
 
       if (nextPublished) {
-        await refreshDocsData(savedDocKey);
-      } else {
+        await refreshDocsData(isCurrentEntry ? savedDocKey : currentDocKey || savedDocKey);
+      } else if (isCurrentEntry) {
         await refreshDocsData("", {
           preferPublishedFallback: true,
           sectionSlug: current.sectionSlug,
           excludeDocKey: savedDocKey,
+        });
+      } else {
+        await refreshDocsData(currentDocKey || "", {
+          preferPublishedFallback: false,
         });
       }
     } catch (error) {
@@ -2190,6 +3736,34 @@
       setPublishToggleBusyState(false);
     }
   }
+
+  function buildPublishPayload(entry, isPublished) {
+    return {
+      section: readString(entry.sectionSlug, ""),
+      slug: normalizeDocPath(readString(entry.rawSlug, entry.docKey || "")),
+      title: readString(entry.title, "Documento"),
+      nav_group: toNullableString(entry.navGroup),
+      nav_group_order:
+        Number.isFinite(entry.navGroupOrder) && entry.navGroupOrder !== Number.MAX_SAFE_INTEGER
+          ? entry.navGroupOrder
+          : 0,
+      nav_group_icon: toNullableString(entry.navGroupIcon),
+      nav_label: toNullableString(entry.navLabel),
+      page_icon: toNullableString(entry.pageIcon),
+      parent_slug: toNullablePath(entry.parentSlug),
+      sort_order:
+        Number.isFinite(entry.sortOrder) && entry.sortOrder !== Number.MAX_SAFE_INTEGER
+          ? entry.sortOrder
+          : 0,
+      depth: Math.max(0, toDepth(entry.depth)),
+      is_published: !!isPublished,
+      excerpt: toNullableString(entry.excerpt),
+      content_md: String(entry.contentMd || ""),
+      previous_section: readString(entry.sectionSlug, ""),
+      previous_slug: normalizeDocPath(readString(entry.rawSlug, entry.docKey || "")),
+    };
+  }
+
   function resetEditorHistory() {
     state.editorHistoryUndo = [];
     state.editorHistoryRedo = [];
@@ -2202,13 +3776,39 @@
       return;
     }
 
+    closeLinkEditor();
     closeInternalLinkPicker();
+    closeEditorMarkdownContextMenu();
     closeMediaLibraryPanel();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeEditorBoxPicker();
+    closeEditorBoxIconPicker();
+    closeDocsTreeContextMenu();
+    closeWikiTooltip();
+    resetEditorViewMode();
+    setEditorSourceMode("visual", { skipSync: true });
+    syncMarkdownToVisualEditor();
 
     state.elements.editorModal.hidden = false;
     state.isEditorOpen = true;
     document.body.classList.add("docs-editor-open");
     resetEditorHistory();
+
+    state.elements.editorModal.classList.add("is-fresh");
+    if (state.editorFreshTimer) {
+      window.clearTimeout(state.editorFreshTimer);
+      state.editorFreshTimer = 0;
+    }
+
+    state.editorFreshTimer = window.setTimeout(function clearFreshEditorState() {
+      if (!state.elements || !state.elements.editorModal) {
+        return;
+      }
+
+      state.elements.editorModal.classList.remove("is-fresh");
+      state.editorFreshTimer = 0;
+    }, 280);
 
     var titleInput = state.elements.editorForm.elements.namedItem("title");
     if (titleInput && typeof titleInput.focus === "function") {
@@ -2224,9 +3824,27 @@
       return;
     }
 
+    closeLinkEditor();
     closeInternalLinkPicker();
+    closeEditorMarkdownContextMenu();
     closeMediaLibraryPanel();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeEditorBoxPicker();
+    closeEditorBoxIconPicker();
+    closeVisualBlockControls();
+    closeVisualTableControls();
+    closeEditorTableMenu();
+    closeEditorColumnsPanel();
+    clearVisualBlockDragState();
 
+    if (state.editorFreshTimer) {
+      window.clearTimeout(state.editorFreshTimer);
+      state.editorFreshTimer = 0;
+    }
+
+    state.elements.editorModal.classList.remove("is-fresh");
     state.elements.editorModal.hidden = true;
     state.isEditorOpen = false;
     document.body.classList.remove("docs-editor-open");
@@ -2264,6 +3882,7 @@
     setFormCheckboxValue(form, "is_published", entry.isPublished !== false);
     setFormFieldValue(form, "excerpt", readString(entry.excerpt, ""));
     setFormFieldValue(form, "content_md", readString(entry.contentMd, ""));
+    syncMarkdownToVisualEditor();
 
     populateParentSlugOptions(readString(entry.parentSlug, ""));
   }
@@ -2288,9 +3907,95 @@
     setFormFieldValue(form, "depth", "0");
     setFormCheckboxValue(form, "is_published", true);
     setFormFieldValue(form, "excerpt", "");
-    setFormFieldValue(form, "content_md", "# Nuova pagina\n\nScrivi qui il contenuto della nuova pagina.");
+    setFormFieldValue(form, "content_md", "<h2>Nuova pagina</h2><p>Scrivi qui il contenuto della nuova pagina.</p>");
+    syncMarkdownToVisualEditor();
 
     populateParentSlugOptions("");
+  }
+
+  function prefillEditorFormForSubpage(parentEntry) {
+    if (!state.elements || !state.elements.editorForm || !parentEntry) {
+      return;
+    }
+
+    var form = state.elements.editorForm;
+    var parentDepth = toDepth(parentEntry.depth);
+
+    state.editorSlugManual = false;
+
+    setFormFieldValue(form, "section", readString(parentEntry.sectionSlug, "lore"));
+    setFormFieldValue(form, "slug", "");
+    setFormFieldValue(form, "title", "");
+    setFormFieldValue(form, "nav_group", readString(parentEntry.navGroup, ""));
+    setFormFieldValue(
+      form,
+      "nav_group_order",
+      Number.isFinite(parentEntry.navGroupOrder) && parentEntry.navGroupOrder !== Number.MAX_SAFE_INTEGER
+        ? String(parentEntry.navGroupOrder)
+        : "0"
+    );
+    setFormFieldValue(form, "nav_group_icon", readString(parentEntry.navGroupIcon, ""));
+    setFormFieldValue(form, "parent_slug", readString(parentEntry.docKey, ""));
+    setFormFieldValue(form, "depth", String(parentDepth + 1));
+    setFormFieldValue(form, "sort_order", "0");
+
+    populateParentSlugOptions(readString(parentEntry.docKey, ""));
+    syncMarkdownToVisualEditor();
+  }
+
+  function prefillEditorFormForGroupPage(group) {
+    if (!state.elements || !state.elements.editorForm || !group) {
+      return;
+    }
+
+    var form = state.elements.editorForm;
+    var groupMeta = resolveDocsTreeGroupEditorDefaults(group);
+
+    state.editorSlugManual = false;
+
+    setFormFieldValue(form, "section", groupMeta.section || "lore");
+    setFormFieldValue(form, "slug", "");
+    setFormFieldValue(form, "title", "");
+    setFormFieldValue(form, "nav_group", groupMeta.navGroup);
+    setFormFieldValue(form, "nav_group_order", String(groupMeta.navGroupOrder));
+    setFormFieldValue(form, "nav_group_icon", readString(groupMeta.navGroupIcon, ""));
+    setFormFieldValue(form, "parent_slug", "");
+    setFormFieldValue(form, "depth", "0");
+    setFormFieldValue(form, "sort_order", "0");
+
+    populateParentSlugOptions("");
+    syncMarkdownToVisualEditor();
+  }
+
+  function resolveDocsTreeGroupEditorDefaults(group) {
+    var section = cleanSegment(readString(group && group.section, ""));
+    var groupKey = toNavGroupKey(group && group.navGroup);
+    var sourcePages = state.manageIndex && Array.isArray(state.manageIndex.pages) ? state.manageIndex.pages : [];
+    var fallback = {
+      section: section,
+      navGroup: readString(group && group.navGroup, ""),
+      navGroupOrder: 0,
+      navGroupIcon: readString(group && group.icon, ""),
+    };
+
+    for (var i = 0; i < sourcePages.length; i += 1) {
+      var page = sourcePages[i];
+      if (!page || page.sectionSlug !== section || toNavGroupKey(page.navGroup) !== groupKey) {
+        continue;
+      }
+
+      return {
+        section: section,
+        navGroup: readString(page.navGroup, fallback.navGroup),
+        navGroupOrder:
+          Number.isFinite(page.navGroupOrder) && page.navGroupOrder !== Number.MAX_SAFE_INTEGER
+            ? page.navGroupOrder
+            : fallback.navGroupOrder,
+        navGroupIcon: readString(page.navGroupIcon, fallback.navGroupIcon),
+      };
+    }
+
+    return fallback;
   }
 
   function autoPopulateCreateSlug() {
@@ -2509,7 +4214,11 @@
     var shouldDisable = state.editorSaving || state.imageUploading;
 
     if (shouldDisable) {
+      closeEditorMarkdownContextMenu();
+      closeLinkEditor();
       closeInternalLinkPicker();
+      closeTooltipEditor();
+      closeEditorImagePicker();
       closeMediaLibraryPanel();
     }
 
@@ -2544,10 +4253,21 @@
       state.elements.editorSubmit.disabled = shouldDisable;
     }
 
+    if (state.elements.editorTabButtons && state.elements.editorTabButtons.length) {
+      for (var tbi = 0; tbi < state.elements.editorTabButtons.length; tbi += 1) {
+        state.elements.editorTabButtons[tbi].disabled = shouldDisable;
+      }
+    }
+
     if (state.elements.editorMarkdownToolbar) {
       var toolbarButtons = state.elements.editorMarkdownToolbar.querySelectorAll("button[data-md-action]");
       for (var b = 0; b < toolbarButtons.length; b += 1) {
         toolbarButtons[b].disabled = shouldDisable;
+      }
+
+      var toolbarSelects = state.elements.editorMarkdownToolbar.querySelectorAll("select[data-md-block-style]");
+      for (var selectIndex = 0; selectIndex < toolbarSelects.length; selectIndex += 1) {
+        toolbarSelects[selectIndex].disabled = shouldDisable;
       }
     }
 
@@ -2613,7 +4333,7 @@
       }
 
       var altText = readString(state.elements.editorImageAlt && state.elements.editorImageAlt.value, "Immagine");
-      var markdownImage = "![" + escapeMarkdownAltText(altText) + "](" + publicUrl + ")";
+      var markdownImage = buildWikiImageHtml(publicUrl, altText, "full", "100%");
 
       insertMarkdownInEditor(markdownImage);
       setImageUploadStatus("Immagine caricata e inserita nel contenuto.", "success");
@@ -2705,64 +4425,111 @@
   }
 
   function applyMarkdownToolbarAction(action) {
+    if (isVisualEditorMode()) {
+      if (applyVisualToolbarAction(action)) {
+        return;
+      }
+
+      syncVisualEditorToMarkdown();
+      setEditorSourceMode("html", { skipSync: true });
+    }
+
     var textarea = getEditorMarkdownTextarea();
     if (!textarea || !action) {
       return;
     }
 
+    if (action === "paragraph") {
+      wrapHtmlSelection(textarea, '<div class="wiki-paragraph">', "</div>", "Testo base");
+      return;
+    }
+
+    if (action === "h1") {
+      wrapHtmlSelection(textarea, "<h1>", "</h1>", "Titolo");
+      return;
+    }
+
     if (action === "h2") {
-      applyHeadingAction(textarea, 2);
+      wrapHtmlSelection(textarea, "<h2>", "</h2>", "Titolo");
       return;
     }
 
     if (action === "h3") {
-      applyHeadingAction(textarea, 3);
+      wrapHtmlSelection(textarea, "<h3>", "</h3>", "Titolo");
       return;
     }
 
     if (action === "bold") {
-      wrapSelection(textarea, "**", "**", "testo");
+      wrapHtmlSelection(textarea, "<strong>", "</strong>", "testo");
       return;
     }
 
     if (action === "italic") {
-      wrapSelection(textarea, "*", "*", "testo");
+      wrapHtmlSelection(textarea, "<em>", "</em>", "testo");
+      return;
+    }
+
+    if (action === "underline") {
+      wrapHtmlSelection(textarea, "<u>", "</u>", "testo");
       return;
     }
 
     if (action === "ul") {
-      prefixSelectionLines(textarea, function () {
-        return "- ";
-      }, "- voce elenco", 2);
+      wrapHtmlSelection(textarea, "<ul><li>", "</li></ul>", "voce elenco");
       return;
     }
 
     if (action === "ol") {
-      prefixSelectionLines(
-        textarea,
-        function (index) {
-          return String(index + 1) + ". ";
-        },
-        "1. primo elemento",
-        3
-      );
+      wrapHtmlSelection(textarea, "<ol><li>", "</li></ol>", "primo elemento");
+      return;
+    }
+
+    if (action === "checklist") {
+      insertBlockAtCursor(textarea, buildWikiChecklistHtml(["Prima voce", "Seconda voce", "Terza voce"]));
       return;
     }
 
     if (action === "quote") {
-      prefixSelectionLines(textarea, function () {
-        return "> ";
-      }, "> nota", 2);
+      wrapHtmlSelection(textarea, "<blockquote>", "</blockquote>", "citazione");
+      return;
+    }
+
+    if (action === "box") {
+      openEditorBoxPicker(textarea);
+      return;
+    }
+
+    if (action === "stepper") {
+      insertBlockAtCursor(textarea, buildWikiStepperHtml([
+        { title: "Primo passo", body: "Descrivi cosa fare in questo passaggio." },
+        { title: "Secondo passo", body: "Aggiungi istruzioni, note o requisiti." },
+        { title: "Terzo passo", body: "Chiudi il processo con il risultato atteso." }
+      ]));
+      return;
+    }
+
+    if (action === "expandable") {
+      insertBlockAtCursor(textarea, buildWikiExpandableHtml("Titolo expandable", "Scrivi qui il contenuto nascosto."));
+      return;
+    }
+
+    if (action === "columns") {
+      insertBlockAtCursor(textarea, buildWikiColumnsHtml(2));
+      return;
+    }
+
+    if (action === "table") {
+      insertBlockAtCursor(textarea, buildWikiTableHtml(3, 3));
       return;
     }
 
     if (action === "divider") {
-      insertBlockAtCursor(textarea, "---");
+      insertBlockAtCursor(textarea, "<hr>");
       return;
     }
 
     if (action === "link") {
-      applyLinkAction(textarea, false);
+      toggleLinkEditor(textarea);
       return;
     }
 
@@ -2771,8 +4538,13 @@
       return;
     }
 
+    if (action === "tooltip") {
+      applyTooltipAction(textarea);
+      return;
+    }
+
     if (action === "image") {
-      applyLinkAction(textarea, true);
+      toggleEditorImagePicker(textarea);
       return;
     }
 
@@ -2782,12 +4554,3443 @@
     }
 
     if (action === "inline-code") {
-      wrapSelection(textarea, "`", "`", "codice");
+      wrapHtmlSelection(textarea, "<code>", "</code>", "codice");
       return;
     }
 
     if (action === "code-block") {
       applyCodeBlockAction(textarea);
+    }
+  }
+
+  function applyVisualToolbarAction(action) {
+    if (!state.elements || !state.elements.editorVisualEditor || !action) {
+      return false;
+    }
+
+    var editor = state.elements.editorVisualEditor;
+    try {
+      editor.focus({ preventScroll: true });
+    } catch (_error) {
+      editor.focus();
+    }
+
+    if (action === "link") {
+      openVisualLinkEditor();
+      return true;
+    }
+
+    if (action === "tooltip") {
+      openVisualTooltipEditor();
+      return true;
+    }
+
+    if (action === "internal-link") {
+      openVisualInternalLinkPicker();
+      return true;
+    }
+
+    if (action === "image") {
+      openVisualImagePicker();
+      return true;
+    }
+
+    if (action === "text-color") {
+      openVisualColorPicker();
+      return true;
+    }
+
+    if (action === "paragraph") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      applyVisualParagraphFormat();
+      return true;
+    }
+
+    if (action === "bold") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("bold", false, null);
+      return true;
+    }
+
+    if (action === "italic") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("italic", false, null);
+      return true;
+    }
+
+    if (action === "underline") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("underline", false, null);
+      return true;
+    }
+
+    if (action === "ul") {
+      applyVisualListFormat(false);
+      return true;
+    }
+
+    if (action === "ol") {
+      applyVisualListFormat(true);
+      return true;
+    }
+
+    if (action === "checklist") {
+      insertVisualHtmlBlock(buildWikiChecklistHtml(["Prima voce", "Seconda voce", "Terza voce"]));
+      return true;
+    }
+
+    if (action === "h1") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("formatBlock", false, "h1");
+      return true;
+    }
+
+    if (action === "h2") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("formatBlock", false, "h2");
+      return true;
+    }
+
+    if (action === "h3") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("formatBlock", false, "h3");
+      return true;
+    }
+
+    if (action === "quote") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("formatBlock", false, "blockquote");
+      return true;
+    }
+
+    if (action === "divider") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("insertHTML", false, "<hr>");
+      return true;
+    }
+
+    if (action === "inline-code") {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand("insertHTML", false, "<code>codice</code>");
+      return true;
+    }
+
+    if (action === "box") {
+      openVisualBoxPicker();
+      return true;
+    }
+
+    if (action === "stepper") {
+      insertVisualHtmlBlock(buildWikiStepperHtml([
+        { title: "Primo passo", body: "Descrivi cosa fare in questo passaggio." },
+        { title: "Secondo passo", body: "Aggiungi istruzioni, note o requisiti." },
+        { title: "Terzo passo", body: "Chiudi il processo con il risultato atteso." }
+      ]));
+      return true;
+    }
+
+    if (action === "expandable") {
+      insertVisualHtmlBlock(buildWikiExpandableHtml("Titolo expandable", "Scrivi qui il contenuto nascosto."));
+      return true;
+    }
+
+    if (action === "columns") {
+      insertVisualHtmlBlock(buildWikiColumnsHtml(2));
+      return true;
+    }
+
+    if (action === "table") {
+      insertVisualHtmlBlock(buildWikiTableHtml(3, 3));
+      return true;
+    }
+
+    return false;
+  }
+
+  function applyVisualListFormat(isOrdered) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !window.getSelection) {
+      return;
+    }
+
+    var range = getCurrentVisualRange();
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand(isOrdered ? "insertOrderedList" : "insertUnorderedList", false, null);
+      return;
+    }
+
+    var boxContent = findVisualWikiBoxContentFromRange(range);
+    if (!boxContent) {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      document.execCommand(isOrdered ? "insertOrderedList" : "insertUnorderedList", false, null);
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    var currentBlock = getClosestVisualBlockWithin(boxContent, range.commonAncestorContainer);
+    var selectedText = readString(range.toString(), "");
+    var lineBreakPattern = new RegExp(String.fromCharCode(13) + "?" + String.fromCharCode(10));
+    var lines = selectedText
+      ? selectedText.split(lineBreakPattern).map(function mapSelectedLine(line) {
+        return readString(line, "");
+      }).filter(Boolean)
+      : [];
+
+    if (!lines.length && currentBlock && !currentBlock.classList.contains("wiki-box__title")) {
+      lines = readString(currentBlock.textContent, "voce elenco").split(lineBreakPattern).map(function mapBlockLine(line) {
+        return readString(line, "");
+      }).filter(Boolean);
+    }
+
+    if (!lines.length) {
+      lines = [isOrdered ? "primo elemento" : "voce elenco"];
+    }
+
+    var list = document.createElement(isOrdered ? "ol" : "ul");
+    for (var i = 0; i < lines.length; i += 1) {
+      var item = document.createElement("li");
+      item.textContent = lines[i];
+      list.appendChild(item);
+    }
+
+    if (currentBlock && currentBlock.parentNode === boxContent && !currentBlock.classList.contains("wiki-box__title")) {
+      currentBlock.parentNode.replaceChild(list, currentBlock);
+    } else {
+      insertNodeInVisualContainerAtRange(boxContent, list, range);
+    }
+
+    placeCaretInsideElement(list.querySelector("li") || list, false);
+    prepareVisualEditorDomForEditing(editor);
+  }
+
+  function applyVisualParagraphFormat() {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !window.getSelection) {
+      return;
+    }
+
+    var selection = window.getSelection();
+    var range = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+    var block = range && range.commonAncestorContainer ? range.commonAncestorContainer : null;
+
+    if (block && block.nodeType === Node.TEXT_NODE) {
+      block = block.parentNode;
+    }
+
+    if (block && block.closest) {
+      block = block.closest("h1, h2, h3, p, div, blockquote, li");
+    }
+
+    if (!block || !editor.contains(block) || block === editor) {
+      document.execCommand("formatBlock", false, "div");
+      block = getCurrentVisualRangeBlock();
+    }
+
+    if (!block || !editor.contains(block) || block === editor) {
+      return;
+    }
+
+    var paragraph = document.createElement("div");
+    paragraph.className = "wiki-paragraph";
+    paragraph.innerHTML = block.innerHTML || "<br>";
+    block.parentNode.replaceChild(paragraph, block);
+
+    var nextRange = document.createRange();
+    nextRange.selectNodeContents(paragraph);
+    nextRange.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(nextRange);
+  }
+
+  function getCurrentVisualRangeBlock() {
+    var range = getCurrentVisualRange();
+    var node = range && range.commonAncestorContainer ? range.commonAncestorContainer : null;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
+    }
+    return node && node.closest ? node.closest("h1, h2, h3, p, div, blockquote, li") : null;
+  }
+
+  function getVisualEditorBlockFromTarget(target) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !target || !target.closest) {
+      return null;
+    }
+
+    if (!editor.contains(target)) {
+      return null;
+    }
+
+    var block = target.closest("h1, h2, h3, p, ul, ol, blockquote, pre, table, details, hr, .wiki-box, .wiki-image--full, .wiki-stepper, .wiki-checklist, .wiki-expandable, .wiki-columns");
+    if (!block || block === editor || !editor.contains(block)) {
+      return null;
+    }
+
+    while (block.parentElement && block.parentElement !== editor) {
+      block = block.parentElement;
+    }
+
+    if (!block || block === editor || !editor.contains(block)) {
+      return null;
+    }
+
+    return block;
+  }
+
+  function ensureVisualBlockControls() {
+    if (state.visualBlockControls && state.visualBlockControls.root && state.visualBlockControls.root.isConnected) {
+      return state.visualBlockControls;
+    }
+
+    var root = document.createElement("div");
+    root.className = "docs-visual-block-controls";
+    root.setAttribute("data-docs-visual-block-controls", "");
+    root.hidden = true;
+
+    var addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "docs-visual-block-controls__btn";
+    addButton.setAttribute("aria-label", "Inserisci blocco");
+    addButton.setAttribute("title", "Inserisci blocco");
+    addButton.setAttribute("data-tooltip", "Inserisci blocco");
+    addButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
+
+    var dragHandle = document.createElement("button");
+    dragHandle.type = "button";
+    dragHandle.className = "docs-visual-block-controls__btn docs-visual-block-controls__handle";
+    dragHandle.setAttribute("aria-label", "Sposta blocco");
+    dragHandle.setAttribute("title", "Sposta blocco");
+    dragHandle.setAttribute("data-tooltip", "Sposta blocco");
+    dragHandle.setAttribute("draggable", "true");
+    dragHandle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
+
+    var deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "docs-visual-block-controls__btn docs-visual-block-controls__delete";
+    deleteButton.setAttribute("aria-label", "Elimina blocco");
+    deleteButton.setAttribute("title", "Elimina blocco");
+    deleteButton.setAttribute("data-tooltip", "Elimina blocco");
+    deleteButton.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
+
+    root.appendChild(addButton);
+    root.appendChild(dragHandle);
+    root.appendChild(deleteButton);
+    document.body.appendChild(root);
+
+    root.addEventListener("mouseenter", function onControlsEnter() {
+      root.setAttribute("data-hover", "true");
+    });
+
+    root.addEventListener("mouseleave", function onControlsLeave() {
+      root.removeAttribute("data-hover");
+      scheduleVisualBlockControlsClose();
+    });
+
+    addButton.addEventListener("mousedown", function onAddMouseDown(event) {
+      event.preventDefault();
+    });
+
+    addButton.addEventListener("click", function onAddClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      openVisualBlockInsertMenu();
+    });
+
+    deleteButton.addEventListener("mousedown", function onDeleteMouseDown(event) {
+      event.preventDefault();
+    });
+
+    deleteButton.addEventListener("click", function onDeleteClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      deleteVisualBlockTarget();
+    });
+
+    dragHandle.addEventListener("dragstart", function onHandleDragStart(event) {
+      startVisualBlockDrag(event);
+    });
+
+    dragHandle.addEventListener("dragend", function onHandleDragEnd() {
+      clearVisualBlockDragState();
+    });
+
+    state.visualBlockControls = {
+      root: root,
+      addButton: addButton,
+      dragHandle: dragHandle,
+      deleteButton: deleteButton,
+    };
+
+    return state.visualBlockControls;
+  }
+
+  function handleVisualEditorMouseMove(event) {
+    if (!isVisualEditorMode()) {
+      return;
+    }
+
+    var block = getVisualEditorBlockFromTarget(event.target);
+    if (!block) {
+      scheduleVisualBlockControlsClose();
+      return;
+    }
+
+    showVisualBlockControls(block);
+  }
+
+  function showVisualBlockControls(block) {
+    if (!block || !state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    var controls = ensureVisualBlockControls();
+    if (!controls || !controls.root) {
+      return;
+    }
+
+    if (state.visualBlockCloseTimer) {
+      window.clearTimeout(state.visualBlockCloseTimer);
+      state.visualBlockCloseTimer = 0;
+    }
+
+    state.visualBlockTarget = block;
+    controls.root.hidden = false;
+
+    if (controls.deleteButton) {
+      controls.deleteButton.hidden = !isDeletableVisualBlock(block);
+    }
+
+    var rect = block.getBoundingClientRect();
+    var left = Math.max(8, rect.left - 42);
+    var top = Math.max(8, rect.top + 2);
+
+    controls.root.style.left = left + "px";
+    controls.root.style.top = top + "px";
+  }
+
+  function scheduleVisualBlockControlsClose() {
+    if (state.visualBlockCloseTimer) {
+      window.clearTimeout(state.visualBlockCloseTimer);
+    }
+
+    state.visualBlockCloseTimer = window.setTimeout(function closeVisualBlockControlsLater() {
+      state.visualBlockCloseTimer = 0;
+      var controls = state.visualBlockControls;
+      if (!controls || !controls.root || controls.root.getAttribute("data-hover") === "true") {
+        return;
+      }
+
+      if (state.visualBlockDrag) {
+        return;
+      }
+
+      controls.root.hidden = true;
+      state.visualBlockTarget = null;
+    }, 220);
+  }
+
+  function closeVisualBlockControls() {
+    if (state.visualBlockCloseTimer) {
+      window.clearTimeout(state.visualBlockCloseTimer);
+      state.visualBlockCloseTimer = 0;
+    }
+
+    if (state.visualBlockControls && state.visualBlockControls.root) {
+      state.visualBlockControls.root.hidden = true;
+    }
+
+    state.visualBlockTarget = null;
+  }
+
+  function isDeletableVisualBlock(block) {
+    if (!block || !block.classList) {
+      return false;
+    }
+
+    var tag = String(block.tagName || "").toLowerCase();
+    return (
+      block.classList.contains("wiki-box") ||
+      block.classList.contains("wiki-stepper") ||
+      block.classList.contains("wiki-checklist") ||
+      block.classList.contains("wiki-image--full") ||
+      block.classList.contains("wiki-expandable") ||
+      block.classList.contains("wiki-columns") ||
+      tag === "table" ||
+      tag === "details" ||
+      tag === "blockquote" ||
+      tag === "pre"
+    );
+  }
+
+  function ensureVisualEditorStepperAddButtons(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    var steppers = root.querySelectorAll(".wiki-stepper");
+    for (var i = 0; i < steppers.length; i += 1) {
+      var stepper = steppers[i];
+      var addStep = stepper.querySelector("[data-wiki-stepper-add]");
+
+      if (!addStep) {
+        addStep = buildVisualStepperAddButton();
+        stepper.appendChild(addStep);
+      } else if (addStep.parentNode !== stepper) {
+        stepper.appendChild(addStep);
+      } else if (addStep.nextElementSibling) {
+        stepper.appendChild(addStep);
+      }
+
+      addStep.setAttribute("contenteditable", "false");
+      renumberVisualStepper(stepper);
+    }
+  }
+
+  function buildVisualStepperAddButton() {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "wiki-step wiki-step--add";
+    button.setAttribute("data-wiki-stepper-add", "");
+    button.setAttribute("contenteditable", "false");
+    button.setAttribute("aria-label", "Aggiungi step");
+    button.setAttribute("title", "Aggiungi step");
+
+    button.innerHTML =
+      '<span class="wiki-step__rail" aria-hidden="true">' +
+      '<span class="wiki-step__number wiki-step__number--add"><i class="fa-solid fa-plus" aria-hidden="true"></i></span>' +
+      '</span>' +
+      '<span class="wiki-step__body wiki-step__body--add" aria-hidden="true"></span>';
+
+    return button;
+  }
+
+  function getVisualStepperSteps(stepper) {
+    if (!stepper || !stepper.children) {
+      return [];
+    }
+
+    var steps = [];
+    for (var i = 0; i < stepper.children.length; i += 1) {
+      var child = stepper.children[i];
+      if (!child || !child.classList || !child.classList.contains("wiki-step") || child.hasAttribute("data-wiki-stepper-add")) {
+        continue;
+      }
+
+      steps.push(child);
+    }
+
+    return steps;
+  }
+
+  function renumberVisualStepper(stepper) {
+    var steps = getVisualStepperSteps(stepper);
+    for (var i = 0; i < steps.length; i += 1) {
+      var number = steps[i].querySelector(".wiki-step__number");
+      if (number) {
+        number.textContent = String(i + 1);
+      }
+    }
+  }
+
+  function buildVisualStepperStep(stepNumber) {
+    var step = document.createElement("section");
+    step.className = "wiki-step";
+    step.innerHTML =
+      '<div class="wiki-step__rail" aria-hidden="true">' +
+      '<span class="wiki-step__number">' + String(stepNumber) + '</span>' +
+      '</div>' +
+      '<div class="wiki-step__body">' +
+      '<h3>Passo ' + String(stepNumber) + '</h3>' +
+      '<p>Descrizione del passaggio.</p>' +
+      '</div>';
+    return step;
+  }
+
+  function handleVisualStepperClick(event) {
+    if (!isVisualEditorMode() || !event || !event.target || !event.target.closest) {
+      return;
+    }
+
+    var addStep = event.target.closest("[data-wiki-stepper-add]");
+    if (!addStep || !state.elements || !state.elements.editorVisualEditor.contains(addStep)) {
+      return;
+    }
+
+    var stepper = addStep.closest(".wiki-stepper");
+    if (!stepper) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    var nextNumber = getVisualStepperSteps(stepper).length + 1;
+    var step = buildVisualStepperStep(nextNumber);
+    stepper.insertBefore(step, addStep);
+    renumberVisualStepper(stepper);
+    prepareVisualEditorDomForEditing(state.elements.editorVisualEditor);
+
+    var title = step.querySelector("h3");
+    if (title && window.getSelection) {
+      var range = document.createRange();
+      range.selectNodeContents(title);
+      range.collapse(false);
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    try {
+      state.elements.editorVisualEditor.focus({ preventScroll: true });
+    } catch (_error) {
+      state.elements.editorVisualEditor.focus();
+    }
+  }
+
+  function getVisualColumnsFromTarget(target) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !target || !target.closest) {
+      return null;
+    }
+
+    var columns = target.closest(".wiki-columns");
+    return columns && editor.contains(columns) ? columns : null;
+  }
+
+  function handleVisualColumnsClick(event) {
+    if (!isVisualEditorMode()) {
+      return;
+    }
+
+    var columns = getVisualColumnsFromTarget(event && event.target);
+    if (!columns) {
+      return;
+    }
+
+    state.editorColumnsContext = { columns: columns };
+    openEditorColumnsPanel(columns);
+  }
+
+  function ensureEditorColumnsPanel() {
+    if (state.editorColumnsPanel && state.editorColumnsPanel.isConnected) {
+      return state.editorColumnsPanel;
+    }
+
+    var panel = document.createElement("div");
+    panel.className = "docs-editor-md-context docs-columns-panel";
+    panel.setAttribute("data-docs-columns-panel", "");
+    panel.setAttribute("role", "menu");
+    panel.setAttribute("aria-label", "Dimensioni colonne");
+    panel.hidden = true;
+
+    panel.innerHTML =
+      '<p class="docs-columns-panel__label">Larghezza colonne</p>' +
+      '<div class="docs-columns-panel__presets">' +
+      '<button type="button" class="docs-editor-md-context__action" data-columns-layout="50,50"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><span>50 / 50</span></button>' +
+      '<button type="button" class="docs-editor-md-context__action" data-columns-layout="33,67"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><span>33 / 67</span></button>' +
+      '<button type="button" class="docs-editor-md-context__action" data-columns-layout="67,33"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><span>67 / 33</span></button>' +
+      '<button type="button" class="docs-editor-md-context__action" data-columns-layout="33,34,33"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><span>33 / 34 / 33</span></button>' +
+      '<button type="button" class="docs-editor-md-context__action" data-columns-layout="25,50,25"><i class="fa-solid fa-table-columns" aria-hidden="true"></i><span>25 / 50 / 25</span></button>' +
+      '</div>' +
+      '<label class="docs-columns-panel__custom"><span>Custom %</span><input type="text" data-columns-custom placeholder="es. 40,60 oppure 25,50,25"></label>' +
+      '<button type="button" class="docs-editor-md-context__action docs-columns-panel__apply" data-columns-apply><i class="fa-solid fa-check" aria-hidden="true"></i><span>Applica</span></button>';
+
+    panel.addEventListener("mousedown", function onColumnsPanelMouseDown(event) {
+      if (event.target && event.target.closest && event.target.closest("input")) {
+        return;
+      }
+      event.preventDefault();
+    });
+
+    panel.addEventListener("click", function onColumnsPanelClick(event) {
+      var preset = event.target.closest("button[data-columns-layout]");
+      if (preset) {
+        event.preventDefault();
+        event.stopPropagation();
+        applyVisualColumnsWidths(preset.getAttribute("data-columns-layout"));
+        return;
+      }
+
+      var apply = event.target.closest("button[data-columns-apply]");
+      if (apply) {
+        event.preventDefault();
+        event.stopPropagation();
+        var input = panel.querySelector("[data-columns-custom]");
+        applyVisualColumnsWidths(input ? input.value : "");
+      }
+    });
+
+    document.body.appendChild(panel);
+    state.editorColumnsPanel = panel;
+    return panel;
+  }
+
+  function isEditorColumnsPanelOpen() {
+    return !!(state.editorColumnsPanel && !state.editorColumnsPanel.hasAttribute("hidden"));
+  }
+
+  function isEventInsideEditorColumnsUi(target) {
+    if (!target) {
+      return false;
+    }
+
+    if (state.editorColumnsPanel && state.editorColumnsPanel.contains(target)) {
+      return true;
+    }
+
+    if (target.closest && target.closest(".wiki-columns")) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function openEditorColumnsPanel(columns) {
+    var panel = ensureEditorColumnsPanel();
+    if (!panel || !columns) {
+      return;
+    }
+
+    var input = panel.querySelector("[data-columns-custom]");
+    if (input) {
+      input.value = readString(columns.getAttribute("data-wiki-column-widths"), "");
+    }
+
+    panel.hidden = false;
+    var rect = columns.getBoundingClientRect();
+    positionEditorPopoverAtPoint(panel, { x: rect.right, y: rect.top + 18 });
+  }
+
+  function closeEditorColumnsPanel() {
+    if (!state.editorColumnsPanel) {
+      return;
+    }
+
+    state.editorColumnsPanel.hidden = true;
+    resetEditorPopoverPlacement(state.editorColumnsPanel);
+    state.editorColumnsContext = null;
+  }
+
+  function parseColumnsWidthList(value) {
+    var parts = readString(value, "").split(",");
+    var widths = [];
+    var total = 0;
+
+    for (var i = 0; i < parts.length; i += 1) {
+      var parsed = Number(String(parts[i] || "").trim());
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        continue;
+      }
+
+      parsed = Math.max(5, Math.min(parsed, 95));
+      widths.push(Math.round(parsed * 100) / 100);
+      total += parsed;
+    }
+
+    if (widths.length < 2 || widths.length > 3 || total <= 0) {
+      return [];
+    }
+
+    var normalized = [];
+    var normalizedTotal = 0;
+    for (var w = 0; w < widths.length; w += 1) {
+      var valuePercent = Math.round((widths[w] / total) * 10000) / 100;
+      normalized.push(valuePercent);
+      normalizedTotal += valuePercent;
+    }
+
+    if (normalized.length) {
+      normalized[normalized.length - 1] = Math.round((normalized[normalized.length - 1] + (100 - normalizedTotal)) * 100) / 100;
+    }
+
+    return normalized;
+  }
+
+  function applyVisualColumnsWidths(value) {
+    var context = state.editorColumnsContext || {};
+    var columns = context.columns;
+    if (!columns || !columns.isConnected) {
+      closeEditorColumnsPanel();
+      return;
+    }
+
+    var widths = parseColumnsWidthList(value);
+    if (!widths.length) {
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    var currentColumns = Array.prototype.slice.call(columns.querySelectorAll(":scope > .wiki-column"));
+    var targetCount = widths.length;
+
+    while (currentColumns.length < targetCount) {
+      var newColumn = document.createElement("div");
+      newColumn.className = "wiki-column";
+      newColumn.innerHTML = "<p>Nuova colonna.</p>";
+      columns.appendChild(newColumn);
+      currentColumns.push(newColumn);
+    }
+
+    while (currentColumns.length > targetCount && currentColumns.length > 1) {
+      currentColumns.pop().remove();
+    }
+
+    columns.classList.remove("wiki-columns--2", "wiki-columns--3");
+    columns.classList.add("wiki-columns--" + String(targetCount));
+    columns.setAttribute("data-wiki-columns", String(targetCount));
+    columns.setAttribute("data-wiki-column-widths", widths.join(","));
+    columns.style.gridTemplateColumns = widths.map(function mapColumnWidth(width) {
+      return String(width) + "%";
+    }).join(" ");
+
+    closeEditorColumnsPanel();
+  }
+
+  function getVisualTableCellFromTarget(target) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !target || !target.closest) {
+      return null;
+    }
+
+    var cell = target.closest("th, td");
+    if (!cell || !editor.contains(cell)) {
+      return null;
+    }
+
+    var table = cell.closest("table");
+    return table && editor.contains(table) ? cell : null;
+  }
+
+  function readVisualTableContextFromCell(cell) {
+    if (!cell) {
+      return null;
+    }
+
+    var table = cell.closest("table");
+    var row = cell.closest("tr");
+    if (!table || !row) {
+      return null;
+    }
+
+    var rows = getVisualTableRows(table);
+    var cells = getVisualTableRowCells(row);
+    var rowIndex = rows.indexOf(row);
+    var columnIndex = cells.indexOf(cell);
+
+    if (rowIndex < 0 || columnIndex < 0) {
+      return null;
+    }
+
+    return {
+      table: table,
+      row: row,
+      cell: cell,
+      rowIndex: rowIndex,
+      columnIndex: columnIndex,
+    };
+  }
+
+  function getVisualTableRows(table) {
+    if (!table) {
+      return [];
+    }
+
+    return Array.prototype.slice.call(table.querySelectorAll("tr"));
+  }
+
+  function getVisualTableRowCells(row) {
+    if (!row) {
+      return [];
+    }
+
+    return Array.prototype.slice.call(row.children).filter(function filterTableCells(cell) {
+      var tag = String(cell.tagName || "").toLowerCase();
+      return tag === "td" || tag === "th";
+    });
+  }
+
+  function getVisualTableColumnCount(table) {
+    var rows = getVisualTableRows(table);
+    var max = 0;
+    for (var i = 0; i < rows.length; i += 1) {
+      max = Math.max(max, getVisualTableRowCells(rows[i]).length);
+    }
+
+    return max;
+  }
+
+  function ensureEditorTableControls() {
+    if (state.editorTableControls && state.editorTableControls.root && state.editorTableControls.root.isConnected) {
+      return state.editorTableControls;
+    }
+
+    var root = document.createElement("div");
+    root.className = "docs-table-controls";
+    root.setAttribute("data-docs-table-controls", "");
+    root.hidden = true;
+
+    var menuButton = document.createElement("button");
+    menuButton.type = "button";
+    menuButton.className = "docs-table-controls__cell-menu";
+    menuButton.setAttribute("aria-label", "Opzioni cella");
+    menuButton.setAttribute("title", "Opzioni cella");
+    menuButton.setAttribute("data-tooltip", "Opzioni cella");
+    menuButton.innerHTML = '<i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>';
+
+    var addRowButton = document.createElement("button");
+    addRowButton.type = "button";
+    addRowButton.className = "docs-table-controls__add docs-table-controls__add--row";
+    addRowButton.setAttribute("aria-label", "Aggiungi riga");
+    addRowButton.setAttribute("title", "Aggiungi riga");
+    addRowButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
+
+    var addColumnButton = document.createElement("button");
+    addColumnButton.type = "button";
+    addColumnButton.className = "docs-table-controls__add docs-table-controls__add--column";
+    addColumnButton.setAttribute("aria-label", "Aggiungi colonna");
+    addColumnButton.setAttribute("title", "Aggiungi colonna");
+    addColumnButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
+
+    var rowHandles = document.createElement("div");
+    rowHandles.className = "docs-table-controls__row-handles";
+
+    var columnHandles = document.createElement("div");
+    columnHandles.className = "docs-table-controls__column-handles";
+
+    var dropIndicator = document.createElement("span");
+    dropIndicator.className = "docs-table-controls__drop-indicator";
+    dropIndicator.setAttribute("aria-hidden", "true");
+    dropIndicator.hidden = true;
+
+    root.appendChild(dropIndicator);
+    root.appendChild(rowHandles);
+    root.appendChild(columnHandles);
+    root.appendChild(menuButton);
+    root.appendChild(addRowButton);
+    root.appendChild(addColumnButton);
+    document.body.appendChild(root);
+
+    root.addEventListener("mouseenter", function onTableControlsEnter() {
+      root.setAttribute("data-hover", "true");
+    });
+
+    root.addEventListener("mouseleave", function onTableControlsLeave() {
+      root.removeAttribute("data-hover");
+      scheduleVisualTableControlsClose();
+    });
+
+    menuButton.addEventListener("mousedown", function onTableMenuMouseDown(event) {
+      event.preventDefault();
+    });
+
+    menuButton.addEventListener("click", function onTableMenuClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      openEditorTableMenu();
+    });
+
+    addRowButton.addEventListener("click", function onAddTableRowClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      addVisualTableRowAtEnd();
+    });
+
+    addColumnButton.addEventListener("click", function onAddTableColumnClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      addVisualTableColumnAtEnd();
+    });
+
+    root.addEventListener("dragstart", function onTableHandleDragStart(event) {
+      startVisualTableHandleDrag(event);
+    });
+
+    root.addEventListener("dragover", function onTableHandleDragOver(event) {
+      handleVisualTableHandleDragOver(event);
+    });
+
+    root.addEventListener("drop", function onTableHandleDrop(event) {
+      handleVisualTableHandleDrop(event);
+    });
+
+    root.addEventListener("dragend", function onTableHandleDragEnd() {
+      clearVisualTableDragState();
+    });
+
+    state.editorTableControls = {
+      root: root,
+      menuButton: menuButton,
+      addRowButton: addRowButton,
+      addColumnButton: addColumnButton,
+      rowHandles: rowHandles,
+      columnHandles: columnHandles,
+      dropIndicator: dropIndicator,
+    };
+
+    return state.editorTableControls;
+  }
+
+  function handleVisualTableMouseMove(event) {
+    if (!isVisualEditorMode()) {
+      return;
+    }
+
+    var cell = getVisualTableCellFromTarget(event && event.target);
+    if (!cell) {
+      scheduleVisualTableControlsClose();
+      return;
+    }
+
+    showVisualTableControls(cell);
+  }
+
+  function handleVisualTableClick(event) {
+    if (!isVisualEditorMode()) {
+      return;
+    }
+
+    var cell = getVisualTableCellFromTarget(event && event.target);
+    if (cell) {
+      state.editorTableContext = readVisualTableContextFromCell(cell);
+      showVisualTableControls(cell);
+    }
+  }
+
+  function showVisualTableControls(cell) {
+    var context = readVisualTableContextFromCell(cell);
+    if (!context || !context.table) {
+      return;
+    }
+
+    var controls = ensureEditorTableControls();
+    if (!controls || !controls.root) {
+      return;
+    }
+
+    if (state.visualBlockCloseTimer) {
+      window.clearTimeout(state.visualBlockCloseTimer);
+      state.visualBlockCloseTimer = 0;
+    }
+
+    state.editorTableContext = context;
+    controls.root.hidden = false;
+
+    positionVisualTableControls(context);
+  }
+
+  function positionVisualTableControls(context) {
+    var controls = ensureEditorTableControls();
+    if (!controls || !controls.root || !context || !context.table || !context.cell) {
+      return;
+    }
+
+    var tableRect = context.table.getBoundingClientRect();
+    var cellRect = context.cell.getBoundingClientRect();
+    var root = controls.root;
+
+    root.style.left = "0px";
+    root.style.top = "0px";
+
+    controls.menuButton.style.left = Math.round(cellRect.right - 14) + "px";
+    controls.menuButton.style.top = Math.round(cellRect.top + cellRect.height / 2 - 13) + "px";
+
+    controls.addRowButton.style.left = Math.round(tableRect.left) + "px";
+    controls.addRowButton.style.top = Math.round(tableRect.bottom + 7) + "px";
+    controls.addRowButton.style.width = Math.max(26, Math.round(tableRect.width)) + "px";
+    controls.addRowButton.style.height = "26px";
+
+    controls.addColumnButton.style.left = Math.round(tableRect.right + 7) + "px";
+    controls.addColumnButton.style.top = Math.round(tableRect.top) + "px";
+    controls.addColumnButton.style.width = "26px";
+    controls.addColumnButton.style.height = Math.max(26, Math.round(tableRect.height)) + "px";
+
+    renderVisualTableHandles(context.table, controls, context);
+  }
+
+  function renderVisualTableHandles(table, controls, context) {
+    if (!table || !controls || !context) {
+      return;
+    }
+
+    controls.rowHandles.innerHTML = "";
+    controls.columnHandles.innerHTML = "";
+
+    var rows = getVisualTableRows(table);
+    var activeRowIndex = Math.max(0, Math.min(Number(context.rowIndex) || 0, rows.length - 1));
+    var activeRow = rows[activeRowIndex];
+
+    if (activeRow) {
+      var rowRect = activeRow.getBoundingClientRect();
+      var rowHandle = document.createElement("button");
+      rowHandle.type = "button";
+      rowHandle.className = "docs-table-controls__handle docs-table-controls__handle--row";
+      rowHandle.setAttribute("draggable", "true");
+      rowHandle.setAttribute("data-table-row-handle", String(activeRowIndex));
+      rowHandle.setAttribute("aria-label", "Sposta riga " + String(activeRowIndex + 1));
+      rowHandle.innerHTML = '<i class="fa-solid fa-grip-lines" aria-hidden="true"></i>';
+      rowHandle.style.left = Math.round(rowRect.left - 26) + "px";
+      rowHandle.style.top = Math.round(rowRect.top + rowRect.height / 2 - 10) + "px";
+      controls.rowHandles.appendChild(rowHandle);
+    }
+
+    var firstRow = rows[0];
+    var firstCells = getVisualTableRowCells(firstRow);
+    var activeColumnIndex = Math.max(0, Math.min(Number(context.columnIndex) || 0, firstCells.length - 1));
+    var activeCell = firstCells[activeColumnIndex];
+
+    if (activeCell) {
+      var cellRect = activeCell.getBoundingClientRect();
+      var columnHandle = document.createElement("button");
+      columnHandle.type = "button";
+      columnHandle.className = "docs-table-controls__handle docs-table-controls__handle--column";
+      columnHandle.setAttribute("draggable", "true");
+      columnHandle.setAttribute("data-table-column-handle", String(activeColumnIndex));
+      columnHandle.setAttribute("aria-label", "Sposta colonna " + String(activeColumnIndex + 1));
+      columnHandle.innerHTML = '<i class="fa-solid fa-grip-lines" aria-hidden="true"></i>';
+      columnHandle.style.left = Math.round(cellRect.left + cellRect.width / 2 - 10) + "px";
+      columnHandle.style.top = Math.round(cellRect.top - 26) + "px";
+      controls.columnHandles.appendChild(columnHandle);
+    }
+  }
+
+  function scheduleVisualTableControlsClose() {
+    var controls = state.editorTableControls;
+    if (!controls || !controls.root) {
+      return;
+    }
+
+    window.setTimeout(function closeVisualTableControlsLater() {
+      var currentControls = state.editorTableControls;
+      if (!currentControls || !currentControls.root || currentControls.root.getAttribute("data-hover") === "true") {
+        return;
+      }
+
+      if (isEditorTableMenuOpen() || state.editorTableDrag) {
+        return;
+      }
+
+      closeVisualTableControls();
+    }, 220);
+  }
+
+  function closeVisualTableControls() {
+    if (state.editorTableControls && state.editorTableControls.root) {
+      state.editorTableControls.root.hidden = true;
+      state.editorTableControls.rowHandles.innerHTML = "";
+      state.editorTableControls.columnHandles.innerHTML = "";
+      hideVisualTableDropIndicator();
+    }
+
+    state.editorTableContext = null;
+  }
+
+  function isEventInsideEditorTableUi(target) {
+    if (!target) {
+      return false;
+    }
+
+    if (state.editorTableControls && state.editorTableControls.root && state.editorTableControls.root.contains(target)) {
+      return true;
+    }
+
+    if (state.editorTableMenu && state.editorTableMenu.contains(target)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function ensureEditorTableMenu() {
+    if (state.editorTableMenu && state.editorTableMenu.isConnected) {
+      return state.editorTableMenu;
+    }
+
+    var menu = document.createElement("div");
+    menu.className = "docs-editor-md-context docs-table-menu";
+    menu.setAttribute("data-docs-table-menu", "");
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", "Opzioni tabella");
+    menu.hidden = true;
+
+    var actions = [
+      { action: "toggle-header", icon: "fa-solid fa-heading", label: "Mostra/nascondi header" },
+      { separator: true },
+      { action: "row-above", icon: "fa-solid fa-arrow-up", label: "Riga sopra" },
+      { action: "row-below", icon: "fa-solid fa-arrow-down", label: "Riga sotto" },
+      { action: "delete-row", icon: "fa-solid fa-trash", label: "Elimina riga" },
+      { separator: true },
+      { action: "col-left", icon: "fa-solid fa-arrow-left", label: "Colonna a sinistra" },
+      { action: "col-right", icon: "fa-solid fa-arrow-right", label: "Colonna a destra" },
+      { action: "delete-col", icon: "fa-solid fa-trash", label: "Elimina colonna" },
+      { separator: true },
+      { action: "align-left", icon: "fa-solid fa-align-left", label: "Allinea a sinistra" },
+      { action: "align-center", icon: "fa-solid fa-align-center", label: "Allinea al centro" },
+      { action: "align-right", icon: "fa-solid fa-align-right", label: "Allinea a destra" },
+      { separator: true },
+      { action: "valign-top", icon: "fa-solid fa-arrow-up-short-wide", label: "Allinea in alto" },
+      { action: "valign-middle", icon: "fa-solid fa-arrows-up-down", label: "Allinea al centro verticale" },
+      { action: "valign-bottom", icon: "fa-solid fa-arrow-down-wide-short", label: "Allinea in basso" },
+    ];
+
+    for (var i = 0; i < actions.length; i += 1) {
+      var item = actions[i];
+      if (item.separator) {
+        var separator = document.createElement("span");
+        separator.className = "docs-editor-md-context__separator";
+        separator.setAttribute("aria-hidden", "true");
+        menu.appendChild(separator);
+        continue;
+      }
+
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-editor-md-context__action";
+      button.setAttribute("data-table-action", item.action);
+      button.setAttribute("role", "menuitem");
+      button.setAttribute("aria-label", item.label);
+      button.innerHTML = '<i class="' + item.icon + '" aria-hidden="true"></i><span>' + item.label + '</span>';
+      menu.appendChild(button);
+    }
+
+    menu.addEventListener("mousedown", function onTableMenuMouseDown(event) {
+      event.preventDefault();
+    });
+
+    menu.addEventListener("click", function onTableMenuActionClick(event) {
+      var button = event.target.closest("button[data-table-action]");
+      if (!button || button.disabled) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      applyVisualTableAction(button.getAttribute("data-table-action"));
+    });
+
+    document.body.appendChild(menu);
+    state.editorTableMenu = menu;
+    return menu;
+  }
+
+  function isEditorTableMenuOpen() {
+    return !!(state.editorTableMenu && !state.editorTableMenu.hasAttribute("hidden"));
+  }
+
+  function openEditorTableMenu() {
+    var context = state.editorTableContext;
+    if (!context || !context.cell || !context.cell.isConnected) {
+      return;
+    }
+
+    var menu = ensureEditorTableMenu();
+    if (!menu) {
+      return;
+    }
+
+    menu.hidden = false;
+    var rect = context.cell.getBoundingClientRect();
+    positionEditorPopoverAtPoint(menu, { x: rect.right, y: rect.top + rect.height / 2 });
+  }
+
+  function closeEditorTableMenu() {
+    if (!state.editorTableMenu) {
+      return;
+    }
+
+    state.editorTableMenu.hidden = true;
+    resetEditorPopoverPlacement(state.editorTableMenu);
+  }
+
+  function applyVisualTableAction(action) {
+    var context = state.editorTableContext;
+    if (!context || !context.table || !context.cell || !context.table.isConnected) {
+      closeEditorTableMenu();
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    if (action === "toggle-header") {
+      toggleVisualTableHeader(context.table);
+    } else if (action === "row-above") {
+      insertVisualTableRow(context.table, context.rowIndex);
+    } else if (action === "row-below") {
+      insertVisualTableRow(context.table, context.rowIndex + 1);
+    } else if (action === "delete-row") {
+      deleteVisualTableRow(context.table, context.rowIndex);
+    } else if (action === "col-left") {
+      insertVisualTableColumn(context.table, context.columnIndex);
+    } else if (action === "col-right") {
+      insertVisualTableColumn(context.table, context.columnIndex + 1);
+    } else if (action === "delete-col") {
+      deleteVisualTableColumn(context.table, context.columnIndex);
+    } else if (action.indexOf("align-") === 0) {
+      setVisualTableCellHorizontalAlign(context.cell, action.replace("align-", ""));
+    } else if (action.indexOf("valign-") === 0) {
+      setVisualTableCellVerticalAlign(context.cell, action.replace("valign-", ""));
+    }
+
+    prepareVisualEditorDomForEditing(state.elements.editorVisualEditor);
+    closeEditorTableMenu();
+
+    if (context.cell && context.cell.isConnected) {
+      showVisualTableControls(context.cell);
+    } else {
+      closeVisualTableControls();
+    }
+  }
+
+  function createVisualTableCell(tagName, text) {
+    var cell = document.createElement(tagName || "td");
+    cell.textContent = readString(text, tagName === "th" ? "Colonna" : "Dato");
+    return cell;
+  }
+
+  function insertVisualTableRow(table, index) {
+    var rows = getVisualTableRows(table);
+    var columnCount = Math.max(1, getVisualTableColumnCount(table));
+    var insertIndex = Math.max(0, Math.min(Number(index) || 0, rows.length));
+    var body = table.tBodies && table.tBodies.length ? table.tBodies[0] : table;
+    var row = document.createElement("tr");
+
+    for (var c = 0; c < columnCount; c += 1) {
+      row.appendChild(createVisualTableCell("td", "Dato"));
+    }
+
+    if (insertIndex >= rows.length) {
+      body.appendChild(row);
+    } else {
+      rows[insertIndex].parentNode.insertBefore(row, rows[insertIndex]);
+    }
+  }
+
+  function deleteVisualTableRow(table, rowIndex) {
+    var rows = getVisualTableRows(table);
+    if (rows.length <= 1) {
+      return;
+    }
+
+    var index = Math.max(0, Math.min(Number(rowIndex) || 0, rows.length - 1));
+    rows[index].remove();
+
+    if (table.tHead && !table.tHead.querySelector("tr")) {
+      table.tHead.remove();
+    }
+  }
+
+  function insertVisualTableColumn(table, index) {
+    var rows = getVisualTableRows(table);
+    var columnCount = Math.max(1, getVisualTableColumnCount(table));
+    var insertIndex = Math.max(0, Math.min(Number(index) || 0, columnCount));
+
+    for (var r = 0; r < rows.length; r += 1) {
+      var row = rows[r];
+      var cells = getVisualTableRowCells(row);
+      var tag = cells.length && String(cells[0].tagName || "").toLowerCase() === "th" ? "th" : "td";
+      var newCell = createVisualTableCell(tag, tag === "th" ? "Colonna" : "Dato");
+
+      if (insertIndex >= cells.length) {
+        row.appendChild(newCell);
+      } else {
+        row.insertBefore(newCell, cells[insertIndex]);
+      }
+    }
+  }
+
+  function deleteVisualTableColumn(table, columnIndex) {
+    var columnCount = getVisualTableColumnCount(table);
+    if (columnCount <= 1) {
+      return;
+    }
+
+    var index = Math.max(0, Math.min(Number(columnIndex) || 0, columnCount - 1));
+    var rows = getVisualTableRows(table);
+
+    for (var r = 0; r < rows.length; r += 1) {
+      var cells = getVisualTableRowCells(rows[r]);
+      if (cells[index]) {
+        cells[index].remove();
+      }
+    }
+  }
+
+  function addVisualTableRowAtEnd() {
+    var context = state.editorTableContext;
+    if (!context || !context.table) {
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+    insertVisualTableRow(context.table, getVisualTableRows(context.table).length);
+    prepareVisualEditorDomForEditing(state.elements.editorVisualEditor);
+    showVisualTableControls(context.cell && context.cell.isConnected ? context.cell : context.table.querySelector("td, th"));
+  }
+
+  function addVisualTableColumnAtEnd() {
+    var context = state.editorTableContext;
+    if (!context || !context.table) {
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+    insertVisualTableColumn(context.table, getVisualTableColumnCount(context.table));
+    prepareVisualEditorDomForEditing(state.elements.editorVisualEditor);
+    showVisualTableControls(context.cell && context.cell.isConnected ? context.cell : context.table.querySelector("td, th"));
+  }
+
+  function toggleVisualTableHeader(table) {
+    if (!table) {
+      return;
+    }
+
+    var thead = table.tHead;
+    if (thead && thead.querySelector("tr")) {
+      var headerRow = thead.querySelector("tr");
+      var body = table.tBodies && table.tBodies.length ? table.tBodies[0] : table.createTBody();
+      var headerCells = getVisualTableRowCells(headerRow);
+      for (var h = 0; h < headerCells.length; h += 1) {
+        var td = document.createElement("td");
+        td.innerHTML = headerCells[h].innerHTML || "Dato";
+        headerRow.replaceChild(td, headerCells[h]);
+      }
+      body.insertBefore(headerRow, body.firstChild);
+      thead.remove();
+      return;
+    }
+
+    var rows = getVisualTableRows(table);
+    if (!rows.length) {
+      return;
+    }
+
+    var firstRow = rows[0];
+    var cells = getVisualTableRowCells(firstRow);
+    for (var c = 0; c < cells.length; c += 1) {
+      var th = document.createElement("th");
+      th.innerHTML = cells[c].innerHTML || "Colonna";
+      firstRow.replaceChild(th, cells[c]);
+    }
+
+    var newHead = table.createTHead();
+    newHead.appendChild(firstRow);
+  }
+
+  function clearVisualTableCellAlignClasses(cell) {
+    if (!cell || !cell.classList) {
+      return;
+    }
+
+    cell.classList.remove(
+      "wiki-cell-align-left",
+      "wiki-cell-align-center",
+      "wiki-cell-align-right",
+      "wiki-cell-valign-top",
+      "wiki-cell-valign-middle",
+      "wiki-cell-valign-bottom"
+    );
+  }
+
+  function setVisualTableCellHorizontalAlign(cell, align) {
+    if (!cell || !cell.classList) {
+      return;
+    }
+
+    cell.classList.remove("wiki-cell-align-left", "wiki-cell-align-center", "wiki-cell-align-right");
+    cell.classList.add("wiki-cell-align-" + (align === "center" || align === "right" ? align : "left"));
+  }
+
+  function setVisualTableCellVerticalAlign(cell, align) {
+    if (!cell || !cell.classList) {
+      return;
+    }
+
+    var value = align === "middle" || align === "bottom" ? align : "top";
+    cell.classList.remove("wiki-cell-valign-top", "wiki-cell-valign-middle", "wiki-cell-valign-bottom");
+    cell.classList.add("wiki-cell-valign-" + value);
+  }
+
+  function startVisualTableHandleDrag(event) {
+    var target = event && event.target && event.target.closest ? event.target.closest("[data-table-row-handle], [data-table-column-handle]") : null;
+    var context = state.editorTableContext;
+    if (!target || !context || !context.table) {
+      return;
+    }
+
+    event.stopPropagation();
+    closeEditorTableMenu();
+    closeEditorColumnsPanel();
+    closeVisualBlockControls();
+
+    var rowIndex = target.getAttribute("data-table-row-handle");
+    var columnIndex = target.getAttribute("data-table-column-handle");
+    state.editorTableDrag = {
+      table: context.table,
+      kind: rowIndex !== null ? "row" : "column",
+      sourceIndex: rowIndex !== null ? Number(rowIndex) : Number(columnIndex),
+      targetIndex: -1,
+    };
+
+    target.classList.add("is-dragging");
+    context.table.classList.add("is-table-drag-source");
+
+    if (state.elements && state.elements.editorVisualEditor) {
+      state.elements.editorVisualEditor.classList.add("is-table-drag-active");
+      state.elements.editorVisualEditor.style.userSelect = "none";
+      state.elements.editorVisualEditor.style.caretColor = "transparent";
+      state.elements.editorVisualEditor.style.cursor = "grabbing";
+    }
+
+    document.body.classList.add("is-wiki-table-dragging");
+
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.dropEffect = "move";
+      try {
+        event.dataTransfer.setData("text/plain", "wiki-table-" + state.editorTableDrag.kind);
+      } catch (_error) {
+        // Ignore dataTransfer errors.
+      }
+    }
+  }
+
+  function handleVisualTableHandleDragOver(event) {
+    handleVisualTableDragOver(event);
+  }
+
+  function handleVisualTableHandleDrop(event) {
+    handleVisualTableDrop(event);
+  }
+
+  function handleVisualTableDragOver(event) {
+    if (!state.editorTableDrag || !state.editorTableDrag.table) {
+      return;
+    }
+
+    var placement = resolveVisualTableDropPlacement(event);
+    if (!placement) {
+      hideVisualTableDropIndicator();
+      state.editorTableDrag.targetIndex = -1;
+      if (event && event.dataTransfer) {
+        event.dataTransfer.dropEffect = "none";
+      }
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    state.editorTableDrag.targetIndex = placement.insertIndex;
+    renderVisualTableDropIndicator(placement);
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move";
+    }
+  }
+
+  function handleVisualTableDrop(event) {
+    if (!state.editorTableDrag || !state.editorTableDrag.table) {
+      clearVisualTableDragState();
+      return;
+    }
+
+    var drag = state.editorTableDrag;
+    var placement = resolveVisualTableDropPlacement(event);
+
+    if (event && typeof event.preventDefault === "function") {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!placement) {
+      clearVisualTableDragState();
+      return;
+    }
+
+    var source = Number(drag.sourceIndex);
+    var target = Number(placement.insertIndex);
+
+    if (!Number.isFinite(source) || !Number.isFinite(target) || target < 0) {
+      clearVisualTableDragState();
+      return;
+    }
+
+    if (drag.kind === "row" && (target === source || target === source + 1)) {
+      clearVisualTableDragState();
+      return;
+    }
+
+    if (drag.kind === "column" && (target === source || target === source + 1)) {
+      clearVisualTableDragState();
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    if (drag.kind === "row") {
+      moveVisualTableRowToIndex(drag.table, source, target);
+    } else {
+      moveVisualTableColumnToIndex(drag.table, source, target);
+    }
+
+    prepareVisualEditorDomForEditing(state.elements.editorVisualEditor);
+
+    var nextCell = drag.table.querySelector("td, th");
+    clearVisualTableDragState();
+
+    if (nextCell) {
+      showVisualTableControls(nextCell);
+    }
+  }
+
+  function resolveVisualTableDropPlacement(event) {
+    var drag = state.editorTableDrag;
+    if (!drag || !drag.table || !drag.table.isConnected || !event) {
+      return null;
+    }
+
+    var table = drag.table;
+    var tableRect = table.getBoundingClientRect();
+    var x = Number(event.clientX);
+    var y = Number(event.clientY);
+    var margin = 18;
+
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return null;
+    }
+
+    if (x < tableRect.left - margin || x > tableRect.right + margin || y < tableRect.top - margin || y > tableRect.bottom + margin) {
+      return null;
+    }
+
+    if (drag.kind === "row") {
+      var rows = getVisualTableRows(table);
+      if (!rows.length) {
+        return null;
+      }
+
+      var rowInsertIndex = rows.length;
+      for (var r = 0; r < rows.length; r += 1) {
+        var rowRect = rows[r].getBoundingClientRect();
+        if (y < rowRect.top + rowRect.height / 2) {
+          rowInsertIndex = r;
+          break;
+        }
+      }
+
+      return {
+        kind: "row",
+        table: table,
+        insertIndex: rowInsertIndex,
+      };
+    }
+
+    var firstRow = getVisualTableRows(table)[0];
+    var cells = getVisualTableRowCells(firstRow);
+    if (!cells.length) {
+      return null;
+    }
+
+    var columnInsertIndex = cells.length;
+    for (var c = 0; c < cells.length; c += 1) {
+      var cellRect = cells[c].getBoundingClientRect();
+      if (x < cellRect.left + cellRect.width / 2) {
+        columnInsertIndex = c;
+        break;
+      }
+    }
+
+    return {
+      kind: "column",
+      table: table,
+      insertIndex: columnInsertIndex,
+    };
+  }
+
+  function renderVisualTableDropIndicator(placement) {
+    var controls = ensureEditorTableControls();
+    if (!controls || !controls.dropIndicator || !placement || !placement.table) {
+      return;
+    }
+
+    var indicator = controls.dropIndicator;
+    var tableRect = placement.table.getBoundingClientRect();
+    indicator.hidden = false;
+    indicator.classList.toggle("is-row", placement.kind === "row");
+    indicator.classList.toggle("is-column", placement.kind === "column");
+    indicator.style.position = "fixed";
+    indicator.style.zIndex = "10095";
+    indicator.style.pointerEvents = "none";
+    indicator.style.borderRadius = "999px";
+    indicator.style.background = "var(--accent-strong)";
+    indicator.style.boxShadow = "0 0 0 3px rgba(var(--accent-strong-rgb), 0.18)";
+
+    if (placement.kind === "row") {
+      var rows = getVisualTableRows(placement.table);
+      var y = tableRect.bottom;
+      if (placement.insertIndex < rows.length) {
+        y = rows[placement.insertIndex].getBoundingClientRect().top;
+      }
+
+      indicator.style.left = Math.round(tableRect.left) + "px";
+      indicator.style.top = Math.round(y - 1) + "px";
+      indicator.style.width = Math.max(24, Math.round(tableRect.width)) + "px";
+      indicator.style.height = "2px";
+      return;
+    }
+
+    var firstRow = getVisualTableRows(placement.table)[0];
+    var cells = getVisualTableRowCells(firstRow);
+    var x = tableRect.right;
+    if (placement.insertIndex < cells.length) {
+      x = cells[placement.insertIndex].getBoundingClientRect().left;
+    }
+
+    indicator.style.left = Math.round(x - 1) + "px";
+    indicator.style.top = Math.round(tableRect.top) + "px";
+    indicator.style.width = "2px";
+    indicator.style.height = Math.max(24, Math.round(tableRect.height)) + "px";
+  }
+
+  function hideVisualTableDropIndicator() {
+    if (state.editorTableControls && state.editorTableControls.dropIndicator) {
+      state.editorTableControls.dropIndicator.hidden = true;
+      state.editorTableControls.dropIndicator.classList.remove("is-row", "is-column");
+    }
+  }
+
+  function clearVisualTableDragState() {
+    if (state.editorTableControls && state.editorTableControls.root) {
+      var dragging = state.editorTableControls.root.querySelectorAll(".is-dragging");
+      for (var i = 0; i < dragging.length; i += 1) {
+        dragging[i].classList.remove("is-dragging");
+      }
+    }
+
+    hideVisualTableDropIndicator();
+
+    if (state.editorTableDrag && state.editorTableDrag.table) {
+      state.editorTableDrag.table.classList.remove("is-table-drag-source");
+    }
+
+    if (state.elements && state.elements.editorVisualEditor) {
+      state.elements.editorVisualEditor.classList.remove("is-table-drag-active");
+      state.elements.editorVisualEditor.style.removeProperty("user-select");
+      state.elements.editorVisualEditor.style.removeProperty("caret-color");
+      state.elements.editorVisualEditor.style.removeProperty("cursor");
+    }
+
+    document.body.classList.remove("is-wiki-table-dragging");
+    state.editorTableDrag = null;
+  }
+
+  function moveVisualTableRowToIndex(table, sourceIndex, insertIndex) {
+    var rows = getVisualTableRows(table);
+    var source = rows[sourceIndex];
+    if (!source) {
+      return;
+    }
+
+    var parent = source.parentNode;
+    var adjustedIndex = insertIndex;
+    if (sourceIndex < insertIndex) {
+      adjustedIndex -= 1;
+    }
+
+    source.remove();
+
+    var nextRows = getVisualTableRows(table);
+    var reference = nextRows[adjustedIndex] || null;
+    if (reference && reference.parentNode) {
+      reference.parentNode.insertBefore(source, reference);
+    } else if (parent) {
+      parent.appendChild(source);
+    }
+  }
+
+  function moveVisualTableColumnToIndex(table, sourceIndex, insertIndex) {
+    var rows = getVisualTableRows(table);
+    var adjustedIndex = sourceIndex < insertIndex ? insertIndex - 1 : insertIndex;
+
+    for (var r = 0; r < rows.length; r += 1) {
+      var cells = getVisualTableRowCells(rows[r]);
+      var source = cells[sourceIndex];
+      if (!source) {
+        continue;
+      }
+
+      source.remove();
+      var nextCells = getVisualTableRowCells(rows[r]);
+      var reference = nextCells[adjustedIndex] || null;
+      rows[r].insertBefore(source, reference);
+    }
+  }
+
+  function deleteVisualBlockTarget() {
+    var block = state.visualBlockTarget;
+    var editor = state.elements && state.elements.editorVisualEditor;
+
+    if (!editor || !block || !block.isConnected || !editor.contains(block) || !isDeletableVisualBlock(block)) {
+      closeVisualBlockControls();
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    var nextFocus = block.nextElementSibling || block.previousElementSibling || null;
+    block.remove();
+
+    if (!editor.childNodes.length || !String(editor.textContent || "").trim()) {
+      editor.innerHTML = "<p><br></p>";
+      nextFocus = editor.querySelector("p");
+    }
+
+    prepareVisualEditorDomForEditing(editor);
+    closeVisualBlockControls();
+
+    if (nextFocus && nextFocus.isConnected && window.getSelection) {
+      var range = document.createRange();
+      range.selectNodeContents(nextFocus);
+      range.collapse(true);
+
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    try {
+      editor.focus({ preventScroll: true });
+    } catch (_error) {
+      editor.focus();
+    }
+  }
+
+  function setVisualSelectionBeforeBlock(block) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !block || !window.getSelection) {
+      return false;
+    }
+
+    var range = document.createRange();
+    range.setStartBefore(block);
+    range.collapse(true);
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    state.visualTooltipSelection = range.cloneRange();
+
+    try {
+      editor.focus({ preventScroll: true });
+    } catch (_error) {
+      editor.focus();
+    }
+
+    return true;
+  }
+
+  function openVisualBlockInsertMenu() {
+    var block = state.visualBlockTarget;
+    if (!block || !block.isConnected) {
+      closeVisualBlockControls();
+      return;
+    }
+
+    setVisualSelectionBeforeBlock(block);
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeEditorBoxPicker();
+    closeEditorBoxIconPicker();
+    closeMediaLibraryPanel();
+
+    var rect = block.getBoundingClientRect();
+    openEditorMarkdownContextMenu(Math.max(8, rect.left - 4), Math.max(8, rect.top + 4), { mode: "insert" });
+  }
+
+  function startVisualBlockDrag(event) {
+    var block = state.visualBlockTarget;
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!block || !block.isConnected || !editor) {
+      return;
+    }
+
+    clearVisualBlockDragState();
+
+    state.visualBlockDrag = {
+      source: block,
+      target: null,
+      position: "before",
+    };
+
+    editor.classList.add("is-visual-block-drag-active");
+    block.classList.add("is-visual-block-dragging");
+
+    if (event && event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.dropEffect = "move";
+      try {
+        event.dataTransfer.setData("text/plain", "wiki-block");
+      } catch (_error) {
+        // Ignore dataTransfer errors.
+      }
+    }
+  }
+
+  function clearVisualBlockDropIndicators() {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !editor.querySelectorAll) {
+      return;
+    }
+
+    var marked = editor.querySelectorAll(".is-visual-drop-before, .is-visual-drop-after, .is-visual-block-dragging");
+    for (var i = 0; i < marked.length; i += 1) {
+      marked[i].classList.remove("is-visual-drop-before", "is-visual-drop-after", "is-visual-block-dragging");
+    }
+  }
+
+  function clearVisualBlockDragState() {
+    clearVisualBlockDropIndicators();
+
+    if (state.elements && state.elements.editorVisualEditor) {
+      state.elements.editorVisualEditor.classList.remove("is-visual-block-drag-active");
+    }
+
+    state.visualBlockDrag = null;
+  }
+
+  function handleVisualEditorDragOver(event) {
+    if (!state.visualBlockDrag || !state.visualBlockDrag.source) {
+      return;
+    }
+
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !event || !event.target || !editor.contains(event.target)) {
+      clearVisualBlockDropIndicators();
+      state.visualBlockDrag.source.classList.add("is-visual-block-dragging");
+      state.visualBlockDrag.target = null;
+      if (event && event.dataTransfer) {
+        event.dataTransfer.dropEffect = "none";
+      }
+      return;
+    }
+
+    event.preventDefault();
+
+    var target = getVisualEditorBlockFromTarget(event.target);
+    if (!target || target === state.visualBlockDrag.source || target.contains(state.visualBlockDrag.source)) {
+      clearVisualBlockDropIndicators();
+      state.visualBlockDrag.source.classList.add("is-visual-block-dragging");
+      state.visualBlockDrag.target = null;
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "none";
+      }
+      return;
+    }
+
+    var rect = target.getBoundingClientRect();
+    var position = event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+
+    clearVisualBlockDropIndicators();
+    state.visualBlockDrag.source.classList.add("is-visual-block-dragging");
+    target.classList.add(position === "before" ? "is-visual-drop-before" : "is-visual-drop-after");
+
+    state.visualBlockDrag.target = target;
+    state.visualBlockDrag.position = position;
+
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move";
+    }
+  }
+
+  function handleVisualEditorDrop(event) {
+    if (!state.visualBlockDrag || !state.visualBlockDrag.source) {
+      clearVisualBlockDragState();
+      return;
+    }
+
+    if (event && typeof event.preventDefault === "function") {
+      event.preventDefault();
+    }
+
+    var source = state.visualBlockDrag.source;
+    var target = state.visualBlockDrag.target;
+    var position = state.visualBlockDrag.position;
+    var editor = state.elements && state.elements.editorVisualEditor;
+
+    if (
+      source &&
+      target &&
+      editor &&
+      source !== target &&
+      source.isConnected &&
+      target.isConnected &&
+      source.parentNode === target.parentNode
+    ) {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+      if (position === "after") {
+        target.parentNode.insertBefore(source, target.nextSibling);
+      } else {
+        target.parentNode.insertBefore(source, target);
+      }
+
+      prepareVisualEditorDomForEditing(editor);
+    }
+
+    clearVisualBlockDragState();
+    closeVisualBlockControls();
+  }
+
+  function handleVisualEditorClick(event) {
+    if (!isVisualEditorMode() || !event || !event.target || !event.target.closest) {
+      return;
+    }
+
+    var iconWrap = event.target.closest(".wiki-box__icon");
+    if (!iconWrap || !state.elements || !state.elements.editorVisualEditor.contains(iconWrap)) {
+      return;
+    }
+
+    var box = iconWrap.closest(".wiki-box");
+    if (!box) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    openVisualBoxIconPicker(box, iconWrap);
+  }
+
+  function handleVisualEditorContextMenu(event) {
+    if (!isVisualEditorMode() || !state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeEditorBoxPicker();
+    closeEditorBoxIconPicker();
+    closeMediaLibraryPanel();
+
+    saveVisualSelectionSnapshot();
+    openEditorMarkdownContextMenu(event.clientX, event.clientY);
+  }
+
+  function getCurrentVisualRange() {
+    if (!state.elements || !state.elements.editorVisualEditor || !window.getSelection) {
+      return null;
+    }
+
+    var selection = window.getSelection();
+    if (!selection || selection.rangeCount < 1) {
+      return null;
+    }
+
+    var range = selection.getRangeAt(0);
+    var editor = state.elements.editorVisualEditor;
+
+    if (!editor.contains(range.commonAncestorContainer)) {
+      return null;
+    }
+
+    return range;
+  }
+
+  function saveVisualSelectionSnapshot() {
+    var range = getCurrentVisualRange();
+    state.visualTooltipSelection = range ? range.cloneRange() : null;
+    state.editorContextSelection = null;
+  }
+
+  function restoreVisualSelectionSnapshot() {
+    if (!state.visualTooltipSelection || !window.getSelection || !state.elements || !state.elements.editorVisualEditor) {
+      return false;
+    }
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(state.visualTooltipSelection);
+
+    try {
+      state.elements.editorVisualEditor.focus({ preventScroll: true });
+    } catch (_error) {
+      state.elements.editorVisualEditor.focus();
+    }
+
+    return true;
+  }
+
+  function getVisualSelectionText() {
+    var range = getCurrentVisualRange() || state.visualTooltipSelection;
+    return range ? readString(range.toString(), "") : "";
+  }
+
+  function getVisualSelectionAnchorPoint() {
+    var range = getCurrentVisualRange() || state.visualTooltipSelection;
+    if (!range || typeof range.getBoundingClientRect !== "function") {
+      return null;
+    }
+
+    var rect = range.getBoundingClientRect();
+    if (!rect || (!rect.width && !rect.height)) {
+      var fallbackRect = state.elements && state.elements.editorVisualEditor
+        ? state.elements.editorVisualEditor.getBoundingClientRect()
+        : null;
+      return fallbackRect ? { x: fallbackRect.left + 32, y: fallbackRect.top + 32 } : null;
+    }
+
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.bottom,
+    };
+  }
+
+  function positionEditorPopoverAtPoint(panel, point) {
+    if (!panel || !point) {
+      return;
+    }
+
+    prepareEditorPopoverPanel(panel);
+
+    var viewportPadding = 12;
+    panel.style.left = "0px";
+    panel.style.top = "0px";
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    panel.style.maxHeight = Math.max(180, window.innerHeight - viewportPadding * 2) + "px";
+    panel.style.visibility = "hidden";
+
+    var panelRect = panel.getBoundingClientRect();
+    var left = point.x - panelRect.width / 2;
+    var top = point.y + 12;
+
+    if (top + panelRect.height > window.innerHeight - viewportPadding) {
+      top = point.y - panelRect.height - 12;
+    }
+
+    left = Math.max(viewportPadding, Math.min(left, window.innerWidth - panelRect.width - viewportPadding));
+    top = Math.max(viewportPadding, Math.min(top, window.innerHeight - panelRect.height - viewportPadding));
+
+    panel.style.left = left + "px";
+    panel.style.top = top + "px";
+    panel.style.visibility = "";
+  }
+
+  function openVisualColorPicker() {
+    if (!state.elements || !state.elements.editorColorPicker || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    saveVisualSelectionSnapshot();
+
+    var existingColor = findVisualColorElementFromSelection();
+    var selectedText = getVisualSelectionText() || "testo colorato";
+
+    if (existingColor) {
+      selectedText = readString(existingColor.textContent, selectedText);
+      state.visualColorSelection = document.createRange();
+      state.visualColorSelection.selectNodeContents(existingColor);
+    } else {
+      state.visualColorSelection = state.visualTooltipSelection ? state.visualTooltipSelection.cloneRange() : null;
+    }
+
+    state.colorSelection = {
+      mode: "visual",
+      selectedText: selectedText,
+      element: existingColor || null,
+    };
+
+    closeInternalLinkPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeMediaLibraryPanel();
+
+    state.elements.editorColorPicker.hidden = false;
+    positionEditorPopoverAtPoint(state.elements.editorColorPicker, getVisualSelectionAnchorPoint());
+  }
+
+  function findVisualColorElementFromSelection() {
+    var range = getCurrentVisualRange();
+    if (!range) {
+      return null;
+    }
+
+    var node = range.commonAncestorContainer;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
+    }
+
+    return node && node.closest ? node.closest(".wiki-color") : null;
+  }
+
+  function restoreVisualColorSelection() {
+    var range = state.visualColorSelection || state.visualTooltipSelection;
+    if (!range || !window.getSelection || !state.elements || !state.elements.editorVisualEditor) {
+      return false;
+    }
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    try {
+      state.elements.editorVisualEditor.focus({ preventScroll: true });
+    } catch (_error) {
+      state.elements.editorVisualEditor.focus();
+    }
+
+    return true;
+  }
+
+  function insertVisualColoredText(colorName) {
+    var color = normalizeWikiColor(colorName);
+    var snapshot = state.colorSelection || {};
+    var className = "wiki-color-" + color;
+
+    if (snapshot.element && snapshot.element.isConnected) {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+      for (var i = snapshot.element.classList.length - 1; i >= 0; i -= 1) {
+        var currentClass = String(snapshot.element.classList[i] || "");
+        if (currentClass.indexOf("wiki-color-") === 0) {
+          snapshot.element.classList.remove(currentClass);
+        }
+      }
+
+      snapshot.element.classList.add("wiki-color", className);
+      closeColorPicker();
+      return;
+    }
+
+    var range = state.visualColorSelection || state.visualTooltipSelection;
+    if (!range || !state.elements || !state.elements.editorVisualEditor || !window.getSelection) {
+      closeColorPicker();
+      return;
+    }
+
+    var editor = state.elements.editorVisualEditor;
+    if (!editor.contains(range.commonAncestorContainer)) {
+      closeColorPicker();
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    var content = range.toString() || readString(snapshot.selectedText, "testo colorato");
+    var span = document.createElement("span");
+    span.className = "wiki-color " + className;
+    span.textContent = content;
+
+    range.deleteContents();
+    range.insertNode(span);
+
+    var selection = window.getSelection();
+    var nextRange = document.createRange();
+    nextRange.selectNodeContents(span);
+    nextRange.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(nextRange);
+
+    try {
+      editor.focus({ preventScroll: true });
+    } catch (_error) {
+      editor.focus();
+    }
+
+    closeColorPicker();
+  }
+
+  function openVisualImagePicker() {
+    var picker = ensureEditorImagePicker();
+    if (!picker || !picker.panel || !state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    saveVisualSelectionSnapshot();
+    var existingImage = findVisualImageElementFromSelection();
+    var existingData = existingImage ? readWikiImageDataFromNode(existingImage) : null;
+    var existingWidthParts = existingData ? splitWikiImageWidth(existingData.width, existingData.layout) : null;
+
+    state.visualImageSelection = state.visualTooltipSelection ? state.visualTooltipSelection.cloneRange() : null;
+    state.imagePickerTargetElement = existingImage || null;
+    state.imagePickerSelection = {
+      mode: "visual",
+      selectedText: getVisualSelectionText(),
+    };
+    state.imagePickerQuery = "";
+    state.imagePickerExternalUrl = existingData ? existingData.src : "";
+    state.imagePickerAlt = existingData ? existingData.alt : getVisualSelectionText() || readString(state.elements && state.elements.editorImageAlt && state.elements.editorImageAlt.value, "Immagine");
+    state.imagePickerLayout = existingData ? existingData.layout : "full";
+    state.imagePickerWidthValue = existingWidthParts ? existingWidthParts.value : "100";
+    state.imagePickerWidthUnit = existingWidthParts ? existingWidthParts.unit : "%";
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeMediaLibraryPanel();
+
+    if (picker.alt) {
+      picker.alt.value = state.imagePickerAlt;
+    }
+
+    if (picker.layout) {
+      picker.layout.addEventListener("change", function onImagePickerLayoutChange(event) {
+        state.imagePickerLayout = normalizeWikiImageLayout(event.target.value);
+      });
+    }
+
+    if (picker.widthValue) {
+      picker.widthValue.addEventListener("input", function onImagePickerWidthValueInput(event) {
+        state.imagePickerWidthValue = readString(event.target.value, "");
+      });
+
+      picker.widthValue.addEventListener("keydown", handleEditorImagePickerKeydown);
+    }
+
+    if (picker.widthUnit) {
+      picker.widthUnit.addEventListener("change", function onImagePickerWidthUnitChange(event) {
+        state.imagePickerWidthUnit = normalizeWikiImageWidthUnit(event.target.value);
+      });
+    }
+
+    if (picker.url) {
+      picker.url.value = state.imagePickerExternalUrl || "";
+    }
+
+    if (picker.layout) {
+      picker.layout.value = state.imagePickerLayout;
+    }
+
+    if (picker.widthValue) {
+      picker.widthValue.value = state.imagePickerWidthValue;
+    }
+
+    if (picker.widthUnit) {
+      picker.widthUnit.value = state.imagePickerWidthUnit;
+    }
+
+    if (picker.search) {
+      picker.search.value = "";
+    }
+
+    setEditorImagePickerStatus("", "");
+    picker.panel.hidden = false;
+    renderEditorImagePickerResults();
+    positionEditorPopoverAtPoint(picker.panel, getVisualSelectionAnchorPoint());
+
+    ensureMediaLibraryLoaded(state.mediaLibraryNeedsRefresh)
+      .then(function onVisualImageLibraryLoaded() {
+        renderEditorImagePickerResults();
+      })
+      .catch(function onVisualImageLibraryError() {
+        renderEditorImagePickerResults();
+      });
+
+    if (picker.search && typeof picker.search.focus === "function") {
+      picker.search.focus();
+    }
+  }
+
+  function findVisualImageElementFromSelection() {
+    var range = getCurrentVisualRange();
+    if (!range) {
+      return null;
+    }
+
+    var node = range.commonAncestorContainer;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
+    }
+
+    if (!node || !node.closest) {
+      return null;
+    }
+
+    var wrapper = node.closest(".wiki-image");
+    if (wrapper) {
+      return wrapper;
+    }
+
+    var image = node.closest("img");
+    return image || null;
+  }
+
+  function restoreVisualImageSelection() {
+    var range = state.visualImageSelection || state.visualTooltipSelection;
+    if (!range || !window.getSelection || !state.elements || !state.elements.editorVisualEditor) {
+      return false;
+    }
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    try {
+      state.elements.editorVisualEditor.focus({ preventScroll: true });
+    } catch (_error) {
+      state.elements.editorVisualEditor.focus();
+    }
+
+    return true;
+  }
+
+  function insertVisualImageFromPicker(url, altText) {
+    if (!state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    var layout = state.editorImagePicker && state.editorImagePicker.layout
+      ? state.editorImagePicker.layout.value
+      : state.imagePickerLayout;
+    var widthValue = state.editorImagePicker && state.editorImagePicker.widthValue
+      ? state.editorImagePicker.widthValue.value
+      : state.imagePickerWidthValue;
+    var widthUnit = state.editorImagePicker && state.editorImagePicker.widthUnit
+      ? state.editorImagePicker.widthUnit.value
+      : state.imagePickerWidthUnit;
+    var normalizedLayout = normalizeWikiImageLayout(layout);
+    var width = normalizeWikiImageWidth(readString(widthValue, "") + normalizeWikiImageWidthUnit(widthUnit), normalizedLayout);
+    var html = buildWikiImageHtml(url, altText, normalizedLayout, width);
+    var replacement = createElementFromHtml(html);
+
+    if (!replacement) {
+      closeEditorImagePicker();
+      return;
+    }
+
+    if (state.imagePickerTargetElement && state.imagePickerTargetElement.isConnected) {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      state.imagePickerTargetElement.parentNode.replaceChild(replacement, state.imagePickerTargetElement);
+      closeEditorImagePicker();
+      return;
+    }
+
+    insertVisualImageNode(replacement, normalizedLayout);
+    closeEditorImagePicker();
+  }
+
+  function createElementFromHtml(html) {
+    var temp = document.createElement("div");
+    temp.innerHTML = String(html || "").trim();
+    return temp.firstElementChild || null;
+  }
+
+  function insertVisualHtmlBlock(html) {
+    if (!state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    var editor = state.elements.editorVisualEditor;
+    var node = createElementFromHtml(html);
+    if (!node) {
+      return;
+    }
+
+    restoreVisualSelectionSnapshot();
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    var selection = window.getSelection ? window.getSelection() : null;
+    var range = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+    }
+
+    var boxContent = findVisualWikiBoxContentFromRange(range);
+    if (boxContent) {
+      insertNodeInVisualContainerAtRange(boxContent, node, range);
+      prepareVisualEditorDomForEditing(editor);
+      placeCaretAfterInsertedVisualBlock(node);
+
+      try {
+        editor.focus({ preventScroll: true });
+      } catch (_error) {
+        editor.focus();
+      }
+      return;
+    }
+
+    var spacer = document.createElement("p");
+    spacer.appendChild(document.createElement("br"));
+
+    range.deleteContents();
+    range.insertNode(spacer);
+    range.insertNode(node);
+
+    var nextRange = document.createRange();
+    nextRange.selectNodeContents(spacer);
+    nextRange.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(nextRange);
+
+    prepareVisualEditorDomForEditing(editor);
+
+    try {
+      editor.focus({ preventScroll: true });
+    } catch (_error) {
+      editor.focus();
+    }
+  }
+
+  function findVisualWikiBoxContentFromRange(range) {
+    if (!range) {
+      return null;
+    }
+
+    var node = range.commonAncestorContainer;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
+    }
+
+    if (!node || !node.closest) {
+      return null;
+    }
+
+    var content = node.closest(".wiki-box__content");
+    if (!content) {
+      return null;
+    }
+
+    var box = content.closest(".wiki-box");
+    var editor = state.elements && state.elements.editorVisualEditor;
+    return box && editor && editor.contains(box) ? content : null;
+  }
+
+  function getClosestVisualBlockWithin(container, node) {
+    if (!container || !node) {
+      return null;
+    }
+
+    var current = node.nodeType === Node.TEXT_NODE ? node.parentNode : node;
+    while (current && current !== container) {
+      if (current.nodeType === Node.ELEMENT_NODE) {
+        var tag = String(current.tagName || "").toLowerCase();
+        if (
+          tag === "p" ||
+          tag === "div" ||
+          tag === "ul" ||
+          tag === "ol" ||
+          tag === "blockquote" ||
+          tag === "pre" ||
+          tag === "table" ||
+          tag === "details" ||
+          tag === "hr" ||
+          (current.classList &&
+            (current.classList.contains("wiki-stepper") ||
+              current.classList.contains("wiki-checklist") ||
+              current.classList.contains("wiki-expandable") ||
+              current.classList.contains("wiki-columns") ||
+              current.classList.contains("wiki-image--full")))
+        ) {
+          return current;
+        }
+      }
+      current = current.parentNode;
+    }
+
+    return null;
+  }
+
+  function insertNodeInVisualContainerAtRange(container, node, range) {
+    if (!container || !node) {
+      return;
+    }
+
+    var reference = getClosestVisualBlockWithin(container, range && range.commonAncestorContainer);
+
+    if (reference && reference.classList && reference.classList.contains("wiki-box__title")) {
+      reference = reference.nextElementSibling || null;
+    }
+
+    if (reference && reference.parentNode === container) {
+      container.insertBefore(node, reference.nextSibling);
+    } else {
+      container.appendChild(node);
+    }
+
+    if (!node.nextElementSibling) {
+      var spacer = document.createElement("p");
+      spacer.appendChild(document.createElement("br"));
+      container.insertBefore(spacer, node.nextSibling);
+    }
+  }
+
+  function placeCaretInsideElement(element, collapseToStart) {
+    if (!element || !window.getSelection) {
+      return;
+    }
+
+    var range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(!!collapseToStart);
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function placeCaretAfterInsertedVisualBlock(node) {
+    if (!node || !window.getSelection) {
+      return;
+    }
+
+    var target = node.nextElementSibling || node;
+    placeCaretInsideElement(target, true);
+  }
+
+  function insertVisualImageNode(imageNode, layout) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !imageNode) {
+      return;
+    }
+
+    restoreVisualImageSelection();
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    var selection = window.getSelection ? window.getSelection() : null;
+    var range = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+    }
+
+    range.deleteContents();
+
+    if (normalizeWikiImageLayout(layout) === "inline") {
+      var trailingSpace = document.createTextNode(" ");
+      range.insertNode(trailingSpace);
+      range.insertNode(imageNode);
+
+      var inlineRange = document.createRange();
+      inlineRange.setStartAfter(trailingSpace);
+      inlineRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(inlineRange);
+    } else {
+      var paragraph = document.createElement("p");
+      paragraph.appendChild(document.createElement("br"));
+
+      range.insertNode(paragraph);
+      range.insertNode(imageNode);
+
+      var blockRange = document.createRange();
+      blockRange.selectNodeContents(paragraph);
+      blockRange.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(blockRange);
+    }
+
+    try {
+      editor.focus({ preventScroll: true });
+    } catch (_error) {
+      editor.focus();
+    }
+  }
+
+  function openVisualInternalLinkPicker() {
+    if (!state.elements || !state.elements.editorInternalLinkPanel || !state.elements.editorInternalLinkInput) {
+      return;
+    }
+
+    saveVisualSelectionSnapshot();
+
+    var selectedText = getVisualSelectionText() || "";
+    var existingLink = findVisualLinkElementFromSelection();
+
+    if (existingLink) {
+      selectedText = readString(existingLink.textContent, selectedText || "Pagina wiki");
+      state.visualInternalLinkSelection = document.createRange();
+      state.visualInternalLinkSelection.selectNodeContents(existingLink);
+    } else {
+      state.visualInternalLinkSelection = state.visualTooltipSelection ? state.visualTooltipSelection.cloneRange() : null;
+    }
+
+    state.internalLinkSelection = {
+      mode: "visual",
+      selectedText: selectedText,
+      element: existingLink || null,
+    };
+    state.internalLinkQuery = "";
+
+    closeMediaLibraryPanel();
+    closeTooltipEditor();
+    closeColorPicker();
+    closeEditorImagePicker();
+
+    state.elements.editorInternalLinkInput.value = "";
+    state.elements.editorInternalLinkPanel.hidden = false;
+    renderInternalLinkResults();
+    positionEditorPopoverAtPoint(state.elements.editorInternalLinkPanel, getVisualSelectionAnchorPoint());
+    state.elements.editorInternalLinkInput.focus();
+  }
+
+  function findVisualLinkElementFromSelection() {
+    var range = getCurrentVisualRange();
+    if (!range) {
+      return null;
+    }
+
+    var node = range.commonAncestorContainer;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
+    }
+
+    return node && node.closest ? node.closest("a") : null;
+  }
+
+  function restoreVisualInternalLinkSelection() {
+    var range = state.visualInternalLinkSelection || state.visualTooltipSelection;
+    if (!range || !window.getSelection || !state.elements || !state.elements.editorVisualEditor) {
+      return false;
+    }
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    try {
+      state.elements.editorVisualEditor.focus({ preventScroll: true });
+    } catch (_error) {
+      state.elements.editorVisualEditor.focus();
+    }
+
+    return true;
+  }
+
+  function insertVisualInternalDocLink(target) {
+    var snapshot = state.internalLinkSelection || {};
+    var href = "docs.html?doc=" + readString(target.docKey, "");
+    var label = readString(snapshot.selectedText, readString(target.title, "Pagina wiki"));
+
+    if (snapshot.element && snapshot.element.isConnected) {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      snapshot.element.textContent = label;
+      snapshot.element.setAttribute("href", href);
+      closeInternalLinkPicker();
+      return;
+    }
+
+    if (!restoreVisualInternalLinkSelection()) {
+      closeInternalLinkPicker();
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+    document.execCommand(
+      "insertHTML",
+      false,
+      '<a href="' + escapeInlineHtmlText(href) + '">' + escapeInlineHtmlText(label) + '</a>'
+    );
+
+    closeInternalLinkPicker();
+  }
+
+  function openVisualTooltipEditor() {
+    if (!state.elements || !state.elements.editorTooltipPanel) {
+      return;
+    }
+
+    saveVisualSelectionSnapshot();
+
+    var selectedText = getVisualSelectionText() || "testo visibile";
+    var existingTooltip = findVisualTooltipElementFromSelection();
+    var tooltipText = existingTooltip ? readString(existingTooltip.getAttribute("data-tooltip"), "") : "";
+
+    if (existingTooltip) {
+      selectedText = readString(existingTooltip.textContent, selectedText);
+      state.visualTooltipSelection = document.createRange();
+      state.visualTooltipSelection.selectNodeContents(existingTooltip);
+    }
+
+    state.tooltipSelection = {
+      mode: "visual",
+      selectedText: selectedText,
+      element: existingTooltip || null,
+    };
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeEditorImagePicker();
+    closeMediaLibraryPanel();
+
+    if (state.elements.editorTooltipVisible) {
+      state.elements.editorTooltipVisible.value = selectedText;
+    }
+
+    if (state.elements.editorTooltipText) {
+      state.elements.editorTooltipText.value = tooltipText;
+    }
+
+    state.elements.editorTooltipPanel.hidden = false;
+    positionEditorPopoverAtPoint(state.elements.editorTooltipPanel, getVisualSelectionAnchorPoint());
+
+    var focusTarget = state.elements.editorTooltipText || state.elements.editorTooltipVisible;
+    if (focusTarget && typeof focusTarget.focus === "function") {
+      focusTarget.focus();
+      if (tooltipText && typeof focusTarget.select === "function") {
+        focusTarget.select();
+      }
+    }
+  }
+
+  function findVisualTooltipElementFromSelection() {
+    var range = getCurrentVisualRange();
+    if (!range) {
+      return null;
+    }
+
+    var node = range.commonAncestorContainer;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
+    }
+
+    return node && node.closest ? node.closest(".wiki-tooltip") : null;
+  }
+
+  function applyVisualTooltipEditorSelection() {
+    var snapshot = state.tooltipSelection || {};
+    var visibleText = readString(state.elements && state.elements.editorTooltipVisible && state.elements.editorTooltipVisible.value, snapshot.selectedText || "testo visibile");
+    var tooltipText = readString(state.elements && state.elements.editorTooltipText && state.elements.editorTooltipText.value, "testo tooltip");
+
+    if (snapshot.element && snapshot.element.isConnected) {
+      rememberVisualEditorHistoryBeforeProgrammaticChange();
+      snapshot.element.textContent = visibleText;
+      snapshot.element.setAttribute("data-tooltip", tooltipText);
+      snapshot.element.setAttribute("tabindex", "0");
+      closeTooltipEditor();
+      return;
+    }
+
+    if (!restoreVisualSelectionSnapshot()) {
+      closeTooltipEditor();
+      return;
+    }
+
+    var safeVisible = escapeInlineHtmlText(visibleText);
+    var safeTooltip = escapeInlineHtmlText(tooltipText);
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+    document.execCommand("insertHTML", false, '<span class="wiki-tooltip" tabindex="0" data-tooltip="' + safeTooltip + '">' + safeVisible + '</span>');
+    closeTooltipEditor();
+  }
+
+  function openVisualBoxPicker() {
+    var picker = ensureEditorBoxPicker();
+    if (!picker || !state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    saveVisualSelectionSnapshot();
+
+    var existingBox = findVisualWikiBoxElementFromSelection();
+    if (existingBox) {
+      state.visualBoxSelection = null;
+      state.boxSelection = {
+        mode: "visual",
+        element: existingBox,
+        selectedText: "",
+      };
+      state.boxTitle = readVisualWikiBoxTitle(existingBox);
+    } else {
+      state.visualBoxSelection = state.visualTooltipSelection ? state.visualTooltipSelection.cloneRange() : null;
+      state.boxSelection = {
+        mode: "visual",
+        element: null,
+        selectedText: getVisualSelectionText(),
+      };
+      state.boxTitle = "";
+    }
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeMediaLibraryPanel();
+
+    syncEditorBoxPickerTitleInput();
+    picker.hidden = false;
+    positionEditorPopoverAtPoint(picker, getVisualSelectionAnchorPoint());
+  }
+
+  function findVisualWikiBoxElementFromSelection() {
+    var range = getCurrentVisualRange();
+    if (!range) {
+      return null;
+    }
+
+    var node = range.commonAncestorContainer;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      node = node.parentNode;
+    }
+
+    return node && node.closest ? node.closest(".wiki-box") : null;
+  }
+
+  function restoreVisualBoxSelection() {
+    var range = state.visualBoxSelection || state.visualTooltipSelection;
+    if (!range || !window.getSelection || !state.elements || !state.elements.editorVisualEditor) {
+      return false;
+    }
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    try {
+      state.elements.editorVisualEditor.focus({ preventScroll: true });
+    } catch (_error) {
+      state.elements.editorVisualEditor.focus();
+    }
+
+    return true;
+  }
+
+  function updateVisualWikiBoxType(box, type) {
+    if (!box || !box.classList) {
+      return;
+    }
+
+    var boxType = normalizeWikiBoxType(type);
+    var keys = Object.keys(WIKI_BOX_TYPES);
+
+    for (var i = 0; i < keys.length; i += 1) {
+      box.classList.remove("wiki-box--" + keys[i]);
+    }
+
+    box.classList.add("wiki-box--" + boxType);
+
+    if (!readString(box.getAttribute("data-wiki-box-icon"), "")) {
+      setVisualWikiBoxIcon(box, readDefaultWikiBoxIcon(boxType), { skipData: true });
+    }
+  }
+
+  function readDefaultWikiBoxIcon(type) {
+    var boxType = normalizeWikiBoxType(type);
+    var meta = WIKI_BOX_TYPES[boxType] || WIKI_BOX_TYPES.info;
+    return meta.icon;
+  }
+
+  function isSafeIconToken(token) {
+    var text = String(token || "");
+    if (!text) {
+      return false;
+    }
+
+    for (var i = 0; i < text.length; i += 1) {
+      var code = text.charCodeAt(i);
+      var isNumber = code >= 48 && code <= 57;
+      var isUpper = code >= 65 && code <= 90;
+      var isLower = code >= 97 && code <= 122;
+      var isDash = code === 45;
+      var isUnderscore = code === 95;
+
+      if (!isNumber && !isUpper && !isLower && !isDash && !isUnderscore) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function normalizeWikiBoxIconClass(value, fallback) {
+    var raw = readString(value, "");
+    var parts = raw.split(" ");
+    var safeParts = [];
+
+    for (var i = 0; i < parts.length; i += 1) {
+      if (isSafeIconToken(parts[i])) {
+        safeParts.push(parts[i]);
+      }
+    }
+
+    var clean = safeParts.join(" ").trim();
+    if (!clean || clean.indexOf("fa-") === -1) {
+      return fallback || readDefaultWikiBoxIcon("info");
+    }
+
+    return clean;
+  }
+
+  function readWikiBoxTypeFromElement(box) {
+    var keys = Object.keys(WIKI_BOX_TYPES);
+    for (var i = 0; i < keys.length; i += 1) {
+      if (box && box.classList && box.classList.contains("wiki-box--" + keys[i])) {
+        return keys[i];
+      }
+    }
+
+    return "info";
+  }
+
+  function readWikiBoxIconClass(box) {
+    var type = readWikiBoxTypeFromElement(box);
+    var fallback = readDefaultWikiBoxIcon(type);
+    var custom = readString(box && box.getAttribute && box.getAttribute("data-wiki-box-icon"), "");
+
+    if (custom) {
+      return normalizeWikiBoxIconClass(custom, fallback);
+    }
+
+    var icon = box && box.querySelector ? box.querySelector(".wiki-box__icon i") : null;
+    return normalizeWikiBoxIconClass(icon && icon.className, fallback);
+  }
+
+  function setVisualWikiBoxIcon(box, iconClass, options) {
+    if (!box || !box.querySelector) {
+      return;
+    }
+
+    var opts = options || {};
+    var normalized = normalizeWikiBoxIconClass(iconClass, readDefaultWikiBoxIcon(readWikiBoxTypeFromElement(box)));
+    var icon = box.querySelector(".wiki-box__icon i");
+
+    if (icon) {
+      icon.className = normalized;
+    }
+
+    if (!opts.skipData) {
+      box.setAttribute("data-wiki-box-icon", normalized);
+    }
+  }
+
+  function readVisualWikiBoxTitle(box) {
+    var titleNode = box && box.querySelector ? box.querySelector(".wiki-box__title") : null;
+    return readString(titleNode && titleNode.textContent, "");
+  }
+
+  function updateVisualWikiBoxTitle(box, title) {
+    if (!box || !box.querySelector) {
+      return;
+    }
+
+    var contentWrap = box.querySelector(".wiki-box__content") || box;
+    var titleNode = contentWrap.querySelector(".wiki-box__title");
+    var value = readString(title, "");
+
+    if (!value) {
+      if (titleNode) {
+        titleNode.remove();
+      }
+      box.classList.remove("has-title");
+      return;
+    }
+
+    if (!titleNode) {
+      titleNode = document.createElement("p");
+      titleNode.className = "wiki-box__title";
+      contentWrap.insertBefore(titleNode, contentWrap.firstChild);
+    }
+
+    titleNode.textContent = value;
+    box.classList.add("has-title");
+  }
+
+  function insertVisualWikiBox(type, contentText, title) {
+    if (!state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    var boxType = normalizeWikiBoxType(type);
+    var meta = WIKI_BOX_TYPES[boxType] || WIKI_BOX_TYPES.info;
+    var content = readString(contentText, "Testo del box");
+    var titleText = readString(title, "");
+    var editor = state.elements.editorVisualEditor;
+    var selection = window.getSelection ? window.getSelection() : null;
+    var range = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    var box = document.createElement("aside");
+    box.className = "wiki-box wiki-box--" + boxType;
+    box.setAttribute("role", "note");
+
+    var iconWrap = document.createElement("div");
+    iconWrap.className = "wiki-box__icon";
+    iconWrap.setAttribute("aria-hidden", "true");
+    iconWrap.setAttribute("contenteditable", "false");
+    iconWrap.setAttribute("title", "Cambia icona");
+    iconWrap.setAttribute("data-tooltip", "Cambia icona");
+
+    var icon = document.createElement("i");
+    icon.className = meta.icon;
+    icon.setAttribute("aria-hidden", "true");
+    iconWrap.appendChild(icon);
+
+    var contentWrap = document.createElement("div");
+    contentWrap.className = "wiki-box__content";
+
+    if (titleText) {
+      var titleParagraph = document.createElement("p");
+      titleParagraph.className = "wiki-box__title";
+      titleParagraph.textContent = titleText;
+      contentWrap.appendChild(titleParagraph);
+      box.classList.add("has-title");
+    }
+
+    var paragraph = document.createElement("p");
+    paragraph.textContent = content;
+    contentWrap.appendChild(paragraph);
+
+    box.appendChild(iconWrap);
+    box.appendChild(contentWrap);
+
+    var spacer = document.createElement("p");
+    spacer.appendChild(document.createElement("br"));
+
+    range.deleteContents();
+    range.insertNode(spacer);
+    range.insertNode(box);
+
+    var nextRange = document.createRange();
+    nextRange.selectNodeContents(paragraph);
+    nextRange.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(nextRange);
+
+    try {
+      editor.focus({ preventScroll: true });
+    } catch (_error) {
+      editor.focus();
+    }
+  }
+
+  function getVisualEditorHistorySnapshot(editor) {
+    if (!editor) {
+      return null;
+    }
+
+    var panel = getEditorModalScrollContainer(editor);
+
+    return {
+      mode: "visual",
+      html: String(editor.innerHTML || ""),
+      scrollTop: typeof editor.scrollTop === "number" ? editor.scrollTop : 0,
+      scrollLeft: typeof editor.scrollLeft === "number" ? editor.scrollLeft : 0,
+      panelScrollTop: panel && typeof panel.scrollTop === "number" ? panel.scrollTop : 0,
+    };
+  }
+
+  function getActiveEditorHistorySnapshot() {
+    if (isVisualEditorMode() && state.elements && state.elements.editorVisualEditor) {
+      return getVisualEditorHistorySnapshot(state.elements.editorVisualEditor);
+    }
+
+    return getEditorHistorySnapshot(getEditorMarkdownTextarea());
+  }
+
+  function restoreVisualEditorHistorySnapshot(snapshot) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !snapshot) {
+      return;
+    }
+
+    var panel = getEditorModalScrollContainer(editor);
+
+    editor.innerHTML = String(snapshot.html || "");
+    prepareVisualEditorDomForEditing(editor);
+
+    editor.scrollTop = typeof snapshot.scrollTop === "number" ? snapshot.scrollTop : 0;
+    editor.scrollLeft = typeof snapshot.scrollLeft === "number" ? snapshot.scrollLeft : 0;
+
+    if (panel && typeof panel.scrollTop === "number") {
+      panel.scrollTop = typeof snapshot.panelScrollTop === "number" ? snapshot.panelScrollTop : 0;
+    }
+
+    placeCaretAtVisualEditorEnd(editor);
+
+    window.requestAnimationFrame(function restoreVisualEditorScrollPosition() {
+      editor.scrollTop = typeof snapshot.scrollTop === "number" ? snapshot.scrollTop : 0;
+      editor.scrollLeft = typeof snapshot.scrollLeft === "number" ? snapshot.scrollLeft : 0;
+
+      if (panel && typeof panel.scrollTop === "number") {
+        panel.scrollTop = typeof snapshot.panelScrollTop === "number" ? snapshot.panelScrollTop : 0;
+      }
+    });
+  }
+
+  function placeCaretAtVisualEditorEnd(editor) {
+    if (!editor || !window.getSelection) {
+      return;
+    }
+
+    try {
+      editor.focus({ preventScroll: true });
+    } catch (_error) {
+      editor.focus();
+    }
+
+    var range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function rememberVisualEditorHistoryBeforeNativeInput(event) {
+    if (state.editorHistoryRestoring || !isVisualEditorMode() || !shouldTrackNativeEditorInput(event)) {
+      return;
+    }
+
+    state.editorHistoryPendingSnapshot = getVisualEditorHistorySnapshot(state.elements.editorVisualEditor);
+  }
+
+  function commitVisualEditorHistoryAfterNativeInput(event) {
+    if (state.editorHistoryRestoring || !isVisualEditorMode() || !shouldTrackNativeEditorInput(event)) {
+      state.editorHistoryPendingSnapshot = null;
+      return;
+    }
+
+    var snapshot = state.editorHistoryPendingSnapshot;
+    state.editorHistoryPendingSnapshot = null;
+
+    if (!snapshot) {
+      return;
+    }
+
+    pushEditorHistorySnapshot(snapshot);
+  }
+
+  function rememberVisualEditorHistoryBeforeProgrammaticChange() {
+    if (state.editorHistoryRestoring || !isVisualEditorMode() || !state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    pushEditorHistoryCheckpoint(getVisualEditorHistorySnapshot(state.elements.editorVisualEditor));
+  }
+
+  function handleVisualEditorBoxDeletionKeydown(event) {
+    if (!event || event.defaultPrevented || !isVisualEditorMode()) {
+      return false;
+    }
+
+    if (event.key !== "Backspace" && event.key !== "Delete") {
+      return false;
+    }
+
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return false;
+    }
+
+    var editor = state.elements && state.elements.editorVisualEditor;
+    var range = getCurrentVisualRange();
+    if (!editor || !range || !range.collapsed || !editor.contains(range.commonAncestorContainer)) {
+      return false;
+    }
+
+    var boxContent = findVisualWikiBoxContentFromRange(range);
+    if (!boxContent) {
+      return false;
+    }
+
+    var currentBlock = getClosestVisualBlockWithin(boxContent, range.commonAncestorContainer);
+    if (!currentBlock || currentBlock === boxContent || currentBlock.classList.contains("wiki-box__title")) {
+      return false;
+    }
+
+    if (event.key === "Backspace") {
+      if (!isVisualCaretAtStartOfElement(currentBlock, range)) {
+        return false;
+      }
+
+      event.preventDefault();
+      mergeVisualBoxBlockBackward(boxContent, currentBlock);
+      return true;
+    }
+
+    if (!isVisualCaretAtEndOfElement(currentBlock, range)) {
+      return false;
+    }
+
+    event.preventDefault();
+    mergeVisualBoxBlockForward(boxContent, currentBlock);
+    return true;
+  }
+
+  function isVisualCaretAtStartOfElement(element, range) {
+    if (!element || !range) {
+      return false;
+    }
+
+    var probe = document.createRange();
+    probe.selectNodeContents(element);
+    probe.setEnd(range.startContainer, range.startOffset);
+    return probe.toString().length === 0;
+  }
+
+  function isVisualCaretAtEndOfElement(element, range) {
+    if (!element || !range) {
+      return false;
+    }
+
+    var probe = document.createRange();
+    probe.selectNodeContents(element);
+    probe.setStart(range.startContainer, range.startOffset);
+    return probe.toString().length === 0;
+  }
+
+  function getPreviousEditableBoxBlock(boxContent, block) {
+    var previous = block ? block.previousElementSibling : null;
+
+    while (previous && previous.classList && previous.classList.contains("wiki-box__title")) {
+      previous = previous.previousElementSibling;
+    }
+
+    return previous && previous.parentNode === boxContent ? previous : null;
+  }
+
+  function getNextEditableBoxBlock(boxContent, block) {
+    var next = block ? block.nextElementSibling : null;
+
+    while (next && next.classList && next.classList.contains("wiki-box__title")) {
+      next = next.nextElementSibling;
+    }
+
+    return next && next.parentNode === boxContent ? next : null;
+  }
+
+  function ensureBoxContentHasEditableParagraph(boxContent) {
+    if (!boxContent || !boxContent.isConnected) {
+      return null;
+    }
+
+    var editable = boxContent.querySelector("p:not(.wiki-box__title), div, ul, ol, blockquote, pre, table, details, hr, .wiki-stepper, .wiki-checklist, .wiki-expandable, .wiki-columns, .wiki-image--full");
+    if (editable) {
+      return editable;
+    }
+
+    var paragraph = document.createElement("p");
+    paragraph.appendChild(document.createElement("br"));
+    boxContent.appendChild(paragraph);
+    return paragraph;
+  }
+
+  function mergeVisualBoxBlockBackward(boxContent, currentBlock) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !boxContent || !currentBlock) {
+      return;
+    }
+
+    var previous = getPreviousEditableBoxBlock(boxContent, currentBlock);
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    if (!previous) {
+      return;
+    }
+
+    var caretTarget = previous;
+    var offsetNode = document.createTextNode(" ");
+    previous.appendChild(offsetNode);
+
+    while (currentBlock.firstChild) {
+      previous.appendChild(currentBlock.firstChild);
+    }
+
+    currentBlock.remove();
+    prepareVisualEditorDomForEditing(editor);
+    placeCaretAfterNode(offsetNode);
+  }
+
+  function mergeVisualBoxBlockForward(boxContent, currentBlock) {
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor || !boxContent || !currentBlock) {
+      return;
+    }
+
+    var next = getNextEditableBoxBlock(boxContent, currentBlock);
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    if (!next) {
+      ensureBoxContentHasEditableParagraph(boxContent);
+      return;
+    }
+
+    var offsetNode = document.createTextNode(" ");
+    currentBlock.appendChild(offsetNode);
+
+    while (next.firstChild) {
+      currentBlock.appendChild(next.firstChild);
+    }
+
+    next.remove();
+    prepareVisualEditorDomForEditing(editor);
+    placeCaretAfterNode(offsetNode);
+  }
+
+  function placeCaretAfterNode(node) {
+    if (!node || !node.parentNode || !window.getSelection) {
+      return;
+    }
+
+    var range = document.createRange();
+    range.setStartAfter(node);
+    range.collapse(true);
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (editor) {
+      try {
+        editor.focus({ preventScroll: true });
+      } catch (_error) {
+        editor.focus();
+      }
+    }
+  }
+
+  function handleVisualEditorShortcut(event) {
+    if (!event || event.defaultPrevented || !isPrimaryModifierPressed(event) || event.altKey) {
+      return;
+    }
+
+    var key = String(event.key || "").toLowerCase();
+
+    if (key === "z") {
+      if (event.shiftKey) {
+        if (canRedoEditorHistory()) {
+          event.preventDefault();
+          redoEditorHistory();
+        }
+        return;
+      }
+
+      if (canUndoEditorHistory()) {
+        event.preventDefault();
+        undoEditorHistory();
+      }
+      return;
+    }
+
+    if (key === "y") {
+      if (canRedoEditorHistory()) {
+        event.preventDefault();
+        redoEditorHistory();
+      }
     }
   }
 
@@ -2845,6 +8048,1228 @@
       event.preventDefault();
       applyMarkdownToolbarAction("link");
     }
+  }
+
+  function ensureEditorMarkdownToolbarEnhancements() {
+    if (!state.elements || !state.elements.editorMarkdownToolbar) {
+      return;
+    }
+
+    var toolbar = state.elements.editorMarkdownToolbar;
+    var existingTabs = toolbar.querySelector("[data-docs-visual-tabs]");
+    toolbar.innerHTML = "";
+
+    if (existingTabs) {
+      toolbar.appendChild(existingTabs);
+    }
+
+    var formatGroup = document.createElement("div");
+    formatGroup.className = "docs-md-toolbar__group docs-md-toolbar__group--format";
+    formatGroup.setAttribute("data-md-toolbar-group", "format");
+
+    var formatSelect = document.createElement("select");
+    formatSelect.className = "docs-md-toolbar__select";
+    formatSelect.setAttribute("data-md-block-style", "");
+    formatSelect.setAttribute("aria-label", "Formato contenuto");
+    formatSelect.setAttribute("data-tooltip", "Formato contenuto");
+    formatSelect.removeAttribute("title");
+
+    var options = [
+      { value: "", label: "Formato" },
+      { value: "paragraph", label: "Testo base" },
+      { value: "h1", label: "H1" },
+      { value: "h2", label: "H2" },
+      { value: "h3", label: "H3" },
+      { value: "ul", label: "Lista puntata" },
+      { value: "ol", label: "Lista numerata" },
+      { value: "checklist", label: "Lista checkbox" },
+    ];
+
+    for (var i = 0; i < options.length; i += 1) {
+      var option = document.createElement("option");
+      option.value = options[i].value;
+      option.textContent = options[i].label;
+      formatSelect.appendChild(option);
+    }
+
+    formatGroup.appendChild(formatSelect);
+    toolbar.appendChild(formatGroup);
+
+    appendEditorToolbarGroup(toolbar, [
+      { action: "bold", icon: "fa-solid fa-bold", label: "Grassetto" },
+      { action: "italic", icon: "fa-solid fa-italic", label: "Corsivo" },
+      { action: "underline", icon: "fa-solid fa-underline", label: "Sottolineato" },
+      { action: "text-color", icon: "fa-solid fa-palette", label: "Colore testo" },
+    ]);
+
+    appendEditorToolbarGroup(toolbar, [
+      { action: "box", icon: "fa-solid fa-square-caret-right", label: "Box" },
+      { action: "expandable", icon: "fa-solid fa-square-caret-down", label: "Expandable" },
+      { action: "quote", icon: "fa-solid fa-quote-left", label: "Citazione" },
+    ]);
+
+    appendEditorToolbarGroup(toolbar, [
+      { action: "link", icon: "fa-solid fa-link", label: "Link" },
+      { action: "internal-link", icon: "fa-solid fa-book-bookmark", label: "Link interno" },
+      { action: "tooltip", icon: "fa-solid fa-circle-info", label: "Tooltip" },
+    ]);
+
+    appendEditorToolbarGroup(toolbar, [
+      { action: "columns", icon: "fa-solid fa-table-columns", label: "Colonne" },
+      { action: "table", icon: "fa-solid fa-table", label: "Tabella" },
+      { action: "divider", icon: "fa-solid fa-minus", label: "Divisore" },
+    ]);
+
+    appendEditorToolbarGroup(toolbar, [
+      { action: "image", icon: "fa-solid fa-image", label: "Immagine" },
+    ]);
+
+    appendEditorToolbarGroup(toolbar, [
+      { action: "inline-code", icon: "fa-solid fa-code", label: "Codice inline" },
+      { action: "code-block", icon: "fa-solid fa-file-code", label: "Blocco codice" },
+    ]);
+  }
+
+  function appendEditorToolbarGroup(toolbar, items) {
+    if (!toolbar || !Array.isArray(items) || !items.length) {
+      return null;
+    }
+
+    var group = document.createElement("div");
+    group.className = "docs-md-toolbar__group";
+
+    for (var i = 0; i < items.length; i += 1) {
+      group.appendChild(createEditorToolbarButton(items[i].action, items[i].icon, items[i].label));
+    }
+
+    toolbar.appendChild(group);
+    return group;
+  }
+
+  function createEditorToolbarButton(action, iconClass, label) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "docs-md-toolbar__btn";
+    button.setAttribute("data-md-action", action);
+    button.setAttribute("aria-label", label);
+    button.setAttribute("data-tooltip", label);
+    button.removeAttribute("title");
+
+    var icon = document.createElement("i");
+    icon.className = iconClass;
+    icon.setAttribute("aria-hidden", "true");
+    button.appendChild(icon);
+
+    return button;
+  }
+
+  function ensureEditorToolbarButton(action, iconClass, label, insertAfterSelector) {
+    if (!state.elements || !state.elements.editorMarkdownToolbar) {
+      return null;
+    }
+
+    var toolbar = state.elements.editorMarkdownToolbar;
+    if (toolbar.querySelector('button[data-md-action="' + action + '"]')) {
+      return toolbar.querySelector('button[data-md-action="' + action + '"]');
+    }
+
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "docs-md-toolbar__btn";
+    button.setAttribute("data-md-action", action);
+    button.setAttribute("aria-label", label);
+    button.setAttribute("title", label);
+    button.setAttribute("data-tooltip", label);
+
+    var icon = document.createElement("i");
+    icon.className = iconClass;
+    icon.setAttribute("aria-hidden", "true");
+    button.appendChild(icon);
+
+    var insertAfter = insertAfterSelector ? toolbar.querySelector(insertAfterSelector) : null;
+    if (insertAfter && insertAfter.nextSibling) {
+      toolbar.insertBefore(button, insertAfter.nextSibling);
+    } else if (insertAfter) {
+      toolbar.appendChild(button);
+    } else {
+      toolbar.appendChild(button);
+    }
+
+    return button;
+  }
+
+  function ensureEditorMarkdownContextMenu() {
+    if (state.editorContextMenu && state.editorContextMenu.isConnected) {
+      return state.editorContextMenu;
+    }
+
+
+    var menu = document.createElement("div");
+    menu.className = "docs-editor-md-context";
+    menu.setAttribute("data-docs-editor-md-context", "");
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", "Strumenti editor");
+    menu.hidden = true;
+
+    renderEditorMarkdownContextMenuActions(menu, EDITOR_MARKDOWN_CONTEXT_ACTIONS);
+
+    menu.addEventListener("mousedown", function onEditorContextMouseDown(event) {
+      event.preventDefault();
+    });
+
+    menu.addEventListener("click", function onEditorContextClick(event) {
+      var button = event.target.closest("button[data-md-context-action]");
+      if (!button || button.disabled) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      runEditorMarkdownContextAction(button.getAttribute("data-md-context-action"));
+    });
+
+    document.body.appendChild(menu);
+    state.editorContextMenu = menu;
+    return menu;
+  }
+
+  function renderEditorMarkdownContextMenuActions(menu, actions) {
+    if (!menu) {
+      return;
+    }
+
+    menu.innerHTML = "";
+
+    var items = Array.isArray(actions) && actions.length ? actions : EDITOR_MARKDOWN_CONTEXT_ACTIONS;
+
+    for (var i = 0; i < items.length; i += 1) {
+      var item = items[i];
+
+      if (item.separator) {
+        var separator = document.createElement("span");
+        separator.className = "docs-editor-md-context__separator";
+        separator.setAttribute("aria-hidden", "true");
+        menu.appendChild(separator);
+        continue;
+      }
+
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-editor-md-context__action";
+      button.setAttribute("data-md-context-action", item.action);
+      button.setAttribute("role", "menuitem");
+      button.setAttribute("aria-label", item.label);
+
+      var icon = document.createElement("i");
+      icon.className = item.icon;
+      icon.setAttribute("aria-hidden", "true");
+      button.appendChild(icon);
+
+      var label = document.createElement("span");
+      label.textContent = item.label;
+      button.appendChild(label);
+
+      menu.appendChild(button);
+    }
+  }
+
+  function isEditorMarkdownContextMenuOpen() {
+    return !!(state.editorContextMenu && !state.editorContextMenu.hasAttribute("hidden"));
+  }
+
+  function isEventInsideEditorMarkdownContextMenu(target) {
+    return !!(state.editorContextMenu && target && state.editorContextMenu.contains(target));
+  }
+
+  function handleEditorMarkdownContextMenu(event) {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea || event.target !== textarea || !isEditorOpen()) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeMediaLibraryPanel();
+
+    try {
+      textarea.focus({ preventScroll: true });
+    } catch (_error) {
+      textarea.focus();
+    }
+
+    var snapshot = getSelectionInfo(textarea);
+    state.editorContextSelection = {
+      start: snapshot.start,
+      end: snapshot.end,
+      selectedText: snapshot.selectedText,
+    };
+
+    openEditorMarkdownContextMenu(event.clientX, event.clientY);
+  }
+
+  function openEditorMarkdownContextMenu(clientX, clientY, options) {
+    var menu = ensureEditorMarkdownContextMenu();
+    if (!menu) {
+      return;
+    }
+
+    var opts = options || {};
+    state.editorContextMenuMode = opts.mode === "insert" ? "insert" : "full";
+    renderEditorMarkdownContextMenuActions(
+      menu,
+      state.editorContextMenuMode === "insert" ? EDITOR_BLOCK_INSERT_ACTIONS : EDITOR_MARKDOWN_CONTEXT_ACTIONS
+    );
+
+    syncEditorMarkdownContextMenuButtons();
+    menu.hidden = false;
+
+    var viewportPadding = 8;
+    menu.style.left = "0px";
+    menu.style.top = "0px";
+    menu.style.visibility = "hidden";
+
+    var rect = menu.getBoundingClientRect();
+    var left = Number(clientX) || viewportPadding;
+    var top = Number(clientY) || viewportPadding;
+
+    if (left + rect.width > window.innerWidth - viewportPadding) {
+      left = Math.max(viewportPadding, window.innerWidth - rect.width - viewportPadding);
+    }
+
+    if (top + rect.height > window.innerHeight - viewportPadding) {
+      top = Math.max(viewportPadding, window.innerHeight - rect.height - viewportPadding);
+    }
+
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+    menu.style.visibility = "";
+  }
+
+  function closeEditorMarkdownContextMenu(options) {
+    if (!state.editorContextMenu) {
+      return;
+    }
+
+    var opts = options || {};
+    var snapshot = state.editorContextSelection;
+
+    state.editorContextMenu.hidden = true;
+    state.editorContextMenuMode = "full";
+    state.editorContextMenu.style.left = "";
+    state.editorContextMenu.style.top = "";
+    state.editorContextMenu.style.visibility = "";
+
+    if (!opts.keepSelection) {
+      state.editorContextSelection = null;
+    }
+
+    if (opts.restoreTextareaFocus && snapshot) {
+      restoreEditorContextSelection(snapshot);
+    }
+  }
+
+  function restoreEditorContextSelection(snapshot) {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea || !snapshot) {
+      return;
+    }
+
+    try {
+      textarea.focus({ preventScroll: true });
+    } catch (_error) {
+      textarea.focus();
+    }
+
+    if (typeof textarea.setSelectionRange === "function") {
+      var value = String(textarea.value || "");
+      var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
+      var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
+      textarea.setSelectionRange(start, end);
+    }
+  }
+
+  function runEditorMarkdownContextAction(action) {
+    if (!action || state.editorSaving || state.imageUploading) {
+      closeEditorMarkdownContextMenu();
+      return;
+    }
+
+    var snapshot = state.editorContextSelection;
+    if (snapshot) {
+      restoreEditorContextSelection(snapshot);
+    }
+
+    closeEditorMarkdownContextMenu({ keepSelection: true });
+    applyMarkdownToolbarAction(action);
+    state.editorContextSelection = null;
+  }
+
+  function syncEditorMarkdownContextMenuButtons() {
+    if (!state.editorContextMenu) {
+      return;
+    }
+
+    var disabled = !!(state.editorSaving || state.imageUploading);
+    var buttons = state.editorContextMenu.querySelectorAll("button[data-md-context-action]");
+    for (var i = 0; i < buttons.length; i += 1) {
+      buttons[i].disabled = disabled;
+    }
+  }
+
+  function ensureEditorBoxPicker() {
+    if (state.editorBoxPicker && state.editorBoxPicker.isConnected) {
+      ensureEditorBoxIconPicker();
+      return state.editorBoxPicker;
+    }
+
+    var picker = document.createElement("div");
+    picker.className = "docs-editor-md-context docs-box-picker";
+    picker.setAttribute("data-docs-box-picker", "");
+    picker.setAttribute("role", "menu");
+    picker.setAttribute("aria-label", "Tipo box");
+    picker.hidden = true;
+
+    var titleLabel = document.createElement("label");
+    titleLabel.className = "docs-box-picker__field";
+
+    var titleText = document.createElement("span");
+    titleText.textContent = "Titolo box";
+    titleLabel.appendChild(titleText);
+
+    var titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.placeholder = "Facoltativo";
+    titleInput.setAttribute("data-docs-box-title", "");
+    titleInput.autocomplete = "off";
+    titleInput.spellcheck = false;
+    titleLabel.appendChild(titleInput);
+    picker.appendChild(titleLabel);
+
+    var keys = Object.keys(WIKI_BOX_TYPES);
+    for (var i = 0; i < keys.length; i += 1) {
+      var type = keys[i];
+      var meta = WIKI_BOX_TYPES[type];
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-editor-md-context__action";
+      button.setAttribute("data-docs-box-choice", type);
+      button.setAttribute("role", "menuitem");
+      button.setAttribute("aria-label", meta.label);
+
+      var icon = document.createElement("i");
+      icon.className = meta.icon;
+      icon.setAttribute("aria-hidden", "true");
+      button.appendChild(icon);
+
+      var label = document.createElement("span");
+      label.textContent = meta.label;
+      button.appendChild(label);
+
+      picker.appendChild(button);
+    }
+
+    picker.addEventListener("mousedown", function onBoxPickerMouseDown(event) {
+      if (event.target && event.target.closest && event.target.closest("input, textarea, select")) {
+        return;
+      }
+
+      event.preventDefault();
+    });
+
+    titleInput.addEventListener("input", function onBoxTitleInput(event) {
+      state.boxTitle = readString(event.target.value, "");
+    });
+
+    titleInput.addEventListener("keydown", function onBoxTitleKeydown(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        closeEditorBoxPicker({ restoreFocus: true });
+      }
+    });
+
+    picker.addEventListener("click", function onBoxPickerClick(event) {
+      var button = event.target.closest("button[data-docs-box-choice]");
+      if (!button || button.disabled) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      applyEditorBoxChoice(button.getAttribute("data-docs-box-choice"));
+    });
+
+    document.body.appendChild(picker);
+    state.editorBoxPicker = picker;
+    ensureEditorBoxIconPicker();
+    return picker;
+  }
+
+  function isEditorBoxPickerOpen() {
+    return !!(state.editorBoxPicker && !state.editorBoxPicker.hasAttribute("hidden"));
+  }
+
+  function isEventInsideEditorBoxPicker(target) {
+    if (state.editorBoxPicker && target && state.editorBoxPicker.contains(target)) {
+      return true;
+    }
+
+    if (
+      state.elements &&
+      state.elements.editorMarkdownToolbar &&
+      target &&
+      target.closest &&
+      target.closest('button[data-md-action="box"]') &&
+      state.elements.editorMarkdownToolbar.contains(target)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function openEditorBoxPicker(textarea) {
+    if (isVisualEditorMode()) {
+      openVisualBoxPicker();
+      return;
+    }
+
+    var picker = ensureEditorBoxPicker();
+    var editorTextarea = textarea || getEditorMarkdownTextarea();
+    if (!picker || !editorTextarea) {
+      return;
+    }
+
+    var snapshot = getSelectionInfo(editorTextarea);
+    state.boxSelection = {
+      mode: "markdown",
+      start: snapshot.start,
+      end: snapshot.end,
+      selectedText: snapshot.selectedText,
+    };
+    state.boxTitle = "";
+    syncEditorBoxPickerTitleInput();
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeMediaLibraryPanel();
+
+    picker.hidden = false;
+    positionEditorPopoverPanel(picker, editorTextarea, snapshot);
+  }
+
+  function closeEditorBoxPicker(options) {
+    if (!state.editorBoxPicker) {
+      return;
+    }
+
+    var opts = options || {};
+    var snapshot = state.boxSelection;
+
+    state.editorBoxPicker.hidden = true;
+    resetEditorPopoverPlacement(state.editorBoxPicker);
+
+    if (!opts.keepSelection) {
+      state.boxSelection = null;
+      state.visualBoxSelection = null;
+      state.boxTitle = "";
+      syncEditorBoxPickerTitleInput();
+    }
+
+    if (!opts.restoreFocus || !snapshot) {
+      return;
+    }
+
+    if (snapshot.mode === "visual" && state.elements && state.elements.editorVisualEditor) {
+      try {
+        state.elements.editorVisualEditor.focus({ preventScroll: true });
+      } catch (_error) {
+        state.elements.editorVisualEditor.focus();
+      }
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (textarea && typeof textarea.setSelectionRange === "function") {
+      try {
+        textarea.focus({ preventScroll: true });
+      } catch (_focusError) {
+        textarea.focus();
+      }
+      textarea.setSelectionRange(snapshot.start || 0, snapshot.end || snapshot.start || 0);
+    }
+  }
+
+  function applyEditorBoxChoice(type) {
+    var boxType = normalizeWikiBoxType(type);
+    var snapshot = state.boxSelection || {};
+    var title = getEditorBoxPickerTitle();
+
+    if (snapshot.mode === "visual") {
+      if (snapshot.element && snapshot.element.isConnected) {
+        rememberVisualEditorHistoryBeforeProgrammaticChange();
+        updateVisualWikiBoxType(snapshot.element, boxType);
+        updateVisualWikiBoxTitle(snapshot.element, title);
+        closeEditorBoxPicker();
+        return;
+      }
+
+      restoreVisualBoxSelection();
+      insertVisualWikiBox(boxType, snapshot.selectedText || "Testo del box", title);
+      closeEditorBoxPicker();
+      return;
+    }
+
+    insertMarkdownWikiBoxFromPicker(boxType, title);
+    closeEditorBoxPicker();
+  }
+
+  function getEditorBoxPickerTitle() {
+    var input = state.editorBoxPicker && state.editorBoxPicker.querySelector
+      ? state.editorBoxPicker.querySelector("[data-docs-box-title]")
+      : null;
+    return readString(input && input.value, state.boxTitle || "");
+  }
+
+  function syncEditorBoxPickerTitleInput() {
+    var input = state.editorBoxPicker && state.editorBoxPicker.querySelector
+      ? state.editorBoxPicker.querySelector("[data-docs-box-title]")
+      : null;
+    if (input) {
+      input.value = readString(state.boxTitle, "");
+    }
+  }
+
+  function insertMarkdownWikiBoxFromPicker(type, title) {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    var snapshot = state.boxSelection || getSelectionInfo(textarea);
+    var value = String(textarea.value || "");
+    var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
+    var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
+    var selectedText = value.slice(start, end) || readString(snapshot.selectedText, "");
+    var content = selectedText || "Testo del box";
+    var block = buildWikiBoxSourceHtml(type, title || "", content);
+
+    replaceSelectionByRange(textarea, start, end, block, {
+      start: block.indexOf(escapeInlineHtmlText(content)),
+      end: block.indexOf(escapeInlineHtmlText(content)) + escapeInlineHtmlText(content).length,
+    });
+  }
+
+  function ensureEditorBoxIconPicker() {
+    if (state.editorBoxIconPicker && state.editorBoxIconPicker.isConnected) {
+      return state.editorBoxIconPicker;
+    }
+
+    var picker = document.createElement("div");
+    picker.className = "docs-box-icon-picker docs-editor-md-context";
+    picker.setAttribute("data-docs-box-icon-picker", "");
+    picker.setAttribute("role", "menu");
+    picker.setAttribute("aria-label", "Icona box");
+    picker.hidden = true;
+
+    var label = document.createElement("p");
+    label.className = "docs-box-icon-picker__label";
+    label.textContent = "Icona box";
+    picker.appendChild(label);
+
+    var grid = document.createElement("div");
+    grid.className = "docs-box-icon-picker__grid";
+
+    for (var i = 0; i < WIKI_BOX_ICON_CHOICES.length; i += 1) {
+      var iconClass = WIKI_BOX_ICON_CHOICES[i];
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-box-icon-picker__choice";
+      button.setAttribute("data-docs-box-icon-choice", iconClass);
+      button.setAttribute("role", "menuitem");
+      button.setAttribute("aria-label", iconClassToLabel(iconClass));
+
+      var icon = document.createElement("i");
+      icon.className = iconClass;
+      icon.setAttribute("aria-hidden", "true");
+      button.appendChild(icon);
+      grid.appendChild(button);
+    }
+
+    picker.appendChild(grid);
+
+    picker.addEventListener("mousedown", function onBoxIconPickerMouseDown(event) {
+      event.preventDefault();
+    });
+
+    picker.addEventListener("click", function onBoxIconPickerClick(event) {
+      var button = event.target.closest("button[data-docs-box-icon-choice]");
+      if (!button || button.disabled) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      applyVisualBoxIconChoice(button.getAttribute("data-docs-box-icon-choice"));
+    });
+
+    document.body.appendChild(picker);
+    state.editorBoxIconPicker = picker;
+    return picker;
+  }
+
+  function iconClassToLabel(iconClass) {
+    var text = readString(iconClass, "icona");
+    var parts = text.split(" ");
+    var last = parts.length ? parts[parts.length - 1] : text;
+    return last.replace(/^fa-/, "").replace(/-/g, " ");
+  }
+
+  function isEditorBoxIconPickerOpen() {
+    return !!(state.editorBoxIconPicker && !state.editorBoxIconPicker.hasAttribute("hidden"));
+  }
+
+  function isEventInsideEditorBoxIconPicker(target) {
+    if (state.editorBoxIconPicker && target && state.editorBoxIconPicker.contains(target)) {
+      return true;
+    }
+
+    if (target && target.closest && target.closest(".wiki-box__icon")) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function openVisualBoxIconPicker(box, iconWrap) {
+    var picker = ensureEditorBoxIconPicker();
+    if (!picker || !box) {
+      return;
+    }
+
+    closeEditorMarkdownContextMenu();
+    closeEditorBoxPicker();
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeMediaLibraryPanel();
+
+    state.boxIconTargetElement = box;
+    syncEditorBoxIconPickerSelection(box);
+    picker.hidden = false;
+
+    var rect = iconWrap && typeof iconWrap.getBoundingClientRect === "function" ? iconWrap.getBoundingClientRect() : null;
+    var point = rect ? { x: rect.left + rect.width / 2, y: rect.bottom } : getVisualSelectionAnchorPoint();
+    positionEditorPopoverAtPoint(picker, point);
+  }
+
+  function closeEditorBoxIconPicker(options) {
+    if (!state.editorBoxIconPicker) {
+      return;
+    }
+
+    var opts = options || {};
+    state.editorBoxIconPicker.hidden = true;
+    resetEditorPopoverPlacement(state.editorBoxIconPicker);
+
+    if (!opts.keepSelection) {
+      state.boxIconTargetElement = null;
+    }
+
+    if (opts.restoreFocus && state.elements && state.elements.editorVisualEditor) {
+      try {
+        state.elements.editorVisualEditor.focus({ preventScroll: true });
+      } catch (_error) {
+        state.elements.editorVisualEditor.focus();
+      }
+    }
+  }
+
+  function syncEditorBoxIconPickerSelection(box) {
+    if (!state.editorBoxIconPicker) {
+      return;
+    }
+
+    var currentIcon = readWikiBoxIconClass(box);
+    var buttons = state.editorBoxIconPicker.querySelectorAll("button[data-docs-box-icon-choice]");
+    for (var i = 0; i < buttons.length; i += 1) {
+      var isSelected = buttons[i].getAttribute("data-docs-box-icon-choice") === currentIcon;
+      buttons[i].classList.toggle("is-selected", isSelected);
+      buttons[i].setAttribute("aria-pressed", isSelected ? "true" : "false");
+    }
+  }
+
+  function applyVisualBoxIconChoice(iconClass) {
+    var box = state.boxIconTargetElement;
+    if (!box || !box.isConnected) {
+      closeEditorBoxIconPicker();
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+    setVisualWikiBoxIcon(box, iconClass);
+    closeEditorBoxIconPicker({ restoreFocus: true });
+  }
+
+  function ensureEditorImagePicker() {
+    if (state.editorImagePicker && state.editorImagePicker.panel && state.editorImagePicker.panel.isConnected) {
+      return state.editorImagePicker;
+    }
+
+
+    var panel = document.createElement("div");
+    panel.className = "docs-image-picker";
+    panel.setAttribute("data-docs-image-picker", "");
+    panel.hidden = true;
+
+    panel.innerHTML =
+      '<p class="docs-image-picker__label">Immagine</p>' +
+      '<label class="docs-image-picker__field docs-image-picker__field--alt">' +
+      '<span>Alt text</span>' +
+      '<input type="text" data-docs-image-picker-alt placeholder="Immagine" autocomplete="off" spellcheck="false" />' +
+      '</label>' +
+      '<div class="docs-image-picker__options">' +
+      '<label class="docs-image-picker__field">' +
+      '<span>Layout</span>' +
+      '<select data-docs-image-picker-layout>' +
+      '<option value="full">Full-width</option>' +
+      '<option value="inline">Inline</option>' +
+      '</select>' +
+      '</label>' +
+      '<label class="docs-image-picker__field">' +
+      '<span>Larghezza</span>' +
+      '<input type="number" min="1" step="1" data-docs-image-picker-width-value placeholder="100" />' +
+      '</label>' +
+      '<label class="docs-image-picker__field">' +
+      '<span>Unità</span>' +
+      '<select data-docs-image-picker-width-unit>' +
+      '<option value="%">%</option>' +
+      '<option value="px">px</option>' +
+      '</select>' +
+      '</label>' +
+      '</div>' +
+      '<div class="docs-image-picker__external">' +
+      '<label class="docs-image-picker__field">' +
+      '<span>URL esterno</span>' +
+      '<input type="url" data-docs-image-picker-url placeholder="https://..." autocomplete="off" spellcheck="false" />' +
+      '</label>' +
+      '<button type="button" class="docs-image-picker__btn docs-image-picker__btn--primary" data-docs-image-picker-insert-url>Inserisci URL</button>' +
+      '</div>' +
+      '<div class="docs-image-picker__library-head">' +
+      '<label class="docs-image-picker__field docs-image-picker__field--search">' +
+      '<span>Galleria Supabase</span>' +
+      '<input type="search" data-docs-image-picker-search placeholder="Cerca immagine..." autocomplete="off" spellcheck="false" />' +
+      '</label>' +
+      '</div>' +
+      '<div class="docs-image-picker__results" data-docs-image-picker-results aria-live="polite"></div>' +
+      '<p class="docs-image-picker__status" data-docs-image-picker-status aria-live="polite"></p>';
+
+    var picker = {
+      panel: panel,
+      alt: panel.querySelector("[data-docs-image-picker-alt]"),
+      url: panel.querySelector("[data-docs-image-picker-url]"),
+      search: panel.querySelector("[data-docs-image-picker-search]"),
+      results: panel.querySelector("[data-docs-image-picker-results]"),
+      status: panel.querySelector("[data-docs-image-picker-status]"),
+      insertUrl: panel.querySelector("[data-docs-image-picker-insert-url]"),
+      layout: panel.querySelector("[data-docs-image-picker-layout]"),
+      widthValue: panel.querySelector("[data-docs-image-picker-width-value]"),
+      widthUnit: panel.querySelector("[data-docs-image-picker-width-unit]"),
+    };
+
+    if (picker.search) {
+      picker.search.addEventListener("input", function onImagePickerSearchInput(event) {
+        state.imagePickerQuery = readString(event.target.value, "");
+        renderEditorImagePickerResults();
+      });
+
+      picker.search.addEventListener("keydown", handleEditorImagePickerKeydown);
+    }
+
+    if (picker.alt) {
+      picker.alt.addEventListener("keydown", handleEditorImagePickerKeydown);
+    }
+
+    if (picker.url) {
+      picker.url.addEventListener("input", function onImagePickerUrlInput(event) {
+        state.imagePickerExternalUrl = readString(event.target.value, "");
+      });
+
+      picker.url.addEventListener("keydown", handleEditorImagePickerKeydown);
+    }
+
+    if (picker.insertUrl) {
+      picker.insertUrl.addEventListener("click", function onImagePickerInsertUrlClick(event) {
+        event.preventDefault();
+        insertExternalImageFromPicker();
+      });
+    }
+
+    if (picker.results) {
+      picker.results.addEventListener("click", function onImagePickerResultClick(event) {
+        var button = event.target.closest("button[data-docs-image-picker-path]");
+        if (!button || button.disabled) {
+          return;
+        }
+
+        event.preventDefault();
+        insertImageFromPickerLibraryPath(button.getAttribute("data-docs-image-picker-path"));
+      });
+    }
+
+    document.body.appendChild(panel);
+    state.editorImagePicker = picker;
+    return picker;
+  }
+
+  function isEditorImagePickerOpen() {
+    return !!(
+      state.editorImagePicker &&
+      state.editorImagePicker.panel &&
+      !state.editorImagePicker.panel.hasAttribute("hidden")
+    );
+  }
+
+  function isEventInsideEditorImagePicker(target) {
+    if (state.editorImagePicker && state.editorImagePicker.panel && target && state.editorImagePicker.panel.contains(target)) {
+      return true;
+    }
+
+    if (
+      state.elements &&
+      state.elements.editorMarkdownToolbar &&
+      target &&
+      target.closest &&
+      target.closest('button[data-md-action="image"]') &&
+      state.elements.editorMarkdownToolbar.contains(target)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function toggleEditorImagePicker(textarea) {
+    if (isEditorImagePickerOpen()) {
+      closeEditorImagePicker({ restoreTextareaFocus: true });
+      return;
+    }
+
+    openEditorImagePicker(textarea);
+  }
+
+  async function openEditorImagePicker(textarea) {
+    if (isVisualEditorMode()) {
+      openVisualImagePicker();
+      return;
+    }
+    var picker = ensureEditorImagePicker();
+    if (!picker || !picker.panel) {
+      applyLinkAction(textarea, true);
+      return;
+    }
+
+    var editorTextarea = textarea || getEditorMarkdownTextarea();
+    if (!editorTextarea) {
+      return;
+    }
+
+    var snapshot = getSelectionInfo(editorTextarea);
+    state.imagePickerSelection = {
+      start: snapshot.start,
+      end: snapshot.end,
+      selectedText: snapshot.selectedText,
+    };
+    state.imagePickerQuery = "";
+    state.imagePickerExternalUrl = "";
+    state.imagePickerAlt = snapshot.selectedText || readString(state.elements && state.elements.editorImageAlt && state.elements.editorImageAlt.value, "Immagine");
+    state.imagePickerLayout = "full";
+    state.imagePickerWidthValue = "100";
+    state.imagePickerWidthUnit = "%";
+    state.imagePickerTargetElement = null;
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeMediaLibraryPanel();
+
+    if (picker.alt) {
+      picker.alt.value = state.imagePickerAlt;
+    }
+
+    if (picker.url) {
+      picker.url.value = "";
+    }
+
+    if (picker.layout) {
+      picker.layout.value = state.imagePickerLayout;
+    }
+
+    if (picker.widthValue) {
+      picker.widthValue.value = state.imagePickerWidthValue;
+    }
+
+    if (picker.widthUnit) {
+      picker.widthUnit.value = state.imagePickerWidthUnit;
+    }
+
+    if (picker.search) {
+      picker.search.value = "";
+    }
+
+    setEditorImagePickerStatus("", "");
+    picker.panel.hidden = false;
+    positionEditorPopoverPanel(picker.panel, editorTextarea, snapshot);
+    renderEditorImagePickerResults();
+
+    try {
+      await ensureMediaLibraryLoaded(state.mediaLibraryNeedsRefresh);
+      renderEditorImagePickerResults();
+    } catch (_error) {
+      renderEditorImagePickerResults();
+    }
+
+    if (picker.search && typeof picker.search.focus === "function") {
+      picker.search.focus();
+    }
+  }
+
+  function closeEditorImagePicker(options) {
+    if (!state.editorImagePicker || !state.editorImagePicker.panel) {
+      return;
+    }
+
+    var opts = options || {};
+    var snapshot = state.imagePickerSelection;
+
+    state.editorImagePicker.panel.hidden = true;
+    resetEditorPopoverPlacement(state.editorImagePicker.panel);
+    state.imagePickerQuery = "";
+    state.imagePickerExternalUrl = "";
+
+    if (state.editorImagePicker.search) {
+      state.editorImagePicker.search.value = "";
+    }
+
+    if (state.editorImagePicker.url) {
+      state.editorImagePicker.url.value = "";
+    }
+
+    if (state.editorImagePicker.results) {
+      state.editorImagePicker.results.innerHTML = "";
+    }
+
+    setEditorImagePickerStatus("", "");
+
+    if (!opts.keepSelection) {
+      state.imagePickerSelection = null;
+      state.visualImageSelection = null;
+      state.imagePickerTargetElement = null;
+    }
+
+    if (snapshot && snapshot.mode === "visual") {
+      if (opts.restoreTextareaFocus && state.elements && state.elements.editorVisualEditor) {
+        try {
+          state.elements.editorVisualEditor.focus({ preventScroll: true });
+        } catch (_error) {
+          state.elements.editorVisualEditor.focus();
+        }
+      }
+      return;
+    }
+
+    if (opts.restoreTextareaFocus && snapshot) {
+      restoreImagePickerTextareaSelection(snapshot);
+    }
+  }
+
+  function restoreImagePickerTextareaSelection(snapshot) {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea || !snapshot) {
+      return;
+    }
+
+    try {
+      textarea.focus({ preventScroll: true });
+    } catch (_error) {
+      textarea.focus();
+    }
+
+    if (typeof textarea.setSelectionRange === "function") {
+      var value = String(textarea.value || "");
+      var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
+      var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
+      textarea.setSelectionRange(start, end);
+    }
+  }
+
+  function handleEditorImagePickerKeydown(event) {
+    if (!event) {
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeEditorImagePicker({ restoreTextareaFocus: true });
+      return;
+    }
+
+    if (event.key === "Enter" && event.target && event.target.matches && event.target.matches("[data-docs-image-picker-url]")) {
+      event.preventDefault();
+      event.stopPropagation();
+      insertExternalImageFromPicker();
+      return;
+    }
+
+    if (event.key === "Enter" && isPrimaryModifierPressed(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      insertExternalImageFromPicker();
+    }
+  }
+
+  function setEditorImagePickerStatus(message, tone) {
+    if (!state.editorImagePicker || !state.editorImagePicker.status) {
+      return;
+    }
+
+    var status = state.editorImagePicker.status;
+    status.textContent = readString(message, "");
+    status.classList.remove("is-error", "is-success");
+
+    if (tone === "error") {
+      status.classList.add("is-error");
+    } else if (tone === "success") {
+      status.classList.add("is-success");
+    }
+  }
+
+  function renderEditorImagePickerResults() {
+    var picker = state.editorImagePicker;
+    if (!picker || !picker.results) {
+      return;
+    }
+
+    var container = picker.results;
+    container.innerHTML = "";
+
+    if (state.mediaLibraryLoading) {
+      var loading = document.createElement("p");
+      loading.className = "docs-image-picker__empty";
+      loading.textContent = "Caricamento immagini...";
+      container.appendChild(loading);
+      return;
+    }
+
+    if (!Array.isArray(state.mediaLibraryItems) || !state.mediaLibraryItems.length) {
+      var empty = document.createElement("p");
+      empty.className = "docs-image-picker__empty";
+      empty.textContent = "Nessuna immagine nella galleria.";
+      container.appendChild(empty);
+      return;
+    }
+
+    var results = getFilteredMediaLibraryItems(normalizeSearchText(state.imagePickerQuery));
+    if (!results.length) {
+      var noResults = document.createElement("p");
+      noResults.className = "docs-image-picker__empty";
+      noResults.textContent = "Nessuna immagine trovata.";
+      container.appendChild(noResults);
+      return;
+    }
+
+    var grid = document.createElement("div");
+    grid.className = "docs-image-picker__grid";
+
+    for (var i = 0; i < results.length; i += 1) {
+      var item = results[i].item;
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-image-picker__item";
+      button.setAttribute("data-docs-image-picker-path", item.path);
+      button.setAttribute("aria-label", "Inserisci " + item.name);
+
+      var image = document.createElement("img");
+      image.className = "docs-image-picker__thumb";
+      image.src = item.publicUrl;
+      image.alt = "";
+      image.loading = "lazy";
+      button.appendChild(image);
+
+      var label = document.createElement("span");
+      label.className = "docs-image-picker__name";
+      label.textContent = item.name;
+      button.appendChild(label);
+
+      grid.appendChild(button);
+    }
+
+    container.appendChild(grid);
+  }
+
+  function getImagePickerAltText() {
+    var picker = state.editorImagePicker;
+    var value = picker && picker.alt ? readString(picker.alt.value, "") : "";
+    return value || state.imagePickerAlt || "Immagine";
+  }
+
+  function insertImageMarkdownFromPicker(url, altText) {
+    if (state.imagePickerSelection && state.imagePickerSelection.mode === "visual") {
+      insertVisualImageFromPicker(url, altText);
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    var value = String(textarea.value || "");
+    var snapshot = state.imagePickerSelection || getSelectionInfo(textarea);
+    var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
+    var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
+    var layout = state.editorImagePicker && state.editorImagePicker.layout ? state.editorImagePicker.layout.value : state.imagePickerLayout;
+    var widthValue = state.editorImagePicker && state.editorImagePicker.widthValue ? state.editorImagePicker.widthValue.value : state.imagePickerWidthValue;
+    var widthUnit = state.editorImagePicker && state.editorImagePicker.widthUnit ? state.editorImagePicker.widthUnit.value : state.imagePickerWidthUnit;
+    var width = normalizeWikiImageWidth(readString(widthValue, "") + normalizeWikiImageWidthUnit(widthUnit), layout);
+    var markdownImage = buildWikiImageHtml(url, altText, layout, width);
+
+    replaceSelectionByRange(textarea, start, end, markdownImage, {
+      start: markdownImage.length,
+      end: markdownImage.length,
+    });
+
+    closeEditorImagePicker();
+  }
+
+  function insertImageFromPickerLibraryPath(path) {
+    var item = resolveMediaLibraryItemByPath(path);
+    if (!item) {
+      setEditorImagePickerStatus("Immagine non disponibile.", "error");
+      return;
+    }
+
+    insertImageMarkdownFromPicker(item.publicUrl, getImagePickerAltText() || item.name || "Immagine");
+  }
+
+  function insertExternalImageFromPicker() {
+    var picker = state.editorImagePicker;
+    var url = picker && picker.url ? readString(picker.url.value, "") : "";
+
+    if (!/^https?:\/\//i.test(url)) {
+      setEditorImagePickerStatus("Inserisci un URL immagine valido, con http:// o https://.", "error");
+      return;
+    }
+
+    insertImageMarkdownFromPicker(url, getImagePickerAltText());
   }
 
   function isPrimaryModifierPressed(event) {
@@ -2926,13 +9351,48 @@
     }
   }
 
-  function pushEditorHistorySnapshot(snapshot, textarea) {
-    if (state.editorHistoryRestoring || !snapshot || !textarea) {
+  function areEditorHistorySnapshotsEqual(left, right) {
+    if (!left || !right) {
+      return false;
+    }
+
+    if (left.mode === "visual" || right.mode === "visual") {
+      return left.mode === right.mode && String(left.html || "") === String(right.html || "");
+    }
+
+    return String(left.value || "") === String(right.value || "");
+  }
+
+  function pushEditorHistoryCheckpoint(snapshot) {
+    if (state.editorHistoryRestoring || !snapshot) {
       return;
     }
 
-    if (snapshot.value === String(textarea.value || "")) {
+    var last = state.editorHistoryUndo.length ? state.editorHistoryUndo[state.editorHistoryUndo.length - 1] : null;
+    if (areEditorHistorySnapshotsEqual(last, snapshot)) {
       return;
+    }
+
+    state.editorHistoryUndo.push(snapshot);
+    trimEditorHistoryStack(state.editorHistoryUndo);
+    state.editorHistoryRedo = [];
+  }
+
+  function pushEditorHistorySnapshot(snapshot, textarea) {
+    if (state.editorHistoryRestoring || !snapshot) {
+      return;
+    }
+
+    if (snapshot.mode === "visual") {
+      var editor = state.elements && state.elements.editorVisualEditor;
+      if (!editor || snapshot.html === String(editor.innerHTML || "")) {
+        return;
+      }
+    } else {
+      var field = textarea || getEditorMarkdownTextarea();
+      if (!field || snapshot.value === String(field.value || "")) {
+        return;
+      }
     }
 
     state.editorHistoryUndo.push(snapshot);
@@ -2949,13 +9409,22 @@
   }
 
   function restoreEditorHistorySnapshot(snapshot) {
-    var textarea = getEditorMarkdownTextarea();
-    if (!textarea || !snapshot) {
+    if (!snapshot) {
       return;
     }
 
     state.editorHistoryRestoring = true;
     try {
+      if (snapshot.mode === "visual") {
+        restoreVisualEditorHistorySnapshot(snapshot);
+        return;
+      }
+
+      var textarea = getEditorMarkdownTextarea();
+      if (!textarea) {
+        return;
+      }
+
       setTextareaSelection(textarea, snapshot.value, snapshot.selectionStart, snapshot.selectionEnd, {
         preserveScrollTop: snapshot.scrollTop,
         preserveScrollLeft: snapshot.scrollLeft,
@@ -2969,28 +9438,34 @@
   }
 
   function undoEditorHistory() {
-    var textarea = getEditorMarkdownTextarea();
-    if (!textarea || !canUndoEditorHistory()) {
+    if (!canUndoEditorHistory()) {
       return;
     }
 
-    var currentSnapshot = getEditorHistorySnapshot(textarea);
+    var currentSnapshot = getActiveEditorHistorySnapshot();
     var previousSnapshot = state.editorHistoryUndo.pop();
-    state.editorHistoryRedo.push(currentSnapshot);
-    trimEditorHistoryStack(state.editorHistoryRedo);
+
+    if (currentSnapshot) {
+      state.editorHistoryRedo.push(currentSnapshot);
+      trimEditorHistoryStack(state.editorHistoryRedo);
+    }
+
     restoreEditorHistorySnapshot(previousSnapshot);
   }
 
   function redoEditorHistory() {
-    var textarea = getEditorMarkdownTextarea();
-    if (!textarea || !canRedoEditorHistory()) {
+    if (!canRedoEditorHistory()) {
       return;
     }
 
-    var currentSnapshot = getEditorHistorySnapshot(textarea);
+    var currentSnapshot = getActiveEditorHistorySnapshot();
     var nextSnapshot = state.editorHistoryRedo.pop();
-    state.editorHistoryUndo.push(currentSnapshot);
-    trimEditorHistoryStack(state.editorHistoryUndo);
+
+    if (currentSnapshot) {
+      state.editorHistoryUndo.push(currentSnapshot);
+      trimEditorHistoryStack(state.editorHistoryUndo);
+    }
+
     restoreEditorHistorySnapshot(nextSnapshot);
   }
 
@@ -3029,6 +9504,163 @@
       end: end,
       selectedText: value.slice(start, end),
     };
+  }
+
+  function getTextareaCaretViewportPoint(textarea, position) {
+    if (!textarea || typeof textarea.getBoundingClientRect !== "function") {
+      return null;
+    }
+
+    var value = String(textarea.value || "");
+    var caretIndex = Math.max(0, Math.min(Number(position) || 0, value.length));
+    var rect = textarea.getBoundingClientRect();
+    var style = window.getComputedStyle ? window.getComputedStyle(textarea) : null;
+
+    if (!style) {
+      return {
+        x: rect.left + 18,
+        y: rect.top + 28,
+      };
+    }
+
+    var mirror = document.createElement("div");
+    var copiedProperties = [
+      "boxSizing",
+      "width",
+      "fontFamily",
+      "fontSize",
+      "fontWeight",
+      "fontStyle",
+      "letterSpacing",
+      "textTransform",
+      "textAlign",
+      "lineHeight",
+      "paddingTop",
+      "paddingRight",
+      "paddingBottom",
+      "paddingLeft",
+      "borderTopWidth",
+      "borderRightWidth",
+      "borderBottomWidth",
+      "borderLeftWidth",
+      "tabSize",
+    ];
+
+    mirror.style.position = "absolute";
+    mirror.style.visibility = "hidden";
+    mirror.style.pointerEvents = "none";
+    mirror.style.whiteSpace = "pre-wrap";
+    mirror.style.overflowWrap = "break-word";
+    mirror.style.wordBreak = "break-word";
+    mirror.style.left = "-99999px";
+    mirror.style.top = "0";
+    mirror.style.height = "auto";
+    mirror.style.minHeight = "0";
+    mirror.style.overflow = "hidden";
+
+    for (var i = 0; i < copiedProperties.length; i += 1) {
+      var property = copiedProperties[i];
+      mirror.style[property] = style[property];
+    }
+
+    mirror.style.width = rect.width + "px";
+
+    var before = value.slice(0, caretIndex);
+    mirror.appendChild(document.createTextNode(before));
+
+    var marker = document.createElement("span");
+    marker.textContent = "​";
+    mirror.appendChild(marker);
+
+    document.body.appendChild(mirror);
+
+    var lineHeight = parseFloat(style.lineHeight);
+    if (!Number.isFinite(lineHeight)) {
+      lineHeight = parseFloat(style.fontSize) * 1.2;
+    }
+
+    var point = {
+      x: rect.left + marker.offsetLeft - textarea.scrollLeft,
+      y: rect.top + marker.offsetTop - textarea.scrollTop + lineHeight,
+    };
+
+    document.body.removeChild(mirror);
+
+    point.x = Math.max(rect.left + 8, Math.min(point.x, rect.right - 8));
+    point.y = Math.max(rect.top + 8, Math.min(point.y, rect.bottom - 8));
+
+    return point;
+  }
+
+  function prepareEditorPopoverPanel(panel) {
+    if (!panel) {
+      return;
+    }
+
+    if (panel.parentNode !== document.body) {
+      document.body.appendChild(panel);
+    }
+
+    panel.style.position = "fixed";
+    panel.style.zIndex = "10050";
+  }
+
+  function resetEditorPopoverPlacement(panel) {
+    if (!panel) {
+      return;
+    }
+
+    panel.style.position = "";
+    panel.style.left = "";
+    panel.style.top = "";
+    panel.style.right = "";
+    panel.style.bottom = "";
+    panel.style.zIndex = "";
+    panel.style.maxHeight = "";
+    panel.style.visibility = "";
+  }
+
+  function positionEditorPopoverPanel(panel, textarea, selectionInfo) {
+    if (!panel || !textarea) {
+      return;
+    }
+
+    prepareEditorPopoverPanel(panel);
+
+    var info = selectionInfo || getSelectionInfo(textarea);
+    var anchorIndex = typeof info.end === "number" ? info.end : typeof info.start === "number" ? info.start : 0;
+    var anchor = getTextareaCaretViewportPoint(textarea, anchorIndex);
+    var viewportPadding = 12;
+
+    if (!anchor) {
+      var textareaRect = textarea.getBoundingClientRect();
+      anchor = {
+        x: textareaRect.left + 24,
+        y: textareaRect.top + 36,
+      };
+    }
+
+    panel.style.left = "0px";
+    panel.style.top = "0px";
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    panel.style.maxHeight = Math.max(180, window.innerHeight - viewportPadding * 2) + "px";
+    panel.style.visibility = "hidden";
+
+    var panelRect = panel.getBoundingClientRect();
+    var left = anchor.x - panelRect.width / 2;
+    var top = anchor.y + 12;
+
+    if (top + panelRect.height > window.innerHeight - viewportPadding) {
+      top = anchor.y - panelRect.height - 12;
+    }
+
+    left = Math.max(viewportPadding, Math.min(left, window.innerWidth - panelRect.width - viewportPadding));
+    top = Math.max(viewportPadding, Math.min(top, window.innerHeight - panelRect.height - viewportPadding));
+
+    panel.style.left = left + "px";
+    panel.style.top = top + "px";
+    panel.style.visibility = "";
   }
 
   function setTextareaSelection(textarea, value, selectionStart, selectionEnd, options) {
@@ -3152,6 +9784,21 @@
     });
   }
 
+  function wrapHtmlSelection(textarea, openTag, closeTag, placeholder) {
+    if (!textarea) {
+      return;
+    }
+
+    var info = getSelectionInfo(textarea);
+    var content = info.selectedText || placeholder;
+    var replacement = openTag + escapeInlineHtmlText(content) + closeTag;
+
+    replaceSelectionRange(textarea, replacement, {
+      start: openTag.length,
+      end: openTag.length + escapeInlineHtmlText(content).length,
+    });
+  }
+
   function prefixSelectionLines(textarea, prefixFactory, fallbackLine, fallbackSelectionStart) {
     var info = getSelectionInfo(textarea);
 
@@ -3252,18 +9899,876 @@
     });
   }
 
+  function applyWikiBoxAction(textarea, type) {
+    if (!textarea) {
+      return;
+    }
+
+    var boxType = normalizeWikiBoxType(type);
+    var info = getSelectionInfo(textarea);
+    var content = info.selectedText || "Testo del box";
+    var block = buildWikiBoxSourceHtml(boxType, "", content);
+
+    if (info.selectedText) {
+      replaceSelectionRange(textarea, block, {
+        start: 0,
+        end: block.length,
+      });
+      return;
+    }
+
+    insertBlockAtCursor(textarea, block, {
+      start: block.indexOf(escapeInlineHtmlText(content)),
+      end: block.indexOf(escapeInlineHtmlText(content)) + escapeInlineHtmlText(content).length,
+    });
+  }
+
+  function buildWikiBoxSourceHtml(type, title, content) {
+    var boxType = normalizeWikiBoxType(type);
+    var meta = WIKI_BOX_TYPES[boxType] || WIKI_BOX_TYPES.info;
+    var titleValue = readString(title, "");
+    var titleHtml = titleValue ? '<p class="wiki-box__title">' + escapeInlineHtmlText(titleValue) + '</p>' : "";
+    var contentHtml = '<p>' + escapeInlineHtmlText(content || "Testo del box") + '</p>';
+    var titleClass = titleValue ? " has-title" : "";
+
+    return '<aside class="wiki-box wiki-box--' + boxType + titleClass + '" role="note">' +
+      '<div class="wiki-box__icon" aria-hidden="true"><i class="' + escapeInlineHtmlText(meta.icon) + '"></i></div>' +
+      '<div class="wiki-box__content">' + titleHtml + contentHtml + '</div>' +
+      '</aside>';
+  }
+
+  function normalizeWikiBoxType(value) {
+    var type = cleanSegment(readString(value, "info"));
+    return WIKI_BOX_TYPES[type] ? type : "info";
+  }
+
   function applyLinkAction(textarea, isImage) {
     var info = getSelectionInfo(textarea);
     var label = info.selectedText || (isImage ? "Alt text" : "Testo link");
-    var prefix = isImage ? "!" : "";
-    var replacement = prefix + "[" + label + "](https://)";
-    var urlStart = replacement.lastIndexOf("(https://") + 1;
+
+    if (isImage) {
+      var imageHtml = buildWikiImageHtml("https://", label, "full", "100%");
+      replaceSelectionRange(textarea, imageHtml, {
+        start: imageHtml.indexOf("https://"),
+        end: imageHtml.indexOf("https://") + "https://".length,
+      });
+      return;
+    }
+
+    var safeLabel = escapeInlineHtmlText(label);
+    var replacement = '<a href="https://">' + safeLabel + '</a>';
+    var urlStart = replacement.indexOf("https://");
     var urlEnd = urlStart + "https://".length;
 
     replaceSelectionRange(textarea, replacement, {
       start: urlStart,
       end: urlEnd,
     });
+  }
+
+  function ensureEditorLinkPanel() {
+    if (state.editorLinkPanel && state.editorLinkPanel.panel && state.editorLinkPanel.panel.isConnected) {
+      return state.editorLinkPanel;
+    }
+
+    var panel = document.createElement("div");
+    panel.className = "docs-link-editor docs-editor-md-context";
+    panel.setAttribute("data-docs-link-editor", "");
+    panel.hidden = true;
+
+    panel.innerHTML =
+      '<p class="docs-link-editor__label">Link</p>' +
+      '<label class="docs-link-editor__field">' +
+      '<span>Testo visibile</span>' +
+      '<input type="text" data-docs-link-label autocomplete="off" spellcheck="false" placeholder="Testo link">' +
+      '</label>' +
+      '<label class="docs-link-editor__field">' +
+      '<span>URL</span>' +
+      '<input type="url" data-docs-link-url autocomplete="off" spellcheck="false" placeholder="https://...">' +
+      '</label>' +
+      '<div class="docs-link-editor__actions">' +
+      '<button type="button" class="docs-link-editor__btn docs-link-editor__btn--primary" data-docs-link-apply>Applica</button>' +
+      '<button type="button" class="docs-link-editor__btn" data-docs-link-cancel>Annulla</button>' +
+      '</div>' +
+      '<p class="docs-link-editor__status" data-docs-link-status aria-live="polite"></p>';
+
+    var linkPanel = {
+      panel: panel,
+      label: panel.querySelector("[data-docs-link-label]"),
+      url: panel.querySelector("[data-docs-link-url]"),
+      apply: panel.querySelector("[data-docs-link-apply]"),
+      cancel: panel.querySelector("[data-docs-link-cancel]"),
+      status: panel.querySelector("[data-docs-link-status]"),
+    };
+
+    panel.addEventListener("mousedown", function onLinkPanelMouseDown(event) {
+      if (event.target && event.target.closest && event.target.closest("input, textarea, select, button")) {
+        return;
+      }
+      event.preventDefault();
+    });
+
+    if (linkPanel.apply) {
+      linkPanel.apply.addEventListener("click", function onLinkApplyClick(event) {
+        event.preventDefault();
+        applyLinkEditorSelection();
+      });
+    }
+
+    if (linkPanel.cancel) {
+      linkPanel.cancel.addEventListener("click", function onLinkCancelClick(event) {
+        event.preventDefault();
+        closeLinkEditor({ restoreTextareaFocus: true });
+      });
+    }
+
+    if (linkPanel.label) {
+      linkPanel.label.addEventListener("keydown", handleLinkEditorKeydown);
+    }
+
+    if (linkPanel.url) {
+      linkPanel.url.addEventListener("keydown", handleLinkEditorKeydown);
+    }
+
+    document.body.appendChild(panel);
+    state.editorLinkPanel = linkPanel;
+    return linkPanel;
+  }
+
+  function isLinkEditorOpen() {
+    return !!(state.editorLinkPanel && state.editorLinkPanel.panel && !state.editorLinkPanel.panel.hasAttribute("hidden"));
+  }
+
+  function isEventInsideLinkEditor(target) {
+    if (state.editorLinkPanel && state.editorLinkPanel.panel && target && state.editorLinkPanel.panel.contains(target)) {
+      return true;
+    }
+
+    if (
+      state.elements &&
+      state.elements.editorMarkdownToolbar &&
+      target &&
+      target.closest &&
+      target.closest('button[data-md-action="link"]') &&
+      state.elements.editorMarkdownToolbar.contains(target)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function setLinkEditorStatus(message, tone) {
+    var panel = state.editorLinkPanel;
+    if (!panel || !panel.status) {
+      return;
+    }
+
+    panel.status.textContent = readString(message, "");
+    panel.status.classList.remove("is-error", "is-success");
+
+    if (tone === "error") {
+      panel.status.classList.add("is-error");
+    } else if (tone === "success") {
+      panel.status.classList.add("is-success");
+    }
+  }
+
+  function normalizeExternalLinkUrl(value) {
+    var url = readString(value, "");
+    if (!url) {
+      return "";
+    }
+
+    var lower = url.toLowerCase();
+    if (
+      lower.indexOf("http://") === 0 ||
+      lower.indexOf("https://") === 0 ||
+      lower.indexOf("mailto:") === 0 ||
+      lower.indexOf("tel:") === 0 ||
+      lower.indexOf("docs.html?doc=") === 0 ||
+      url.charAt(0) === "#"
+    ) {
+      return url;
+    }
+
+    return "https://" + url;
+  }
+
+  function toggleLinkEditor(textarea) {
+    if (isLinkEditorOpen()) {
+      closeLinkEditor({ restoreTextareaFocus: true });
+      return;
+    }
+
+    openLinkEditor(textarea);
+  }
+
+  function openLinkEditor(textarea) {
+    if (isVisualEditorMode()) {
+      openVisualLinkEditor();
+      return;
+    }
+
+    var panel = ensureEditorLinkPanel();
+    var editorTextarea = textarea || getEditorMarkdownTextarea();
+    if (!panel || !editorTextarea) {
+      return;
+    }
+
+    var snapshot = getSelectionInfo(editorTextarea);
+    var existing = findHtmlAnchorAroundTextareaSelection(snapshot);
+    var selectedText = existing ? existing.label : snapshot.selectedText || "Testo link";
+    var href = existing ? existing.href : "https://";
+
+    state.linkSelection = {
+      mode: "html",
+      start: existing ? existing.start : snapshot.start,
+      end: existing ? existing.end : snapshot.end,
+      selectedText: selectedText,
+      element: null,
+    };
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeMediaLibraryPanel();
+
+    if (panel.label) {
+      panel.label.value = selectedText;
+    }
+
+    if (panel.url) {
+      panel.url.value = href;
+    }
+
+    setLinkEditorStatus("", "");
+    panel.panel.hidden = false;
+    positionEditorPopoverPanel(panel.panel, editorTextarea, {
+      start: state.linkSelection.start,
+      end: state.linkSelection.end,
+    });
+
+    if (panel.url && typeof panel.url.focus === "function") {
+      panel.url.focus();
+      panel.url.select();
+    }
+  }
+
+  function findHtmlAnchorAroundTextareaSelection(info) {
+    if (!info || !info.value) {
+      return null;
+    }
+
+    var value = String(info.value || "");
+    var start = Math.max(0, Math.min(Number(info.start) || 0, value.length));
+    var end = Math.max(start, Math.min(Number(info.end) || start, value.length));
+    var anchorStart = value.lastIndexOf("<a", start);
+    if (anchorStart === -1) {
+      return null;
+    }
+
+    var openEnd = value.indexOf(">", anchorStart);
+    var anchorEnd = value.indexOf("</a>", Math.max(end, openEnd));
+    if (openEnd === -1 || anchorEnd === -1) {
+      return null;
+    }
+
+    anchorEnd += 4;
+    if (end < anchorStart || start > anchorEnd) {
+      return null;
+    }
+
+    var rawOpen = value.slice(anchorStart, openEnd + 1);
+    var href = readAttributeFromHtmlTag(rawOpen, "href");
+    if (!href) {
+      return null;
+    }
+
+    return {
+      start: anchorStart,
+      end: anchorEnd,
+      href: href,
+      label: stripHtmlForEditorLabel(value.slice(openEnd + 1, anchorEnd - 4)) || "Testo link",
+    };
+  }
+
+  function readAttributeFromHtmlTag(tagHtml, attrName) {
+    var template = document.createElement("template");
+    template.innerHTML = String(tagHtml || "") + "</a>";
+    var element = template.content.querySelector("a");
+    return element ? readString(element.getAttribute(attrName), "") : "";
+  }
+
+  function stripHtmlForEditorLabel(value) {
+    var template = document.createElement("template");
+    template.innerHTML = String(value || "");
+    return readString(template.content.textContent, "Testo link");
+  }
+
+  function closeLinkEditor(options) {
+    if (!state.editorLinkPanel || !state.editorLinkPanel.panel) {
+      return;
+    }
+
+    var opts = options || {};
+    var snapshot = state.linkSelection;
+
+    state.editorLinkPanel.panel.hidden = true;
+    resetEditorPopoverPlacement(state.editorLinkPanel.panel);
+    setLinkEditorStatus("", "");
+
+    if (!opts.keepSelection) {
+      state.linkSelection = null;
+      state.visualLinkSelection = null;
+    }
+
+    if (snapshot && snapshot.mode === "visual") {
+      if (opts.restoreTextareaFocus && state.elements && state.elements.editorVisualEditor) {
+        try {
+          state.elements.editorVisualEditor.focus({ preventScroll: true });
+        } catch (_error) {
+          state.elements.editorVisualEditor.focus();
+        }
+      }
+      return;
+    }
+
+    if (opts.restoreTextareaFocus && snapshot) {
+      var textarea = getEditorMarkdownTextarea();
+      if (textarea && typeof textarea.setSelectionRange === "function") {
+        try {
+          textarea.focus({ preventScroll: true });
+        } catch (_focusError) {
+          textarea.focus();
+        }
+
+        var value = String(textarea.value || "");
+        var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
+        var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
+        textarea.setSelectionRange(start, end);
+      }
+    }
+  }
+
+  function handleLinkEditorKeydown(event) {
+    if (!event) {
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeLinkEditor({ restoreTextareaFocus: true });
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
+      applyLinkEditorSelection();
+    }
+  }
+
+  function applyLinkEditorSelection() {
+    var panel = state.editorLinkPanel || ensureEditorLinkPanel();
+    if (!panel) {
+      return;
+    }
+
+    var label = readString(panel.label && panel.label.value, "Testo link");
+    var href = normalizeExternalLinkUrl(panel.url && panel.url.value);
+
+    if (!href) {
+      setLinkEditorStatus("Inserisci un URL valido.", "error");
+      return;
+    }
+
+    if (state.linkSelection && state.linkSelection.mode === "visual") {
+      applyVisualLinkEditorSelection(label, href);
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      closeLinkEditor();
+      return;
+    }
+
+    var value = String(textarea.value || "");
+    var snapshot = state.linkSelection || getSelectionInfo(textarea);
+    var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
+    var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
+    var replacement = '<a href="' + escapeInlineHtmlText(href) + '">' + escapeInlineHtmlText(label) + '</a>';
+
+    replaceSelectionByRange(textarea, start, end, replacement, {
+      start: replacement.length,
+      end: replacement.length,
+    });
+
+    closeLinkEditor();
+  }
+
+  function openVisualLinkEditor() {
+    if (!state.elements || !state.elements.editorVisualEditor) {
+      return;
+    }
+
+    var panel = ensureEditorLinkPanel();
+    if (!panel) {
+      return;
+    }
+
+    saveVisualSelectionSnapshot();
+
+    var existingLink = findVisualLinkElementFromSelection();
+    var selectedText = getVisualSelectionText() || "Testo link";
+    var href = "https://";
+
+    if (existingLink) {
+      selectedText = readString(existingLink.textContent, selectedText);
+      href = readString(existingLink.getAttribute("href"), href);
+      state.visualLinkSelection = document.createRange();
+      state.visualLinkSelection.selectNodeContents(existingLink);
+    } else {
+      state.visualLinkSelection = state.visualTooltipSelection ? state.visualTooltipSelection.cloneRange() : null;
+    }
+
+    state.linkSelection = {
+      mode: "visual",
+      selectedText: selectedText,
+      element: existingLink || null,
+    };
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeMediaLibraryPanel();
+
+    if (panel.label) {
+      panel.label.value = selectedText;
+    }
+
+    if (panel.url) {
+      panel.url.value = href;
+    }
+
+    setLinkEditorStatus("", "");
+    panel.panel.hidden = false;
+    positionEditorPopoverAtPoint(panel.panel, getVisualSelectionAnchorPoint());
+
+    if (panel.url && typeof panel.url.focus === "function") {
+      panel.url.focus();
+      panel.url.select();
+    }
+  }
+
+  function restoreVisualLinkSelection() {
+    var range = state.visualLinkSelection || state.visualTooltipSelection;
+    if (!range || !window.getSelection || !state.elements || !state.elements.editorVisualEditor) {
+      return false;
+    }
+
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    try {
+      state.elements.editorVisualEditor.focus({ preventScroll: true });
+    } catch (_error) {
+      state.elements.editorVisualEditor.focus();
+    }
+
+    return true;
+  }
+
+  function applyVisualLinkEditorSelection(label, href) {
+    var snapshot = state.linkSelection || {};
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor) {
+      closeLinkEditor();
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    if (snapshot.element && snapshot.element.isConnected) {
+      snapshot.element.textContent = label;
+      snapshot.element.setAttribute("href", href);
+      closeLinkEditor();
+      return;
+    }
+
+    if (!restoreVisualLinkSelection()) {
+      closeLinkEditor();
+      return;
+    }
+
+    document.execCommand("insertHTML", false, '<a href="' + escapeInlineHtmlText(href) + '">' + escapeInlineHtmlText(label) + '</a>');
+    closeLinkEditor();
+  }
+
+  function ensureEditorColorPickerChoices() {
+    if (!state.elements || !state.elements.editorColorPicker) {
+      return;
+    }
+
+    var picker = state.elements.editorColorPicker;
+    var choices = Array.isArray(state.wikiColorChoices) ? state.wikiColorChoices : [];
+    if (!choices.length) {
+      return;
+    }
+
+    picker.innerHTML = "";
+
+    var label = document.createElement("p");
+    label.className = "docs-color-picker__label";
+    label.textContent = "Colore testo";
+    picker.appendChild(label);
+
+    var clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.className = "docs-color-picker__choice docs-color-picker__choice--clear";
+    clearButton.setAttribute("data-docs-color-choice", "");
+    clearButton.setAttribute("data-docs-color-clear", "");
+    clearButton.setAttribute("aria-label", "Colore base");
+    clearButton.setAttribute("title", "Colore base");
+    clearButton.textContent = "Base";
+    picker.appendChild(clearButton);
+
+    var grid = document.createElement("div");
+    grid.className = "docs-color-picker__grid";
+
+    for (var i = 0; i < choices.length; i += 1) {
+      var choice = choices[i];
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-color-picker__choice wiki-color wiki-color-" + choice.value;
+      button.setAttribute("data-docs-color-choice", choice.value);
+      button.setAttribute("aria-label", choice.label);
+      button.setAttribute("title", choice.label);
+      button.textContent = "Aa";
+      grid.appendChild(button);
+    }
+
+    picker.appendChild(grid);
+  }
+
+  function applyTooltipAction(textarea) {
+    if (!textarea) {
+      return;
+    }
+
+    if (state.elements && state.elements.editorTooltipPanel) {
+      toggleTooltipEditor(textarea);
+      return;
+    }
+
+    applyTooltipPromptFallback(textarea);
+  }
+
+  function applyTooltipPromptFallback(textarea) {
+    var info = getSelectionInfo(textarea);
+    var visibleText = info.selectedText || "testo visibile";
+    var tooltipInput = window.prompt("Contenuto tooltip", "");
+
+    if (tooltipInput === null) {
+      if (typeof textarea.focus === "function") {
+        textarea.focus();
+      }
+      return;
+    }
+
+    var snippet = buildTooltipHtml(visibleText, tooltipInput);
+
+    replaceSelectionByRange(textarea, info.start, info.end, snippet, {
+      start: snippet.length,
+      end: snippet.length,
+    });
+  }
+
+  function buildTooltipHtml(visibleText, tooltipText) {
+    var visible = escapeInlineHtmlText(readString(visibleText, "testo visibile"));
+    var tooltip = escapeInlineHtmlText(readString(tooltipText, "testo tooltip"));
+    return '<span class="wiki-tooltip" tabindex="0" data-tooltip="' + tooltip + '">' + visible + '</span>';
+  }
+
+  function buildTooltipShortcode(visibleText, tooltipText) {
+    var visibleSegment = escapeTooltipShortcodeSegment(visibleText, "testo visibile");
+    var tooltipSegment = escapeTooltipShortcodeSegment(tooltipText, "testo tooltip");
+    return "{{tooltip:" + visibleSegment + "|" + tooltipSegment + "}}";
+  }
+
+  function isTooltipEditorOpen() {
+    return !!(
+      state.elements &&
+      state.elements.editorTooltipPanel &&
+      !state.elements.editorTooltipPanel.hasAttribute("hidden")
+    );
+  }
+
+  function isEventInsideTooltipEditor(target) {
+    if (!state.elements) {
+      return false;
+    }
+
+    if (state.elements.editorTooltipPanel && state.elements.editorTooltipPanel.contains(target)) {
+      return true;
+    }
+
+    if (
+      state.elements.editorMarkdownToolbar &&
+      target &&
+      target.closest &&
+      target.closest('button[data-md-action="tooltip"]') &&
+      state.elements.editorMarkdownToolbar.contains(target)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function toggleTooltipEditor(textarea) {
+    if (isTooltipEditorOpen()) {
+      closeTooltipEditor({ restoreTextareaFocus: true });
+      return;
+    }
+
+    openTooltipEditor(textarea);
+  }
+
+  function openTooltipEditor(textarea) {
+    if (!state.elements || !state.elements.editorTooltipPanel) {
+      applyTooltipPromptFallback(textarea);
+      return;
+    }
+
+    var editorTextarea = textarea || getEditorMarkdownTextarea();
+    if (!editorTextarea) {
+      return;
+    }
+
+    var info = getSelectionInfo(editorTextarea);
+    var existing = findTooltipShortcodeAroundSelection(info);
+    var visibleText = existing ? existing.label : info.selectedText || "testo visibile";
+    var tooltipText = existing ? existing.tooltipText : "";
+
+    state.tooltipSelection = {
+      start: existing ? existing.start : info.start,
+      end: existing ? existing.end : info.end,
+      selectedText: existing ? existing.raw : info.selectedText,
+    };
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeMediaLibraryPanel();
+
+    if (state.elements.editorTooltipVisible) {
+      state.elements.editorTooltipVisible.value = visibleText;
+    }
+
+    if (state.elements.editorTooltipText) {
+      state.elements.editorTooltipText.value = tooltipText;
+    }
+
+    state.elements.editorTooltipPanel.hidden = false;
+    positionEditorPopoverPanel(state.elements.editorTooltipPanel, editorTextarea, {
+      start: state.tooltipSelection.start,
+      end: state.tooltipSelection.end,
+    });
+
+    var focusTarget = state.elements.editorTooltipText || state.elements.editorTooltipVisible;
+    if (focusTarget && typeof focusTarget.focus === "function") {
+      focusTarget.focus();
+      if (tooltipText && typeof focusTarget.select === "function") {
+        focusTarget.select();
+      }
+    }
+  }
+
+  function closeTooltipEditor(options) {
+    if (!state.elements || !state.elements.editorTooltipPanel) {
+      return;
+    }
+
+    var opts = options || {};
+    var snapshot = state.tooltipSelection;
+
+    state.elements.editorTooltipPanel.hidden = true;
+    resetEditorPopoverPlacement(state.elements.editorTooltipPanel);
+
+    if (state.elements.editorTooltipVisible) {
+      state.elements.editorTooltipVisible.value = "";
+    }
+
+    if (state.elements.editorTooltipText) {
+      state.elements.editorTooltipText.value = "";
+    }
+
+    if (!opts.keepSelection) {
+      state.tooltipSelection = null;
+      state.visualTooltipSelection = null;
+    }
+
+    if (snapshot && snapshot.mode === "visual") {
+      if (opts.restoreTextareaFocus && state.elements.editorVisualEditor) {
+        try {
+          state.elements.editorVisualEditor.focus({ preventScroll: true });
+        } catch (_error) {
+          state.elements.editorVisualEditor.focus();
+        }
+      }
+      return;
+    }
+
+    if (opts.restoreTextareaFocus) {
+      var textarea = getEditorMarkdownTextarea();
+      if (textarea) {
+        textarea.focus();
+
+        if (snapshot && typeof textarea.setSelectionRange === "function") {
+          var value = String(textarea.value || "");
+          var start = Math.max(0, Math.min(snapshot.start, value.length));
+          var end = Math.max(start, Math.min(snapshot.end, value.length));
+          textarea.setSelectionRange(start, end);
+        }
+      }
+    }
+  }
+
+  function handleTooltipEditorKeydown(event) {
+    if (!event) {
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeTooltipEditor({ restoreTextareaFocus: true });
+      return;
+    }
+
+    if (event.key === "Enter" && isPrimaryModifierPressed(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      applyTooltipEditorSelection();
+    }
+  }
+
+  function applyTooltipEditorSelection() {
+    if (state.tooltipSelection && state.tooltipSelection.mode === "visual") {
+      applyVisualTooltipEditorSelection();
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    var value = String(textarea.value || "");
+    var snapshot = state.tooltipSelection || getSelectionInfo(textarea);
+    var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
+    var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
+    var selectedText = value.slice(start, end) || readString(snapshot.selectedText, "");
+    var visibleText = readString(state.elements && state.elements.editorTooltipVisible && state.elements.editorTooltipVisible.value, selectedText || "testo visibile");
+    var tooltipText = readString(state.elements && state.elements.editorTooltipText && state.elements.editorTooltipText.value, "testo tooltip");
+    var snippet = buildTooltipHtml(visibleText, tooltipText);
+
+    replaceSelectionByRange(textarea, start, end, snippet, {
+      start: snippet.length,
+      end: snippet.length,
+    });
+
+    closeTooltipEditor();
+  }
+
+  function findTooltipShortcodeAroundSelection(info) {
+    if (!info || !info.value) {
+      return null;
+    }
+
+    var value = String(info.value || "");
+    var searchStart = Math.max(0, Math.min(Number(info.start) || 0, value.length));
+    var shortcodeStart = value.lastIndexOf("{{tooltip:", searchStart);
+
+    if (shortcodeStart === -1) {
+      return null;
+    }
+
+    var labelResult = readTooltipTokenSegment(value, shortcodeStart + 10, "|");
+    if (!labelResult.found) {
+      return null;
+    }
+
+    var textResult = readTooltipTokenSegment(value, labelResult.nextIndex, "}}");
+    if (!textResult.found) {
+      return null;
+    }
+
+    var shortcodeEnd = textResult.nextIndex;
+    if (info.end < shortcodeStart || info.start > shortcodeEnd) {
+      return null;
+    }
+
+    return {
+      start: shortcodeStart,
+      end: shortcodeEnd,
+      raw: value.slice(shortcodeStart, shortcodeEnd),
+      label: decodeTooltipShortcodeSegment(labelResult.value, "testo visibile"),
+      tooltipText: decodeTooltipShortcodeSegment(textResult.value, ""),
+    };
+  }
+
+  function escapeTooltipShortcodeSegment(value, fallback) {
+    var source = readString(value, "").replace(/\r?\n+/g, " ").trim();
+    if (!source) {
+      source = readString(fallback, "").trim();
+    }
+
+    return source
+      .replace(/\\/g, "\\\\")
+      .replace(/\|/g, "\\|")
+      .replace(/\{/g, "\\{")
+      .replace(/\}/g, "\\}");
+  }
+
+  function decodeTooltipShortcodeSegment(value, fallback) {
+    var raw = readString(value, "");
+    var decoded = "";
+    var backslash = String.fromCharCode(92);
+    var carriageReturn = String.fromCharCode(13);
+    var lineFeed = String.fromCharCode(10);
+
+    for (var i = 0; i < raw.length; i += 1) {
+      var current = raw.charAt(i);
+
+      if (current === backslash && i + 1 < raw.length) {
+        var next = raw.charAt(i + 1);
+
+        if (next === backslash || next === "|" || next === "{" || next === "}") {
+          decoded += next;
+          i += 1;
+          continue;
+        }
+      }
+
+      decoded += current;
+    }
+
+    var source = decoded
+      .split(carriageReturn).join(lineFeed)
+      .split(lineFeed).join(" ")
+      .trim();
+
+    if (!source) {
+      source = readString(fallback, "").trim();
+    }
+
+    return source;
   }
 
   function isColorPickerOpen() {
@@ -3323,9 +10828,11 @@
     };
 
     closeInternalLinkPicker();
+    closeTooltipEditor();
     closeMediaLibraryPanel();
 
     state.elements.editorColorPicker.hidden = false;
+    positionEditorPopoverPanel(state.elements.editorColorPicker, editorTextarea, snapshot);
   }
 
   function closeColorPicker(options) {
@@ -3337,9 +10844,22 @@
     var snapshot = state.colorSelection;
 
     state.elements.editorColorPicker.hidden = true;
+    resetEditorPopoverPlacement(state.elements.editorColorPicker);
 
     if (!opts.keepSelection) {
       state.colorSelection = null;
+      state.visualColorSelection = null;
+    }
+
+    if (snapshot && snapshot.mode === "visual") {
+      if (opts.restoreTextareaFocus && state.elements.editorVisualEditor) {
+        try {
+          state.elements.editorVisualEditor.focus({ preventScroll: true });
+        } catch (_error) {
+          state.elements.editorVisualEditor.focus();
+        }
+      }
+      return;
     }
 
     if (opts.restoreTextareaFocus) {
@@ -3369,6 +10889,11 @@
       stone: true,
       plum: true,
       rose: true,
+      clay: true,
+      copper: true,
+      indigo: true,
+      olive: true,
+      ash: true,
     };
 
     var color = cleanSegment(readString(value, ""));
@@ -3384,7 +10909,140 @@
       .replace(/'/g, "&#39;");
   }
 
+  function clearColoredText() {
+    if (state.colorSelection && state.colorSelection.mode === "visual") {
+      clearVisualColoredText();
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      closeColorPicker();
+      return;
+    }
+
+    var value = String(textarea.value || "");
+    var snapshot = state.colorSelection || getSelectionInfo(textarea);
+    var existing = findHtmlColorSpanAroundTextareaSelection({
+      value: value,
+      start: snapshot.start,
+      end: snapshot.end,
+    });
+
+    if (existing) {
+      replaceSelectionByRange(textarea, existing.start, existing.end, existing.content, {
+        start: 0,
+        end: existing.content.length,
+      });
+      closeColorPicker();
+      return;
+    }
+
+    closeColorPicker({ restoreTextareaFocus: true });
+  }
+
+  function clearVisualColoredText() {
+    var snapshot = state.colorSelection || {};
+    var editor = state.elements && state.elements.editorVisualEditor;
+    if (!editor) {
+      closeColorPicker();
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+
+    if (snapshot.element && snapshot.element.isConnected) {
+      unwrapElementPreservingChildren(snapshot.element);
+      closeColorPicker();
+      return;
+    }
+
+    var range = state.visualColorSelection || state.visualTooltipSelection || getCurrentVisualRange();
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      closeColorPicker();
+      return;
+    }
+
+    var root = range.commonAncestorContainer;
+    if (root && root.nodeType === Node.TEXT_NODE) {
+      root = root.parentNode;
+    }
+
+    var scope = root && root.closest ? root.closest(".docs-visual-editor") || editor : editor;
+    var colored = scope.querySelectorAll ? scope.querySelectorAll(".wiki-color") : [];
+    var touched = [];
+
+    for (var i = 0; i < colored.length; i += 1) {
+      if (typeof range.intersectsNode === "function" && range.intersectsNode(colored[i])) {
+        touched.push(colored[i]);
+      }
+    }
+
+    if (!touched.length) {
+      closeColorPicker();
+      return;
+    }
+
+    for (var j = 0; j < touched.length; j += 1) {
+      unwrapElementPreservingChildren(touched[j]);
+    }
+
+    closeColorPicker();
+  }
+
+  function unwrapElementPreservingChildren(element) {
+    if (!element || !element.parentNode) {
+      return;
+    }
+
+    var parent = element.parentNode;
+    while (element.firstChild) {
+      parent.insertBefore(element.firstChild, element);
+    }
+    parent.removeChild(element);
+  }
+
+  function findHtmlColorSpanAroundTextareaSelection(info) {
+    if (!info || !info.value) {
+      return null;
+    }
+
+    var value = String(info.value || "");
+    var start = Math.max(0, Math.min(Number(info.start) || 0, value.length));
+    var end = Math.max(start, Math.min(Number(info.end) || start, value.length));
+    var searchStart = value.lastIndexOf("<span", start);
+
+    while (searchStart !== -1) {
+      var openEnd = value.indexOf(">", searchStart);
+      var closeStart = value.indexOf("</span>", Math.max(end, openEnd));
+
+      if (openEnd === -1 || closeStart === -1) {
+        return null;
+      }
+
+      var openTag = value.slice(searchStart, openEnd + 1);
+      var closeEnd = closeStart + "</span>".length;
+
+      if (end >= searchStart && start <= closeEnd && /class=["'][^"']*wiki-color[^"']*["']/i.test(openTag)) {
+        return {
+          start: searchStart,
+          end: closeEnd,
+          content: value.slice(openEnd + 1, closeStart),
+        };
+      }
+
+      searchStart = value.lastIndexOf("<span", searchStart - 1);
+    }
+
+    return null;
+  }
+
   function insertColoredText(colorName) {
+    if (state.colorSelection && state.colorSelection.mode === "visual") {
+      insertVisualColoredText(colorName);
+      return;
+    }
+
     var textarea = getEditorMarkdownTextarea();
     if (!textarea) {
       return;
@@ -3467,10 +11125,12 @@
     state.internalLinkQuery = "";
 
     closeMediaLibraryPanel();
+    closeTooltipEditor();
 
     state.elements.editorInternalLinkInput.value = "";
     state.elements.editorInternalLinkPanel.hidden = false;
     renderInternalLinkResults();
+    positionEditorPopoverPanel(state.elements.editorInternalLinkPanel, editorTextarea, snapshot);
 
     state.elements.editorInternalLinkInput.focus();
   }
@@ -3484,6 +11144,7 @@
     var snapshot = state.internalLinkSelection;
 
     state.elements.editorInternalLinkPanel.hidden = true;
+    resetEditorPopoverPlacement(state.elements.editorInternalLinkPanel);
     state.internalLinkQuery = "";
 
     if (state.elements.editorInternalLinkInput) {
@@ -3496,6 +11157,19 @@
 
     if (!opts.keepSelection) {
       state.internalLinkSelection = null;
+      state.visualInternalLinkSelection = null;
+    }
+
+    if (snapshot && snapshot.mode === "visual") {
+      resetEditorPopoverPlacement(state.elements.editorInternalLinkPanel);
+      if (opts.restoreTextareaFocus && state.elements.editorVisualEditor) {
+        try {
+          state.elements.editorVisualEditor.focus({ preventScroll: true });
+        } catch (_error) {
+          state.elements.editorVisualEditor.focus();
+        }
+      }
+      return;
     }
 
     if (opts.restoreTextareaFocus) {
@@ -3727,6 +11401,11 @@
   }
 
   function insertInternalDocLink(target) {
+    if (state.internalLinkSelection && state.internalLinkSelection.mode === "visual") {
+      insertVisualInternalDocLink(target);
+      return;
+    }
+
     var textarea = getEditorMarkdownTextarea();
     if (!textarea || !target) {
       return;
@@ -3743,12 +11422,7 @@
     }
 
     var label = selectedText || readString(target.title, "Pagina wiki");
-    var markdownLink =
-      "[" +
-      escapeMarkdownLinkLabel(label) +
-      "](docs.html?doc=" +
-      readString(target.docKey, "") +
-      ")";
+    var markdownLink = '<a href="docs.html?doc=' + escapeInlineHtmlText(readString(target.docKey, "")) + '">' + escapeInlineHtmlText(label) + '</a>';
 
     replaceSelectionByRange(textarea, start, end, markdownLink, {
       start: markdownLink.length,
@@ -3833,21 +11507,13 @@
 
   function applyCodeBlockAction(textarea) {
     var info = getSelectionInfo(textarea);
+    var content = info.selectedText || "codice";
+    var escaped = escapeInlineHtmlText(content);
+    var block = "<pre><code>" + escaped + "</code></pre>";
 
-    if (info.selectedText) {
-      var wrapped = "```text\n" + info.selectedText + "\n```";
-      replaceSelectionRange(textarea, wrapped, {
-        start: 0,
-        end: wrapped.length,
-      });
-      return;
-    }
-
-    var emptyBlock = "```text\n\n```";
-    var cursor = "```text\n".length;
-    insertBlockAtCursor(textarea, emptyBlock, {
-      start: cursor,
-      end: cursor,
+    replaceSelectionRange(textarea, block, {
+      start: "<pre><code>".length,
+      end: "<pre><code>".length + escaped.length,
     });
   }
 
@@ -3915,6 +11581,10 @@
   }
 
   function buildEditorPayload() {
+    if (state.editorSourceMode === "visual") {
+      syncVisualEditorToMarkdown();
+    }
+
     if (!state.elements || !state.elements.editorForm) {
       return null;
     }
@@ -3982,7 +11652,7 @@
       depth: Math.max(0, depth.value === null ? 0 : depth.value),
       is_published: !!(publishedInput && publishedInput.checked),
       excerpt: toNullableString(getFormValue(form, "excerpt")),
-      content_md: String(getFormValue(form, "content_md") || ""),
+      content_md: normalizeEditorSourceForStorage(String(getFormValue(form, "content_md") || "")),
     };
 
     if (state.editorMode === "edit" && state.currentEntry) {
@@ -3991,6 +11661,23 @@
     }
 
     return payload;
+  }
+
+  function normalizeEditorSourceForStorage(value) {
+    var source = String(value || "").trim();
+    if (!source) {
+      return "";
+    }
+
+    if (isLegacyMarkdownContent(source)) {
+      return normalizeStoredHtmlContent(renderMarkdown(source));
+    }
+
+    if (isStoredHtmlContent(source)) {
+      return normalizeStoredHtmlContent(source);
+    }
+
+    return "<p>" + escapeInlineHtmlText(source) + "</p>";
   }
 
   function ensureCreateSlug(section, slug) {
@@ -4053,8 +11740,13 @@
 
       await refreshDocsData(targetDocKey);
 
-      setEditorStatus(state.editorMode === "create" ? "Pagina creata con successo." : "Pagina salvata con successo.", "success");
-      closeEditorModal(true);
+      var wasCreateMode = state.editorMode === "create";
+      if (wasCreateMode) {
+        setEditorMode("edit");
+      }
+
+      resetEditorHistory();
+      setEditorStatus(wasCreateMode ? "Pagina creata con successo." : "Pagina salvata con successo.", "success");
     } catch (error) {
       console.error("Errore salvataggio pagina wiki:", error);
       setEditorStatus(readString(error && error.message, "Errore durante il salvataggio."), "error");
@@ -4495,6 +12187,8 @@
         grouped.set(groupKey, {
           key: groupKey,
           title: readString(page.navGroupDisplay, "Generale"),
+          section: page.sectionSlug,
+          navGroup: readString(page.navGroup, ""),
           order: toGroupOrder(page.navGroupOrder),
           icon: readString(page.navGroupIcon, ""),
           pages: [],
@@ -4539,6 +12233,8 @@
       nodes.push({
         kind: "group",
         title: currentGroup.title,
+        section: readString(currentGroup.section, ""),
+        navGroup: readString(currentGroup.navGroup, ""),
         icon: readString(currentGroup.icon, ""),
         navGroupKey: currentGroup.key,
         children: docNodes,
@@ -4815,6 +12511,7 @@
     document.title = buildPageTitle(entry);
     renderLoadingState();
     teardownTocTracking();
+    renderPageOutlineSpine([]);
 
     try {
       var markdown = readString(entry.contentMd, "");
@@ -4822,8 +12519,10 @@
 
       state.elements.content.innerHTML = html;
 
+      setupWikiInteractiveBlocks(state.elements.content, entry);
       var headings = addHeadingAnchors(state.elements.content);
       renderToc(headings);
+      renderPageOutlineSpine(headings);
       renderPrevNext(entry);
       setupTocTracking(headings);
     } catch (error) {
@@ -4834,11 +12533,21 @@
         technical: "Chiave documento: " + entry.docKey,
       });
       renderToc([]);
+      renderPageOutlineSpine([]);
       renderPrevNext(entry);
       teardownTocTracking();
     }
   }
   function renderMarkdown(markdown) {
+    var source = String(markdown || "").trim();
+    if (!source) {
+      return "";
+    }
+
+    if (!isLegacyMarkdownContent(source) && isStoredHtmlContent(source)) {
+      return normalizeStoredHtmlContent(source);
+    }
+
     if (!window.marked || typeof window.marked.parse !== "function") {
       throw new Error("Parser markdown non disponibile.");
     }
@@ -4848,7 +12557,625 @@
       breaks: false,
     });
 
-    return window.marked.parse(markdown || "");
+    var legacySource = normalizeLegacyMarkdownSource(source);
+    var prepared = replaceWikiBoxBlocks(replaceTooltipShortcodes(legacySource));
+    return normalizeStoredHtmlContent(window.marked.parse(prepared));
+  }
+
+  function isStoredHtmlContent(value) {
+    var source = String(value || "").trim();
+    if (!source) {
+      return false;
+    }
+
+    var boundary = String.fromCharCode(92) + "b";
+    var htmlPattern = new RegExp("</?(?:p|h[1-6]|ul|ol|li|blockquote|pre|code|span|a|figure|aside|img|div|section|input|label|hr|br|strong|em|b|i|table|thead|tbody|tfoot|tr|th|td|details|summary)" + boundary, "i");
+    return htmlPattern.test(source);
+  }
+
+  function normalizeLegacyMarkdownSource(value) {
+    var source = String(value || "").trim();
+    if (!source) {
+      return source;
+    }
+
+    var lineFeed = String.fromCharCode(10);
+    var slash = String.fromCharCode(92);
+    var normalized = source;
+
+    normalized = normalized.replace(new RegExp(slash + "s+---" + slash + "s+", "g"), lineFeed + lineFeed + "---" + lineFeed + lineFeed);
+    normalized = normalized.replace(new RegExp("(^|" + slash + "s)(#{2,6}" + slash + "s+)", "g"), function (_match, before, marker) {
+      return (before && before.trim() ? before : "") + lineFeed + lineFeed + marker;
+    });
+    normalized = normalized.replace(new RegExp(slash + "s+:::box" + slash + "s+(info|note|warning|success|danger)" + slash + "s+([" + slash + "s" + slash + "S]*?)" + slash + "s+:::", "g"), function (_match, type, content) {
+      return lineFeed + lineFeed + ":::box " + type + lineFeed + String(content || "").trim() + lineFeed + ":::" + lineFeed + lineFeed;
+    });
+    normalized = normalized.replace(new RegExp(slash + "s+-" + slash + "s+", "g"), lineFeed + "- ");
+    normalized = normalized.replace(new RegExp(slash + "s+>" + slash + "s+", "g"), lineFeed + lineFeed + "> ");
+
+    return normalized.trim();
+  }
+
+  function isLegacyMarkdownContent(value) {
+    var source = String(value || "").trim();
+    if (!source) {
+      return false;
+    }
+
+    if (
+      source.indexOf("{{tooltip:") !== -1 ||
+      source.indexOf(":::box") !== -1 ||
+      source.indexOf("![") !== -1 ||
+      source.indexOf("](") !== -1 ||
+      source.indexOf("```") !== -1 ||
+      source.indexOf("---") !== -1 ||
+      source.indexOf("**") !== -1
+    ) {
+      return true;
+    }
+
+    var slash = String.fromCharCode(92);
+    var headingPattern = new RegExp("(^|" + slash + "s)#{1,6}" + slash + "s+");
+    var listPattern = new RegExp("(^|" + slash + "s)[-*+]" + slash + "s+");
+    var orderedListPattern = new RegExp("(^|" + slash + "s)[0-9]+[.]" + slash + "s+");
+    var quotePattern = new RegExp("(^|" + slash + "s)>" + slash + "s+");
+
+    return headingPattern.test(source) || listPattern.test(source) || orderedListPattern.test(source) || quotePattern.test(source);
+  }
+
+  function normalizeStoredHtmlContent(value) {
+    var source = String(value || "").trim();
+    if (!source) {
+      return "";
+    }
+
+    var template = document.createElement("template");
+    template.innerHTML = source;
+    cleanStoredHtmlFragment(template.content);
+    return template.innerHTML.trim();
+  }
+
+  function cleanStoredHtmlFragment(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    normalizeStoredTextDivs(root);
+
+    var scripts = root.querySelectorAll("script, iframe, object, embed");
+    for (var scriptIndex = 0; scriptIndex < scripts.length; scriptIndex += 1) {
+      scripts[scriptIndex].remove();
+    }
+
+    var editorOnlyStepperAddButtons = root.querySelectorAll("[data-wiki-stepper-add]");
+    for (var addIndex = 0; addIndex < editorOnlyStepperAddButtons.length; addIndex += 1) {
+      editorOnlyStepperAddButtons[addIndex].remove();
+    }
+
+    var all = root.querySelectorAll("*");
+    for (var i = 0; i < all.length; i += 1) {
+      var element = all[i];
+      var tag = String(element.tagName || "").toLowerCase();
+
+      for (var attrIndex = element.attributes.length - 1; attrIndex >= 0; attrIndex -= 1) {
+        var attr = element.attributes[attrIndex];
+        var name = String(attr.name || "").toLowerCase();
+        var value = String(attr.value || "");
+
+        if (name.indexOf("on") === 0) {
+          element.removeAttribute(attr.name);
+          continue;
+        }
+
+        if ((name === "href" || name === "src") && /^javascript:/i.test(value.trim())) {
+          element.removeAttribute(attr.name);
+          continue;
+        }
+
+        if (
+          name === "style" &&
+          !(
+            element.classList &&
+            (element.classList.contains("wiki-image") || element.classList.contains("wiki-columns"))
+          )
+        ) {
+          element.removeAttribute(attr.name);
+        }
+      }
+
+      element.removeAttribute("contenteditable");
+
+      if (tag === "a") {
+        var href = readString(element.getAttribute("href"), "");
+        if (href && !/^https?:\/\//i.test(href) && href.indexOf("docs.html?doc=") !== 0 && href.charAt(0) !== "#") {
+          element.removeAttribute("href");
+        }
+      }
+
+      if (element.classList && element.classList.contains("wiki-image")) {
+        var imageData = readWikiImageDataFromNode(element);
+        if (imageData && imageData.width) {
+          element.setAttribute("data-wiki-image-layout", imageData.layout);
+          element.setAttribute("data-wiki-image-width", imageData.width);
+          element.style.setProperty("--wiki-image-width", imageData.width);
+        }
+      }
+
+      if (tag === "input" && element.getAttribute("data-wiki-check-id")) {
+        element.setAttribute("type", "checkbox");
+        element.removeAttribute("checked");
+      }
+    }
+  }
+
+  function normalizeStoredTextDivs(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    var divs = root.querySelectorAll("div");
+    for (var i = 0; i < divs.length; i += 1) {
+      var div = divs[i];
+      if (!isPlainTextParagraphDiv(div)) {
+        continue;
+      }
+
+      div.classList.add("wiki-paragraph");
+    }
+  }
+
+  function isPlainTextParagraphDiv(div) {
+    if (!div || String(div.tagName || "").toLowerCase() !== "div") {
+      return false;
+    }
+
+    if (div.classList && div.classList.length) {
+      return false;
+    }
+
+    if (div.closest && div.closest(".wiki-box, .wiki-stepper, .wiki-columns, .wiki-expandable, table, figure, blockquote, pre")) {
+      return false;
+    }
+
+    var text = readString(div.textContent, "");
+    if (!text) {
+      return false;
+    }
+
+    var children = div.children || [];
+    for (var i = 0; i < children.length; i += 1) {
+      var tag = String(children[i].tagName || "").toLowerCase();
+      if (tag === "br" || tag === "span" || tag === "strong" || tag === "em" || tag === "b" || tag === "i" || tag === "code" || tag === "a" || tag === "mark") {
+        continue;
+      }
+
+      return false;
+    }
+
+    return true;
+  }
+
+  function replaceWikiBoxBlocks(markdown) {
+    var source = String(markdown || "");
+    if (!source || source.indexOf(":::box") === -1) {
+      return source;
+    }
+
+    var lineFeed = String.fromCharCode(10);
+    var lines = source.split(lineFeed);
+    var output = [];
+    var index = 0;
+
+    while (index < lines.length) {
+      var line = lines[index];
+      var trimmed = String(line || "").trim();
+
+      if (trimmed.indexOf(":::box") !== 0) {
+        output.push(line);
+        index += 1;
+        continue;
+      }
+
+      var header = trimmed.slice(":::box".length).trim();
+      var headerParts = header.split(" ");
+      var type = normalizeWikiBoxType(headerParts.shift() || "info");
+      var title = headerParts.join(" ").trim();
+      var contentLines = [];
+      index += 1;
+
+      while (index < lines.length && String(lines[index] || "").trim() !== ":::") {
+        contentLines.push(lines[index]);
+        index += 1;
+      }
+
+      if (index >= lines.length) {
+        output.push(line);
+        for (var brokenIndex = 0; brokenIndex < contentLines.length; brokenIndex += 1) {
+          output.push(contentLines[brokenIndex]);
+        }
+        continue;
+      }
+
+      index += 1;
+      output.push(buildWikiBoxHtml(type, title, contentLines.join(lineFeed)));
+    }
+
+    return output.join(lineFeed);
+  }
+
+  function buildWikiBoxHtml(type, title, content) {
+    var boxType = normalizeWikiBoxType(type);
+    var meta = WIKI_BOX_TYPES[boxType] || WIKI_BOX_TYPES.info;
+    var titleValue = readString(title, "");
+    var titleHtml = titleValue ? '<p class="wiki-box__title">' + escapeInlineHtmlText(titleValue) + '</p>' : "";
+    var contentHtml = content ? window.marked.parse(replaceTooltipShortcodes(content)) : "";
+    var titleClass = titleValue ? " has-title" : "";
+
+    return '<aside class="wiki-box wiki-box--' + boxType + titleClass + '" role="note">' +
+      '<div class="wiki-box__icon" aria-hidden="true"><i class="' + escapeInlineHtmlText(meta.icon) + '"></i></div>' +
+      '<div class="wiki-box__content">' + titleHtml + contentHtml + '</div>' +
+      '</aside>';
+  }
+
+  function replaceTooltipShortcodes(markdown) {
+    var source = String(markdown || "");
+    if (!source) {
+      return source;
+    }
+
+    var output = "";
+    var cursor = 0;
+
+    while (cursor < source.length) {
+      var start = source.indexOf("{{tooltip:", cursor);
+      if (start === -1) {
+        output += source.slice(cursor);
+        break;
+      }
+
+      output += source.slice(cursor, start);
+
+      var labelResult = readTooltipTokenSegment(source, start + 10, "|");
+      if (!labelResult.found) {
+        output += source.slice(start, start + 2);
+        cursor = start + 2;
+        continue;
+      }
+
+      var textResult = readTooltipTokenSegment(source, labelResult.nextIndex, "}}");
+      if (!textResult.found) {
+        output += source.slice(start, start + 2);
+        cursor = start + 2;
+        continue;
+      }
+
+      var label = decodeTooltipShortcodeSegment(labelResult.value, "testo visibile");
+      var tooltipText = decodeTooltipShortcodeSegment(textResult.value, "");
+      if (!tooltipText) {
+        tooltipText = label;
+      }
+
+      output +=
+        '<span class="wiki-tooltip" tabindex="0" data-tooltip="' +
+        escapeInlineHtmlText(tooltipText) +
+        '">' +
+        escapeInlineHtmlText(label) +
+        "</span>";
+
+      cursor = textResult.nextIndex;
+    }
+
+    return output;
+  }
+
+  function readTooltipTokenSegment(source, startIndex, delimiter) {
+    var text = String(source || "");
+    var value = "";
+    var i = Math.max(0, Number(startIndex) || 0);
+
+    while (i < text.length) {
+      var current = text.charAt(i);
+
+      if (current === "\\") {
+        if (i + 1 < text.length) {
+          value += current + text.charAt(i + 1);
+          i += 2;
+          continue;
+        }
+
+        value += current;
+        i += 1;
+        continue;
+      }
+
+      if (delimiter === "|") {
+        if (current === "|") {
+          return {
+            found: true,
+            value: value,
+            nextIndex: i + 1,
+          };
+        }
+      } else if (delimiter === "}}") {
+        if (current === "}" && i + 1 < text.length && text.charAt(i + 1) === "}") {
+          return {
+            found: true,
+            value: value,
+            nextIndex: i + 2,
+          };
+        }
+      }
+
+      value += current;
+      i += 1;
+    }
+
+    return {
+      found: false,
+      value: value,
+      nextIndex: i,
+    };
+  }
+
+  function findWikiTooltipTrigger(target) {
+    if (!state.elements || !state.elements.content || !target || !target.closest) {
+      return null;
+    }
+
+    var trigger = target.closest(".wiki-tooltip");
+    if (!trigger || !state.elements.content.contains(trigger)) {
+      return null;
+    }
+
+    return trigger;
+  }
+
+  function isWikiTooltipOpen() {
+    return !!(state.wikiTooltipActive && state.wikiTooltipBubble && !state.wikiTooltipBubble.hidden);
+  }
+
+  function isEventInsideWikiTooltip(target) {
+    if (findWikiTooltipTrigger(target)) {
+      return true;
+    }
+
+    if (state.wikiTooltipBubble && state.wikiTooltipBubble.contains && state.wikiTooltipBubble.contains(target)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function ensureWikiTooltipBubble() {
+    if (state.wikiTooltipBubble && state.wikiTooltipBubble.isConnected) {
+      return state.wikiTooltipBubble;
+    }
+
+    var bubble = document.createElement("div");
+    bubble.id = "wiki-tooltip-bubble";
+    bubble.className = "wiki-tooltip-bubble";
+    bubble.setAttribute("role", "tooltip");
+    bubble.hidden = true;
+    document.body.appendChild(bubble);
+
+    state.wikiTooltipBubble = bubble;
+    return bubble;
+  }
+
+  function positionWikiTooltipBubble(trigger, bubble) {
+    if (!trigger || !bubble) {
+      return;
+    }
+
+    var viewportPadding = 10;
+    var triggerRect = trigger.getBoundingClientRect();
+
+    bubble.style.left = "0px";
+    bubble.style.top = "0px";
+    bubble.style.maxWidth = Math.max(180, Math.min(380, window.innerWidth - viewportPadding * 2)) + "px";
+    bubble.style.visibility = "hidden";
+
+    var bubbleRect = bubble.getBoundingClientRect();
+    var top = triggerRect.top - bubbleRect.height - 10;
+    var placement = "top";
+
+    if (top < viewportPadding) {
+      top = triggerRect.bottom + 10;
+      placement = "bottom";
+    }
+
+    if (top + bubbleRect.height > window.innerHeight - viewportPadding) {
+      top = Math.max(viewportPadding, window.innerHeight - bubbleRect.height - viewportPadding);
+    }
+
+    var left = triggerRect.left + triggerRect.width / 2 - bubbleRect.width / 2;
+    left = Math.max(viewportPadding, Math.min(left, window.innerWidth - bubbleRect.width - viewportPadding));
+
+    bubble.style.left = left + "px";
+    bubble.style.top = top + "px";
+    bubble.setAttribute("data-placement", placement);
+    bubble.style.visibility = "visible";
+  }
+
+  function openWikiTooltip(trigger) {
+    if (!trigger) {
+      return;
+    }
+
+    var text = readString(trigger.getAttribute("data-tooltip"), "");
+    if (!text) {
+      closeWikiTooltip();
+      return;
+    }
+
+    var bubble = ensureWikiTooltipBubble();
+
+    if (state.wikiTooltipActive && state.wikiTooltipActive !== trigger) {
+      state.wikiTooltipActive.classList.remove("is-open");
+      state.wikiTooltipActive.removeAttribute("aria-describedby");
+    }
+
+    state.wikiTooltipActive = trigger;
+    trigger.classList.add("is-open");
+    trigger.setAttribute("aria-describedby", bubble.id);
+
+    bubble.textContent = text;
+    bubble.hidden = false;
+    bubble.classList.add("is-visible");
+
+    positionWikiTooltipBubble(trigger, bubble);
+  }
+
+  function closeWikiTooltip() {
+    if (state.wikiTooltipActive) {
+      state.wikiTooltipActive.classList.remove("is-open");
+      state.wikiTooltipActive.removeAttribute("aria-describedby");
+      state.wikiTooltipActive = null;
+    }
+
+    if (state.wikiTooltipBubble) {
+      state.wikiTooltipBubble.hidden = true;
+      state.wikiTooltipBubble.classList.remove("is-visible");
+      state.wikiTooltipBubble.style.visibility = "";
+      state.wikiTooltipBubble.removeAttribute("data-placement");
+    }
+  }
+
+  function handleWikiTooltipClick(event) {
+    var trigger = findWikiTooltipTrigger(event && event.target);
+    if (!trigger) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (state.wikiTooltipActive === trigger && isWikiTooltipOpen()) {
+      closeWikiTooltip();
+      return;
+    }
+
+    openWikiTooltip(trigger);
+  }
+
+  function handleWikiTooltipMouseOver(event) {
+    if (!window.matchMedia || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      return;
+    }
+
+    var trigger = findWikiTooltipTrigger(event && event.target);
+    if (!trigger) {
+      return;
+    }
+
+    openWikiTooltip(trigger);
+  }
+
+  function handleWikiTooltipMouseOut(event) {
+    if (!window.matchMedia || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      return;
+    }
+
+    var trigger = findWikiTooltipTrigger(event && event.target);
+    if (!trigger) {
+      return;
+    }
+
+    var related = event.relatedTarget;
+    if (related && trigger.contains && trigger.contains(related)) {
+      return;
+    }
+
+    closeWikiTooltip();
+  }
+
+  function handleWikiTooltipFocusIn(event) {
+    var trigger = findWikiTooltipTrigger(event && event.target);
+    if (!trigger) {
+      return;
+    }
+
+    openWikiTooltip(trigger);
+  }
+
+  function handleWikiTooltipFocusOut(event) {
+    var trigger = findWikiTooltipTrigger(event && event.target);
+    if (!trigger) {
+      return;
+    }
+
+    var related = event.relatedTarget;
+    if (related && trigger.contains && trigger.contains(related)) {
+      return;
+    }
+
+    closeWikiTooltip();
+  }
+
+  function setupWikiInteractiveBlocks(root, entry) {
+    setupWikiChecklistState(root, entry);
+    setupWikiExpandablesDefaultCollapsed(root);
+  }
+
+  function setupWikiExpandablesDefaultCollapsed(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    var expandables = root.querySelectorAll("details.wiki-expandable");
+    for (var i = 0; i < expandables.length; i += 1) {
+      expandables[i].removeAttribute("open");
+      expandables[i].classList.remove("is-open");
+    }
+  }
+
+  function getWikiChecklistStorageKey(entry, checkId) {
+    var docKey = normalizeDocPath(readString(entry && entry.docKey, state.currentEntry && state.currentEntry.docKey));
+    var id = readString(checkId, "");
+    return WIKI_CHECKLIST_STORAGE_PREFIX + docKey + ":" + id;
+  }
+
+  function setupWikiChecklistState(root, entry) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    var inputs = root.querySelectorAll("input[data-wiki-check-id]");
+    for (var i = 0; i < inputs.length; i += 1) {
+      var input = inputs[i];
+      var key = getWikiChecklistStorageKey(entry, input.getAttribute("data-wiki-check-id"));
+      var saved = "";
+
+      try {
+        saved = localStorage.getItem(key) || "";
+      } catch (_error) {
+        saved = "";
+      }
+
+      input.checked = saved === "1";
+      input.classList.toggle("is-checked", input.checked);
+    }
+  }
+
+  function handleWikiChecklistChange(event) {
+    var input = event && event.target && event.target.closest ? event.target.closest("input[data-wiki-check-id]") : null;
+    if (!input || !state.elements || !state.elements.content || !state.elements.content.contains(input)) {
+      return;
+    }
+
+    var key = getWikiChecklistStorageKey(state.currentEntry, input.getAttribute("data-wiki-check-id"));
+
+    try {
+      if (input.checked) {
+        localStorage.setItem(key, "1");
+      } else {
+        localStorage.removeItem(key);
+      }
+    } catch (_error) {
+      // Ignore localStorage write issues.
+    }
+
+    input.classList.toggle("is-checked", input.checked);
   }
 
   function updateDocMeta(entry) {
@@ -5146,11 +13473,19 @@
       return "";
     }
 
+    if (isStoredHtmlContent(text)) {
+      var template = document.createElement("template");
+      template.innerHTML = normalizeStoredHtmlContent(text);
+      return String(template.content.textContent || "").replace(new RegExp(String.fromCharCode(92) + "s+", "g"), " ").trim();
+    }
+
     return text
       .replace(/```[\s\S]*?```/g, " ")
       .replace(/`[^`]*`/g, " ")
       .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
-      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, function (_match, label) {
+        return label;
+      })
       .replace(/[#>*_~|]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
@@ -5185,12 +13520,412 @@
     }
 
     var pattern = new RegExp("(" + filtered.join("|") + ")", "gi");
-    return safe.replace(pattern, "<mark>$1</mark>");
+    return safe.replace(pattern, function (match) {
+      return "<mark>" + match + "</mark>";
+    });
   }
+  function isDocsTreeContextMenuOpen() {
+    return !!(
+      state.elements &&
+      state.elements.treeContextMenu &&
+      !state.elements.treeContextMenu.hasAttribute("hidden")
+    );
+  }
+
+  function getTreeContextEntry() {
+    var key = normalizeDocPath(readString(state.treeContextEntryKey, ""));
+    if (!key) {
+      return null;
+    }
+
+    if (state.manageIndex && state.manageIndex.pageMap && state.manageIndex.pageMap.has(key)) {
+      return state.manageIndex.pageMap.get(key);
+    }
+
+    if (state.index && state.index.pageMap && state.index.pageMap.has(key)) {
+      return state.index.pageMap.get(key);
+    }
+
+    return null;
+  }
+
+  function getTreeContextGroup() {
+    return state.treeContextGroup && typeof state.treeContextGroup === "object" ? state.treeContextGroup : null;
+  }
+
+  function closeDocsTreeContextMenu() {
+    if (!state.elements || !state.elements.treeContextMenu) {
+      return;
+    }
+
+    state.elements.treeContextMenu.hidden = true;
+    state.elements.treeContextMenu.style.left = "";
+    state.elements.treeContextMenu.style.top = "";
+    state.treeContextEntryKey = "";
+    state.treeContextMode = "";
+    state.treeContextGroup = null;
+    state.treeContextGroup = null;
+  }
+
+  function isDocsTreeIconPickerOpen() {
+    return !!(state.treeIconPicker && !state.treeIconPicker.hasAttribute("hidden"));
+  }
+
+  function isEventInsideDocsTreeIconPicker(target) {
+    return !!(state.treeIconPicker && target && state.treeIconPicker.contains(target));
+  }
+
+  function ensureDocsTreeIconPicker() {
+    if (state.treeIconPicker && state.treeIconPicker.isConnected) {
+      return state.treeIconPicker;
+    }
+
+    var picker = document.createElement("div");
+    picker.className = "docs-box-icon-picker docs-tree-icon-picker docs-editor-md-context";
+    picker.setAttribute("data-docs-tree-icon-picker", "");
+    picker.setAttribute("role", "menu");
+    picker.setAttribute("aria-label", "Icona TOC");
+    picker.hidden = true;
+
+    var label = document.createElement("p");
+    label.className = "docs-box-icon-picker__label";
+    label.textContent = "Icona TOC";
+    picker.appendChild(label);
+
+    var grid = document.createElement("div");
+    grid.className = "docs-box-icon-picker__grid";
+
+    for (var i = 0; i < WIKI_BOX_ICON_CHOICES.length; i += 1) {
+      var iconClass = WIKI_BOX_ICON_CHOICES[i];
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-box-icon-picker__choice";
+      button.setAttribute("data-docs-tree-icon-choice", iconClass);
+      button.setAttribute("role", "menuitem");
+      button.setAttribute("aria-label", iconClassToLabel(iconClass));
+
+      var icon = document.createElement("i");
+      icon.className = iconClass;
+      icon.setAttribute("aria-hidden", "true");
+      button.appendChild(icon);
+      grid.appendChild(button);
+    }
+
+    picker.appendChild(grid);
+
+    picker.addEventListener("mousedown", function onTreeIconPickerMouseDown(event) {
+      event.preventDefault();
+    });
+
+    picker.addEventListener("click", function onTreeIconPickerClick(event) {
+      var button = event.target.closest("button[data-docs-tree-icon-choice]");
+      if (!button || button.disabled) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      applyDocsTreeIconChoice(button.getAttribute("data-docs-tree-icon-choice"));
+    });
+
+    document.body.appendChild(picker);
+    state.treeIconPicker = picker;
+    return picker;
+  }
+
+  function closeDocsTreeIconPicker() {
+    if (!state.treeIconPicker) {
+      return;
+    }
+
+    state.treeIconPicker.hidden = true;
+    resetEditorPopoverPlacement(state.treeIconPicker);
+    state.treeContextIcon = null;
+  }
+
+  function openDocsTreeIconPickerFromContext() {
+    var mode = readString(state.treeContextMode, "");
+    var entry = getTreeContextEntry();
+    var group = getTreeContextGroup();
+
+    if (mode !== "group" && !entry) {
+      closeDocsTreeContextMenu();
+      return;
+    }
+
+    if (mode === "group" && !group) {
+      closeDocsTreeContextMenu();
+      return;
+    }
+
+    var picker = ensureDocsTreeIconPicker();
+    if (!picker) {
+      return;
+    }
+
+    state.treeContextIcon = {
+      mode: mode === "group" ? "group" : "page",
+      entryKey: entry ? entry.docKey : "",
+      group: group,
+    };
+
+    syncDocsTreeIconPickerSelection();
+    picker.hidden = false;
+
+    var menuRect = state.elements && state.elements.treeContextMenu
+      ? state.elements.treeContextMenu.getBoundingClientRect()
+      : null;
+    var point = menuRect
+      ? { x: menuRect.left + menuRect.width + 12, y: menuRect.top + 12 }
+      : { x: 24, y: 24 };
+
+    positionEditorPopoverAtPoint(picker, point);
+    closeDocsTreeContextMenu();
+  }
+
+  function syncDocsTreeIconPickerSelection() {
+    var picker = ensureDocsTreeIconPicker();
+    var context = state.treeContextIcon || {};
+    var currentIcon = "";
+
+    if (context.mode === "group" && context.group) {
+      currentIcon = readString(context.group.icon, "");
+    } else if (context.entryKey) {
+      var entry = resolveDocEntryForTree(context.entryKey);
+      currentIcon = readString(entry && entry.pageIcon, "");
+    }
+
+    var normalized = currentIcon ? resolveTreeIconClass(currentIcon, "") : "";
+    var buttons = picker.querySelectorAll("button[data-docs-tree-icon-choice]");
+    for (var i = 0; i < buttons.length; i += 1) {
+      var isSelected = normalized && buttons[i].getAttribute("data-docs-tree-icon-choice") === normalized;
+      buttons[i].classList.toggle("is-selected", !!isSelected);
+      buttons[i].setAttribute("aria-pressed", isSelected ? "true" : "false");
+    }
+  }
+
+  async function applyDocsTreeIconChoice(iconClass) {
+    var context = state.treeContextIcon || {};
+    var normalizedIcon = normalizeWikiBoxIconClass(iconClass, "fa-solid fa-file-lines");
+
+    closeDocsTreeIconPicker();
+
+    if (context.mode === "group" && context.group) {
+      await persistDocsTreeGroupIcon(context.group, normalizedIcon);
+      return;
+    }
+
+    if (context.entryKey) {
+      var entry = resolveDocEntryForTree(context.entryKey);
+      await persistDocsTreePageIcon(entry, normalizedIcon);
+    }
+  }
+
+  async function persistDocsTreePageIcon(entry, iconClass) {
+    if (!state.isManageUnlocked || !entry || state.editorSaving) {
+      return;
+    }
+
+    var payload = buildPublishPayload(entry, entry.isPublished !== false);
+    payload.page_icon = toNullableString(iconClass);
+
+    setEditorSavingState(true);
+
+    try {
+      var result = await upsertWikiPage(payload);
+      var savedDocKey = resolveSavedDocKey(payload, result);
+      await refreshDocsData(savedDocKey || entry.docKey);
+    } catch (error) {
+      console.error("Errore aggiornamento icona pagina:", error);
+      renderDocErrorState({
+        title: "Operazione non completata",
+        message: readString(error && error.message, "Aggiornamento icona non riuscito."),
+      });
+    } finally {
+      setEditorSavingState(false);
+    }
+  }
+
+  async function persistDocsTreeGroupIcon(group, iconClass) {
+    if (!state.isManageUnlocked || !group || state.editorSaving) {
+      return;
+    }
+
+    var pages = state.manageIndex && Array.isArray(state.manageIndex.pages) ? state.manageIndex.pages : [];
+    var section = cleanSegment(readString(group.section, ""));
+    var groupKey = toNavGroupKey(group.navGroup);
+    var matchingPages = [];
+
+    for (var i = 0; i < pages.length; i += 1) {
+      var page = pages[i];
+      if (!page || page.sectionSlug !== section) {
+        continue;
+      }
+
+      if (toNavGroupKey(page.navGroup) === groupKey) {
+        matchingPages.push(page);
+      }
+    }
+
+    if (!matchingPages.length) {
+      return;
+    }
+
+    var currentDocKey = state.currentEntry ? state.currentEntry.docKey : "";
+    setEditorSavingState(true);
+
+    try {
+      for (var p = 0; p < matchingPages.length; p += 1) {
+        var payload = buildPublishPayload(matchingPages[p], matchingPages[p].isPublished !== false);
+        payload.nav_group_icon = toNullableString(iconClass);
+        await upsertWikiPage(payload);
+      }
+
+      await refreshDocsData(currentDocKey);
+    } catch (error) {
+      console.error("Errore aggiornamento icona gruppo:", error);
+      renderDocErrorState({
+        title: "Operazione non completata",
+        message: readString(error && error.message, "Aggiornamento icona gruppo non riuscito."),
+      });
+    } finally {
+      setEditorSavingState(false);
+    }
+  }
+
+  function closeDocsTreeContextMenu() {
+    if (!state.elements || !state.elements.treeContextMenu) {
+      return;
+    }
+
+    state.elements.treeContextMenu.hidden = true;
+    state.elements.treeContextMenu.style.left = "";
+    state.elements.treeContextMenu.style.top = "";
+    state.treeContextEntryKey = "";
+    state.treeContextMode = "";
+    state.treeContextGroup = null;
+  }
+
+  function openDocsTreeContextMenu(clientX, clientY, mode, entry, group) {
+    if (!state.elements || !state.elements.treeContextMenu) {
+      return;
+    }
+
+    var menu = state.elements.treeContextMenu;
+    var newButton = state.elements.treeContextNew;
+    var editButton = state.elements.treeContextEdit;
+    var toggleButton = state.elements.treeContextToggle;
+    var iconButton = state.elements.treeContextIcon;
+    var subpageButton = state.elements.treeContextSubpage;
+    var groupPageButton = state.elements.treeContextGroupPage;
+
+    if (!newButton || !editButton || !toggleButton) {
+      return;
+    }
+
+    var normalizedMode = mode === "group" ? "group" : mode === "hidden" ? "hidden" : mode === "existing" ? "existing" : "blank";
+
+    state.treeContextMode = normalizedMode;
+    state.treeContextEntryKey = entry && entry.docKey ? entry.docKey : "";
+    state.treeContextGroup = normalizedMode === "group" ? group || null : null;
+
+    newButton.hidden = normalizedMode !== "blank";
+    editButton.hidden = normalizedMode === "blank" || normalizedMode === "group";
+    toggleButton.hidden = normalizedMode === "blank" || normalizedMode === "group";
+
+    if (subpageButton) {
+      subpageButton.hidden = normalizedMode !== "existing" && normalizedMode !== "hidden";
+    }
+
+    if (groupPageButton) {
+      groupPageButton.hidden = normalizedMode !== "group";
+    }
+
+    if (iconButton) {
+      iconButton.hidden = normalizedMode === "blank";
+    }
+
+    var toggleIcon = toggleButton.querySelector("i");
+    if (normalizedMode === "hidden") {
+      setIconButtonLabel(toggleButton, "Pubblica pagina");
+      var toggleLabelShow = toggleButton.querySelector("span");
+      if (toggleLabelShow) {
+        toggleLabelShow.textContent = "Pubblica pagina";
+      }
+      if (toggleIcon) {
+        toggleIcon.className = "fa-solid fa-eye";
+      }
+    } else {
+      setIconButtonLabel(toggleButton, "Nascondi pagina");
+      var toggleLabelHide = toggleButton.querySelector("span");
+      if (toggleLabelHide) {
+        toggleLabelHide.textContent = "Nascondi pagina";
+      }
+      if (toggleIcon) {
+        toggleIcon.className = "fa-solid fa-eye-slash";
+      }
+    }
+
+    menu.hidden = false;
+
+    var viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    var rect = menu.getBoundingClientRect();
+    var left = Number(clientX) || 0;
+    var top = Number(clientY) || 0;
+
+    if (left + rect.width > viewportWidth - 8) {
+      left = Math.max(8, viewportWidth - rect.width - 8);
+    }
+
+    if (top + rect.height > viewportHeight - 8) {
+      top = Math.max(8, viewportHeight - rect.height - 8);
+    }
+
+    menu.style.left = String(left) + "px";
+    menu.style.top = String(top) + "px";
+  }
+
+  function handleDocsTreeContextMenu(event) {
+    if (!state.isManageUnlocked || !state.elements || !state.elements.treeContextMenu) {
+      return;
+    }
+
+    var target = event.target;
+    if (!target || !state.elements.treePanel || !state.elements.treePanel.contains(target)) {
+      return;
+    }
+
+    var groupNode = target.closest("[data-docs-tree-group]");
+    var link = target.closest("a[data-doc-link]");
+    var row = target.closest("[data-doc-key]");
+    var entry = null;
+    var group = null;
+    var mode = "blank";
+
+    if (groupNode) {
+      group = readDocsTreeGroupFromElement(groupNode);
+      mode = group ? "group" : "blank";
+    } else if (link) {
+      entry = resolveDocEntryForTree(link.getAttribute("data-doc-link"));
+    } else if (row) {
+      entry = resolveDocEntryForTree(row.getAttribute("data-doc-key"));
+    }
+
+    if (entry) {
+      mode = entry.isPublished === false ? "hidden" : "existing";
+    }
+
+    event.preventDefault();
+    openDocsTreeContextMenu(event.clientX, event.clientY, mode, entry, group);
+  }
+
   function renderDocsTree() {
     if (!state.index || !state.elements || !state.elements.tree) {
       return;
     }
+
+    closeDocsTreeContextMenu();
 
     var container = state.elements.tree;
     container.innerHTML = "";
@@ -5331,6 +14066,80 @@
     return hidden;
   }
 
+  function getDocsTreeCollapsedSet() {
+    if (state.treeCollapsedKeys instanceof Set) {
+      return state.treeCollapsedKeys;
+    }
+
+    var values = [];
+    try {
+      values = JSON.parse(localStorage.getItem(DOCS_TREE_COLLAPSE_STORAGE_KEY) || "[]");
+    } catch (_error) {
+      values = [];
+    }
+
+    state.treeCollapsedKeys = new Set(Array.isArray(values) ? values.filter(Boolean) : []);
+    return state.treeCollapsedKeys;
+  }
+
+  function persistDocsTreeCollapsedSet() {
+    var set = getDocsTreeCollapsedSet();
+    try {
+      localStorage.setItem(DOCS_TREE_COLLAPSE_STORAGE_KEY, JSON.stringify(Array.from(set.values())));
+    } catch (_error) {
+      // Ignore localStorage write issues.
+    }
+  }
+
+  function buildDocsTreeCollapseKey(kind, value) {
+    var normalizedKind = cleanSegment(kind || "node") || "node";
+    var normalizedValue = readString(value, "");
+    return normalizedKind + ":" + normalizedValue;
+  }
+
+  function isDocsTreeCollapsed(collapseKey) {
+    var key = readString(collapseKey, "");
+    return !!key && getDocsTreeCollapsedSet().has(key);
+  }
+
+  function toggleDocsTreeCollapsed(collapseKey) {
+    var key = readString(collapseKey, "");
+    if (!key) {
+      return;
+    }
+
+    var set = getDocsTreeCollapsedSet();
+    if (set.has(key)) {
+      set.delete(key);
+    } else {
+      set.add(key);
+    }
+
+    persistDocsTreeCollapsedSet();
+    renderDocsTree();
+  }
+
+  function readDocsTreeGroupFromElement(element) {
+    if (!element) {
+      return null;
+    }
+
+    var section = cleanSegment(readString(element.getAttribute("data-section"), ""));
+    var navGroup = readString(element.getAttribute("data-nav-group"), "");
+    var navGroupKey = toNavGroupKey(element.getAttribute("data-nav-group-key") || navGroup);
+
+    if (!section || !navGroupKey) {
+      return null;
+    }
+
+    return {
+      section: section,
+      navGroup: navGroup,
+      navGroupKey: navGroupKey,
+      icon: readString(element.getAttribute("data-nav-group-icon"), ""),
+    };
+  }
+
   function resolveDocEntryForTree(docKey) {
     var normalized = normalizeDocPath(readString(docKey, ""));
     if (!normalized) {
@@ -5445,8 +14254,11 @@
     for (var i = 0; i < nodes.length; i += 1) {
       var node = nodes[i];
       var item = document.createElement("li");
+      var hasChildren = !!(node.children && node.children.length);
 
       if (node.kind === "doc") {
+        item.className = "docs-tree-item docs-tree-item--doc" + (hasChildren ? " has-children" : "");
+
         var row = buildDocsTreeDocRow({
           docKey: node.docKey,
           title: node.title,
@@ -5454,19 +14266,61 @@
           linkClass: opts.linkClass || "docs-tree-link",
         });
 
+        var docCollapseKey = buildDocsTreeCollapseKey("doc", node.docKey);
+        var docCollapsed = hasChildren && isDocsTreeCollapsed(docCollapseKey);
+
         if (row) {
+          if (hasChildren) {
+            row.classList.add("has-children");
+            row.setAttribute("aria-expanded", docCollapsed ? "false" : "true");
+
+            var docToggle = document.createElement("span");
+            docToggle.className = "docs-tree-collapse-toggle docs-tree-collapse-toggle--inside-link";
+            docToggle.setAttribute("data-docs-tree-collapse", docCollapseKey);
+            docToggle.setAttribute("role", "button");
+            docToggle.setAttribute("tabindex", "0");
+            docToggle.setAttribute("aria-label", docCollapsed ? "Espandi sottopagine" : "Comprimi sottopagine");
+            docToggle.setAttribute("aria-expanded", docCollapsed ? "false" : "true");
+            docToggle.innerHTML = '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
+
+            var rowLink = row.querySelector("a[data-doc-link]");
+            if (rowLink) {
+              rowLink.classList.add("has-children");
+              rowLink.setAttribute("aria-expanded", docCollapsed ? "false" : "true");
+              rowLink.appendChild(docToggle);
+            }
+          }
+
           item.appendChild(row);
         }
 
-        if (node.children && node.children.length) {
+        if (hasChildren) {
           var nestedList = document.createElement("ul");
           nestedList.className = "docs-tree-sublist";
+          nestedList.hidden = docCollapsed;
           appendNodesToList(nestedList, node.children, opts);
           item.appendChild(nestedList);
         }
       } else {
-        var label = document.createElement("span");
-        label.className = "docs-tree-label";
+        item.className = "docs-tree-item docs-tree-item--group" + (hasChildren ? " has-children" : "");
+
+        var groupCollapseKey = buildDocsTreeCollapseKey("group", readString(node.section, "") + ":" + toNavGroupKey(node.navGroup));
+        var groupCollapsed = hasChildren && isDocsTreeCollapsed(groupCollapseKey);
+
+        var label = document.createElement("button");
+        label.type = "button";
+        label.className = "docs-tree-label docs-tree-label--collapsible";
+        label.setAttribute("data-docs-tree-group", "");
+        label.setAttribute("data-section", readString(node.section, ""));
+        label.setAttribute("data-nav-group", readString(node.navGroup, ""));
+        label.setAttribute("data-nav-group-key", toNavGroupKey(node.navGroup));
+        label.setAttribute("data-nav-group-icon", readString(node.icon, ""));
+        label.setAttribute("data-docs-tree-collapse", groupCollapseKey);
+        label.setAttribute("aria-expanded", groupCollapsed ? "false" : "true");
+
+        var groupChevron = document.createElement("span");
+        groupChevron.className = "docs-tree-label__chevron";
+        groupChevron.innerHTML = '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
 
         var groupIconWrap = document.createElement("span");
         groupIconWrap.className = "docs-tree-label__icon";
@@ -5480,13 +14334,15 @@
         groupText.className = "docs-tree-label__text";
         groupText.textContent = readString(node.title, "Gruppo");
 
+        label.appendChild(groupChevron);
         label.appendChild(groupIconWrap);
         label.appendChild(groupText);
         item.appendChild(label);
 
-        if (node.children && node.children.length) {
+        if (hasChildren) {
           var subList = document.createElement("ul");
           subList.className = "docs-tree-sublist";
+          subList.hidden = groupCollapsed;
           appendNodesToList(subList, node.children, opts);
           item.appendChild(subList);
         }
@@ -5497,7 +14353,11 @@
   }
 
   function renderToc(headings) {
-    var container = state.elements.toc;
+    var container = state.elements && state.elements.toc;
+    if (!container) {
+      return;
+    }
+
     container.innerHTML = "";
 
     var tocHeadings = [];
@@ -5530,6 +14390,270 @@
     }
 
     container.appendChild(list);
+  }
+
+  function ensurePageOutlineSpine() {
+    if (state.outlineSpine && state.outlineSpine.root && state.outlineSpine.root.isConnected) {
+      return state.outlineSpine;
+    }
+
+    var root = document.querySelector("[data-docs-outline-spine]");
+
+    if (!root) {
+      root = document.createElement("aside");
+      root.className = "docs-outline-spine";
+      root.setAttribute("data-docs-outline-spine", "");
+      root.setAttribute("aria-label", "Indice rapido pagina");
+      root.hidden = true;
+      document.body.appendChild(root);
+    }
+
+    var button = root.querySelector("[data-docs-outline-trigger]");
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-outline-spine__trigger";
+      button.setAttribute("data-docs-outline-trigger", "");
+      button.setAttribute("aria-haspopup", "true");
+      button.setAttribute("aria-expanded", "false");
+      button.setAttribute("aria-label", "Mostra indice pagina");
+      root.appendChild(button);
+    }
+
+    var mini = root.querySelector("[data-docs-outline-mini]");
+    if (!mini) {
+      mini = document.createElement("span");
+      mini.className = "docs-outline-spine__mini";
+      mini.setAttribute("data-docs-outline-mini", "");
+      mini.setAttribute("aria-hidden", "true");
+      button.appendChild(mini);
+    }
+
+    var popover = root.querySelector("[data-docs-outline-popover]");
+    if (!popover) {
+      popover = document.createElement("div");
+      popover.className = "docs-outline-spine__popover";
+      popover.setAttribute("data-docs-outline-popover", "");
+      popover.setAttribute("role", "navigation");
+      popover.setAttribute("aria-label", "In questa pagina");
+      popover.hidden = true;
+      root.appendChild(popover);
+    }
+
+    var viewport = popover.querySelector(".docs-outline-spine__viewport");
+    if (!viewport) {
+      viewport = document.createElement("div");
+      viewport.className = "docs-outline-spine__viewport";
+      popover.appendChild(viewport);
+    }
+
+    var track = viewport.querySelector(".docs-outline-spine__track");
+    if (!track) {
+      track = document.createElement("span");
+      track.className = "docs-outline-spine__track";
+      track.setAttribute("aria-hidden", "true");
+      viewport.appendChild(track);
+    }
+
+    var indicator = root.querySelector("[data-docs-outline-indicator]");
+    if (!indicator) {
+      indicator = document.createElement("span");
+      indicator.className = "docs-outline-spine__indicator";
+      indicator.setAttribute("data-docs-outline-indicator", "");
+      indicator.setAttribute("aria-hidden", "true");
+      viewport.appendChild(indicator);
+    }
+
+    var list = root.querySelector("[data-docs-outline-list]");
+    if (!list) {
+      list = document.createElement("div");
+      list.className = "docs-outline-spine__list";
+      list.setAttribute("data-docs-outline-list", "");
+      viewport.appendChild(list);
+    }
+
+    state.outlineSpine = {
+      root: root,
+      button: button,
+      mini: mini,
+      popover: popover,
+      indicator: indicator,
+      list: list,
+    };
+
+    if (root.getAttribute("data-docs-outline-bound") !== "true") {
+      root.setAttribute("data-docs-outline-bound", "true");
+
+      root.addEventListener("mouseenter", function onOutlineMouseEnter() {
+        setPageOutlineSpineOpen(true);
+      });
+
+      root.addEventListener("mouseleave", function onOutlineMouseLeave() {
+        setPageOutlineSpineOpen(false);
+      });
+
+      root.addEventListener("focusin", function onOutlineFocusIn() {
+        setPageOutlineSpineOpen(true);
+      });
+
+      root.addEventListener("focusout", function onOutlineFocusOut(event) {
+        if (event.relatedTarget && root.contains(event.relatedTarget)) {
+          return;
+        }
+
+        setPageOutlineSpineOpen(false);
+      });
+
+      button.addEventListener("click", function onOutlineButtonClick(event) {
+        event.preventDefault();
+        setPageOutlineSpineOpen(!root.classList.contains("is-open"));
+      });
+
+      list.addEventListener("click", function onOutlineLinkClick(event) {
+        var link = event.target.closest("a[data-docs-outline-link]");
+        if (!link) {
+          return;
+        }
+
+        setPageOutlineSpineOpen(false);
+      });
+    }
+
+    return state.outlineSpine;
+  }
+
+  function setPageOutlineSpineOpen(isOpen) {
+    var spine = state.outlineSpine;
+    if (!spine || !spine.root || !spine.button || !spine.popover) {
+      return;
+    }
+
+    var open = !!isOpen;
+    spine.root.classList.toggle("is-open", open);
+    spine.popover.hidden = !open;
+    spine.button.hidden = open;
+    spine.button.setAttribute("aria-expanded", open ? "true" : "false");
+
+    if (open && state.activeTocId) {
+      window.requestAnimationFrame(function syncOpenOutlineIndicator() {
+        syncPageOutlineSpineActive(state.activeTocId);
+      });
+    }
+  }
+
+  function renderPageOutlineSpine(headings) {
+    var spine = ensurePageOutlineSpine();
+    var tocHeadings = [];
+
+    if (Array.isArray(headings)) {
+      for (var i = 0; i < headings.length; i += 1) {
+        if (headings[i] && headings[i].level <= 3) {
+          tocHeadings.push(headings[i]);
+        }
+      }
+    }
+
+    state.outlineHeadings = tocHeadings;
+
+    if (!spine || !spine.root || !spine.mini || !spine.list) {
+      return;
+    }
+
+    spine.mini.innerHTML = "";
+    spine.list.innerHTML = "";
+    spine.root.hidden = !tocHeadings.length;
+    setPageOutlineSpineOpen(false);
+
+    if (!tocHeadings.length) {
+      return;
+    }
+
+    for (var j = 0; j < tocHeadings.length; j += 1) {
+      var heading = tocHeadings[j];
+
+      var tick = document.createElement("span");
+      tick.className = "docs-outline-spine__tick level-" + heading.level;
+      tick.setAttribute("data-docs-outline-tick", heading.id);
+      tick.setAttribute("data-docs-outline-level", String(heading.level));
+
+      if (heading.level === 1) {
+        tick.style.setProperty("--outline-tick-width", "30px");
+        tick.style.setProperty("--outline-tick-offset", "0px");
+      } else if (heading.level === 2) {
+        tick.style.setProperty("--outline-tick-width", "22px");
+        tick.style.setProperty("--outline-tick-offset", "4px");
+      } else {
+        tick.style.setProperty("--outline-tick-width", "12px");
+        tick.style.setProperty("--outline-tick-offset", "14px");
+      }
+
+      spine.mini.appendChild(tick);
+
+      var link = document.createElement("a");
+      link.className = "docs-outline-spine__link level-" + heading.level;
+      link.href = "#" + heading.id;
+      link.setAttribute("data-docs-outline-link", heading.id);
+      link.textContent = heading.text;
+      spine.list.appendChild(link);
+    }
+
+    syncPageOutlineSpineActive(state.activeTocId || tocHeadings[0].id);
+  }
+
+  function syncPageOutlineSpineActive(activeId) {
+    var spine = state.outlineSpine;
+    if (!spine || !spine.root) {
+      return;
+    }
+
+    var id = readString(activeId, "");
+    var ticks = spine.root.querySelectorAll("[data-docs-outline-tick]");
+    var links = spine.root.querySelectorAll("[data-docs-outline-link]");
+    var activeLink = null;
+
+    for (var i = 0; i < ticks.length; i += 1) {
+      var tickActive = ticks[i].getAttribute("data-docs-outline-tick") === id;
+      ticks[i].classList.toggle("is-active", tickActive);
+    }
+
+    for (var j = 0; j < links.length; j += 1) {
+      var linkActive = links[j].getAttribute("data-docs-outline-link") === id;
+      links[j].classList.toggle("is-active", linkActive);
+
+      if (linkActive) {
+        links[j].setAttribute("aria-current", "location");
+        activeLink = links[j];
+      } else {
+        links[j].removeAttribute("aria-current");
+      }
+    }
+
+    updatePageOutlineIndicator(activeLink);
+  }
+
+  function updatePageOutlineIndicator(activeLink) {
+    var spine = state.outlineSpine;
+    if (!spine || !spine.indicator || !spine.list || !activeLink) {
+      return;
+    }
+
+    if (spine.popover && spine.popover.hidden) {
+      return;
+    }
+
+    var listRect = spine.list.getBoundingClientRect();
+    var linkRect = activeLink.getBoundingClientRect();
+
+    if (!listRect.height || !linkRect.height) {
+      return;
+    }
+
+    var top = Math.max(0, linkRect.top - listRect.top);
+    var height = Math.max(14, linkRect.height);
+
+    spine.indicator.style.top = top + "px";
+    spine.indicator.style.height = height + "px";
+    spine.indicator.style.transform = "none";
   }
 
   function setupTocTracking(headings) {
@@ -5627,6 +14751,12 @@
 
     state.activeTocId = activeId;
 
+    syncPageOutlineSpineActive(activeId);
+
+    if (!state.elements || !state.elements.toc) {
+      return;
+    }
+
     var links = state.elements.toc.querySelectorAll(".docs-toc-link");
     for (var j = 0; j < links.length; j += 1) {
       var isActive = links[j].getAttribute("data-docs-toc-link") === activeId;
@@ -5686,11 +14816,13 @@
   }
 
   function renderLoadingState() {
+    closeWikiTooltip();
     state.elements.content.innerHTML = '<p class="docs-state">Caricamento documento...</p>';
   }
 
   function renderDocErrorState(options) {
     options = options || {};
+    closeWikiTooltip();
 
     var title = readString(options.title, "Documento");
     var message = readString(options.message, "Contenuto non disponibile.");
@@ -5728,7 +14860,9 @@
     });
 
     state.elements.tree.innerHTML = '<p class="docs-state">Indice non disponibile.</p>';
-    state.elements.toc.innerHTML = '<p class="docs-state docs-state--compact">Nessuna sezione disponibile.</p>';
+    if (state.elements.toc) {
+      state.elements.toc.innerHTML = '<p class="docs-state docs-state--compact">Nessuna sezione disponibile.</p>';
+    }
     state.elements.prevNext.innerHTML = "";
   }
 
@@ -5748,6 +14882,7 @@
       technical: "Doc richiesto: " + docKey,
     });
     renderToc([]);
+    renderPageOutlineSpine([]);
     renderPrevNext(null);
   }
 
@@ -5839,7 +14974,4 @@
       .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
-})();
-
-
-
+})()

@@ -22,11 +22,21 @@
         <i class="fa-solid fa-book-atlas" aria-hidden="true"></i>
         <span>Enciclopedia</span>
       </p>
-      <a class="nav-item" href="docs.html?doc=lore/introduzione" data-active-for="docs-lore" data-doc-group-link="lore">
+      <a
+        class="nav-item"
+        href="docs.html?doc=lore/introduzione"
+        data-active-for="docs-lore"
+        data-doc-group-link="lore"
+      >
         <i class="fa-solid fa-landmark" aria-hidden="true"></i>
         <span>Ambientazione</span>
       </a>
-      <a class="nav-item" href="docs.html?doc=regole/panoramica" data-active-for="docs-regole" data-doc-group-link="regole">
+      <a
+        class="nav-item"
+        href="docs.html?doc=regole/panoramica"
+        data-active-for="docs-regole"
+        data-doc-group-link="regole"
+      >
         <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
         <span>Regole</span>
       </a>
@@ -49,7 +59,12 @@
         <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
         <span>Mondo</span>
       </a>
-      <a class="nav-item" href="docs.html?doc=regole/sessioni-e-quest" data-active-for="docs-cronache" data-doc-group-link="regole">
+      <a
+        class="nav-item"
+        href="docs.html?doc=regole/sessioni-e-quest"
+        data-active-for="docs-cronache"
+        data-doc-group-link="regole"
+      >
         <i class="fa-solid fa-scroll" aria-hidden="true"></i>
         <span>Cronache</span>
       </a>
@@ -112,8 +127,34 @@
     </section>
   </nav>
 
-  <a class="btn-vtt" href="#">
-    <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
-    <span>Apri VTT</span>
-  </a>
+  <div class="sidebar-footer">
+    <div class="sidebar-theme" data-theme-toggle role="group" aria-label="Tema interfaccia">
+      <button
+        type="button"
+        class="sidebar-theme__button"
+        data-theme-option="dark"
+        aria-label="Tema scuro"
+        aria-pressed="true"
+        title="Tema scuro"
+      >
+        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+      </button>
+
+      <button
+        type="button"
+        class="sidebar-theme__button"
+        data-theme-option="light"
+        aria-label="Tema chiaro"
+        aria-pressed="false"
+        title="Tema chiaro"
+      >
+        <i class="fa-solid fa-sun" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <a class="btn-vtt" href="#">
+      <i class="fa-solid fa-dice-d20" aria-hidden="true"></i>
+      <span>Apri VTT</span>
+    </a>
+  </div>
 </aside>

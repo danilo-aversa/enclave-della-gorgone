@@ -6,6 +6,7 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Z2xnYXJpdHh6b3dzaGVuYXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzcxNDQsImV4cCI6MjA5MjM1MzE0NH0.ObDvvWMkddZL8wABKyI-TBi4KgVoYArJQjoOnAmVVe8";
 
   var SIDEBAR_PARTIAL_PATH = "partials/sidebar.html";
+
   function readSidebarPartialPath() {
     var container = document.querySelector("[data-sidebar-container]");
     return (
@@ -15,7 +16,10 @@
   }
 
   var ACCESS_CODE_KEY = "gorgoneAccessCode";
+  var THEME_KEY = "gorgoneTheme";
+  var DEFAULT_THEME = "dark";
   var ADMIN_CODE = "Enclave";
+  var MOBILE_SIDEBAR_BREAKPOINT = 980;
   var RESOLVE_PLAYER_ENDPOINT = SUPABASE_URL + "/functions/v1/resolve-player";
   var FALLBACK_TOKEN_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23162229'/><circle cx='32' cy='24' r='12' fill='%234db8a6'/><rect x='14' y='40' width='36' height='16' fill='%233b5865'/></svg>";
@@ -43,6 +47,12 @@
     tokens: null,
     popoverTokens: null,
     profileMeta: null,
+    themeToggle: null,
+    themeButtons: [],
+    primarySidebarContainer: null,
+    mobileSidebarToggle: null,
+    mobileSidebarBackdrop: null,
+    mobileSidebarEventsBound: false,
   };
 
   var bootstrapPromise = null;
@@ -55,13 +65,29 @@
         characters: state.characters.slice(),
       };
     },
+    getTheme: function getTheme() {
+      return readCurrentTheme();
+    },
+    setTheme: function setTheme(theme) {
+      applyTheme(theme, { persist: true });
+      syncThemeControls();
+    },
   };
 
+  applyTheme(readStoredTheme(), { persist: false });
+
   document.addEventListener("DOMContentLoaded", function onReady() {
+    applyTheme(readStoredTheme(), { persist: false });
     bootstrapPromise = bootstrapLayout();
   });
 
   window.addEventListener("storage", function onStorage(event) {
+    if (event.key === THEME_KEY) {
+      applyTheme(readStoredTheme(), { persist: false });
+      syncThemeControls();
+      return;
+    }
+
     if (event.key !== ACCESS_CODE_KEY) {
       return;
     }
@@ -82,6 +108,8 @@
 
     if (dom.sidebarContainers.length) {
       await injectSidebarPartial();
+      initMobileSidebar();
+      bindThemeControls();
       syncManageAccessControls();
       setActiveNavItem();
       document.dispatchEvent(new CustomEvent("enclave:sidebar-ready"));
@@ -154,6 +182,271 @@
 
       links[i].setAttribute("href", prefix + href);
     }
+  }
+  function initMobileSidebar() {
+    if (!document.body || !dom.sidebarContainers.length) {
+      return;
+    }
+
+    dom.primarySidebarContainer = dom.sidebarContainers[0];
+
+    if (!dom.primarySidebarContainer.querySelector(".sidebar")) {
+      return;
+    }
+
+    if (!dom.primarySidebarContainer.id) {
+      dom.primarySidebarContainer.id = "portal-sidebar";
+    }
+
+    document.body.classList.add("has-mobile-sidebar");
+    ensureMobileSidebarControls();
+    bindMobileSidebarCloseOnNavigation(dom.primarySidebarContainer);
+
+    if (!dom.mobileSidebarEventsBound) {
+      dom.mobileSidebarEventsBound = true;
+
+      window.addEventListener("resize", function onResize() {
+        if (!isMobileViewport()) {
+          setMobileSidebarOpen(false);
+        }
+      });
+
+      document.addEventListener("keydown", function onEscape(event) {
+        if (event.key !== "Escape" || !isMobileSidebarOpen()) {
+          return;
+        }
+
+        setMobileSidebarOpen(false);
+      });
+    }
+  }
+
+  function ensureMobileSidebarControls() {
+    if (!document.body || !dom.primarySidebarContainer) {
+      return;
+    }
+
+    if (!dom.mobileSidebarToggle) {
+      dom.mobileSidebarToggle = document.createElement("button");
+      dom.mobileSidebarToggle.type = "button";
+      dom.mobileSidebarToggle.className = "mobile-sidebar-toggle";
+      dom.mobileSidebarToggle.setAttribute("aria-label", "Apri menu");
+      dom.mobileSidebarToggle.setAttribute("aria-expanded", "false");
+      dom.mobileSidebarToggle.innerHTML =
+        '<i class="fa-solid fa-bars" aria-hidden="true"></i>';
+      document.body.appendChild(dom.mobileSidebarToggle);
+
+      dom.mobileSidebarToggle.addEventListener("click", function onToggleClick() {
+        if (!isMobileViewport()) {
+          return;
+        }
+
+        setMobileSidebarOpen(!isMobileSidebarOpen());
+      });
+    }
+
+    dom.mobileSidebarToggle.setAttribute(
+      "aria-controls",
+      dom.primarySidebarContainer.id,
+    );
+
+    if (!dom.mobileSidebarBackdrop) {
+      dom.mobileSidebarBackdrop = document.createElement("button");
+      dom.mobileSidebarBackdrop.type = "button";
+      dom.mobileSidebarBackdrop.className = "mobile-sidebar-backdrop";
+      dom.mobileSidebarBackdrop.setAttribute(
+        "aria-label",
+        "Chiudi menu laterale",
+      );
+      dom.mobileSidebarBackdrop.tabIndex = -1;
+      document.body.appendChild(dom.mobileSidebarBackdrop);
+
+      dom.mobileSidebarBackdrop.addEventListener(
+        "click",
+        function onBackdropClick() {
+          setMobileSidebarOpen(false);
+        },
+      );
+    }
+
+    updateMobileSidebarControls(false);
+  }
+
+  function bindMobileSidebarCloseOnNavigation(container) {
+    if (!container || container.dataset.mobileSidebarBound === "true") {
+      return;
+    }
+
+    container.dataset.mobileSidebarBound = "true";
+    container.addEventListener("click", function onSidebarClick(event) {
+      if (!isMobileViewport() || !isMobileSidebarOpen()) {
+        return;
+      }
+
+      var target = event.target;
+      var link = target && target.closest ? target.closest("a[href]") : null;
+      var actionButton =
+        target && target.closest ? target.closest(".manage-action") : null;
+
+      if (link) {
+        setMobileSidebarOpen(false);
+        return;
+      }
+
+      if (actionButton && !actionButton.disabled) {
+        setMobileSidebarOpen(false);
+      }
+    });
+  }
+
+  function setMobileSidebarOpen(isOpen) {
+    if (!document.body) {
+      return;
+    }
+
+    var shouldOpen = !!isOpen && isMobileViewport();
+    document.body.classList.toggle("sidebar-mobile-open", shouldOpen);
+    updateMobileSidebarControls(shouldOpen);
+  }
+
+  function isMobileSidebarOpen() {
+    return !!(
+      document.body &&
+      document.body.classList.contains("sidebar-mobile-open")
+    );
+  }
+
+  function isMobileViewport() {
+    if (typeof window.matchMedia !== "function") {
+      return window.innerWidth <= MOBILE_SIDEBAR_BREAKPOINT;
+    }
+
+    return window.matchMedia(
+      "(max-width: " + MOBILE_SIDEBAR_BREAKPOINT + "px)",
+    ).matches;
+  }
+
+  function updateMobileSidebarControls(isOpen) {
+    if (!dom.mobileSidebarToggle || !dom.mobileSidebarBackdrop) {
+      return;
+    }
+
+    var open = !!isOpen;
+    var icon = dom.mobileSidebarToggle.querySelector("i");
+
+    dom.mobileSidebarToggle.setAttribute("aria-expanded", String(open));
+    dom.mobileSidebarToggle.setAttribute(
+      "aria-label",
+      open ? "Chiudi menu" : "Apri menu",
+    );
+
+    if (icon) {
+      icon.classList.toggle("fa-bars", !open);
+      icon.classList.toggle("fa-xmark", open);
+    }
+
+    dom.mobileSidebarBackdrop.setAttribute("aria-hidden", String(!open));
+  }
+  function bindThemeControls() {
+    dom.themeToggle = document.querySelector("[data-theme-toggle]");
+    dom.themeButtons = Array.prototype.slice.call(
+      document.querySelectorAll("[data-theme-option]"),
+    );
+
+    if (!dom.themeToggle && !dom.themeButtons.length) {
+      return;
+    }
+
+    if (dom.themeToggle) {
+      dom.themeToggle.addEventListener("click", function onThemeToggleClick(event) {
+        var target = event.target;
+        if (
+          target &&
+          typeof target.closest === "function" &&
+          target.closest("[data-theme-option], [data-theme-toggle]")
+        ) {
+          toggleTheme();
+        }
+      });
+    } else {
+      for (var i = 0; i < dom.themeButtons.length; i += 1) {
+        dom.themeButtons[i].addEventListener("click", function onThemeClick() {
+          toggleTheme();
+        });
+      }
+    }
+
+    syncThemeControls();
+  }
+
+  function toggleTheme() {
+    var currentTheme = readCurrentTheme();
+    var nextTheme = currentTheme === "light" ? "dark" : "light";
+    applyTheme(nextTheme, { persist: true });
+    syncThemeControls();
+  }
+
+  function syncThemeControls() {
+    var activeTheme = readCurrentTheme();
+
+    for (var i = 0; i < dom.themeButtons.length; i += 1) {
+      var buttonTheme = normalizeTheme(
+        dom.themeButtons[i].getAttribute("data-theme-option"),
+      );
+      var isActive = buttonTheme === activeTheme;
+
+      dom.themeButtons[i].classList.toggle("is-active", isActive);
+      dom.themeButtons[i].setAttribute("aria-pressed", String(isActive));
+    }
+  }
+
+  function applyTheme(theme, options) {
+    options = options || {};
+    theme = normalizeTheme(theme);
+
+    document.documentElement.setAttribute("data-theme", theme);
+
+    if (document.body) {
+      document.body.setAttribute("data-theme", theme);
+    }
+
+    if (options.persist !== false) {
+      writeStoredTheme(theme);
+    }
+
+    document.dispatchEvent(
+      new CustomEvent("enclave:theme-changed", {
+        detail: { theme: theme },
+      }),
+    );
+  }
+
+  function readCurrentTheme() {
+    return normalizeTheme(
+      document.documentElement.getAttribute("data-theme") ||
+        (document.body && document.body.getAttribute("data-theme")) ||
+        readStoredTheme(),
+    );
+  }
+
+  function readStoredTheme() {
+    try {
+      return normalizeTheme(window.localStorage.getItem(THEME_KEY));
+    } catch (_error) {
+      return DEFAULT_THEME;
+    }
+  }
+
+  function writeStoredTheme(theme) {
+    try {
+      window.localStorage.setItem(THEME_KEY, normalizeTheme(theme));
+    } catch (_error) {
+      // Ignore storage errors.
+    }
+  }
+
+  function normalizeTheme(value) {
+    return value === "light" ? "light" : DEFAULT_THEME;
   }
 
   function renderProfileWidget() {
@@ -480,12 +773,21 @@
       return false;
     }
 
-    return (
+    if (
       isTruthyPermission(player.can_manage_wiki) ||
+      isTruthyPermission(player.canManageWiki) ||
       isTruthyPermission(player.can_manage_admin) ||
+      isTruthyPermission(player.canManageAdmin) ||
       isTruthyPermission(player.can_manage) ||
-      isTruthyPermission(player.is_admin)
-    );
+      isTruthyPermission(player.canManage) ||
+      isTruthyPermission(player.is_admin) ||
+      isTruthyPermission(player.isAdmin)
+    ) {
+      return true;
+    }
+
+    var role = readString(player.role, "").trim().toLowerCase();
+    return role === "admin" || role === "gm";
   }
 
   function isTruthyPermission(value) {
@@ -496,7 +798,14 @@
     if (typeof value === "string") {
       var normalized = value.trim().toLowerCase();
       return (
-        normalized === "true" || normalized === "1" || normalized === "yes"
+        normalized === "true" ||
+        normalized === "1" ||
+        normalized === "yes" ||
+        normalized === "y" ||
+        normalized === "t" ||
+        normalized === "si" ||
+        normalized === "on" ||
+        normalized === "enabled"
       );
     }
 

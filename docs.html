@@ -25,7 +25,6 @@
             <div class="docs-tree__head">
               <div>
                 <h1>Documentazione</h1>
-                <p>Lore e regole dell'Enclave in formato consultazione.</p>
               </div>
               <div class="docs-tree__controls">
                 <button type="button" class="docs-tree__reorder-toggle" data-docs-reorder-toggle hidden
@@ -58,6 +57,21 @@
             <nav id="docs-tree-panel" data-docs-tree aria-live="polite">
               <p class="docs-state">Caricamento indice...</p>
             </nav>
+
+            <div class="docs-tree-context" data-docs-tree-context-menu hidden role="menu" aria-label="Azioni documentazione">
+              <button type="button" class="docs-tree-context__action" data-docs-tree-context-new role="menuitem">
+                <i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i>
+                <span>Nuova pagina</span>
+              </button>
+              <button type="button" class="docs-tree-context__action" data-docs-tree-context-edit role="menuitem">
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                <span>Modifica pagina</span>
+              </button>
+              <button type="button" class="docs-tree-context__action" data-docs-tree-context-toggle role="menuitem">
+                <i class="fa-solid fa-eye-slash" aria-hidden="true"></i>
+                <span>Nascondi pagina</span>
+              </button>
+            </div>
           </aside>
 
           <section class="section-card docs-main" aria-live="polite">
@@ -90,266 +104,370 @@
             <aside class="profile-rail" aria-label="Profilo giocatore">
               <div data-profile-widget class="data-profile-widget"></div>
             </aside>
-            <aside class="section-card docs-toc" data-docs-toc-wrap aria-label="Indice della pagina">
-
-              <h2>In questa pagina</h2>
-              <nav data-docs-toc>
-                <p class="docs-state docs-state--compact">Nessuna sezione disponibile.</p>
-              </nav>
-            </aside>
           </div>
         </div>
       </main>
     </div>
   </div>
+  <aside class="docs-outline-spine" data-docs-outline-spine hidden aria-label="Indice rapido pagina">
+    <button
+      type="button"
+      class="docs-outline-spine__trigger"
+      data-docs-outline-trigger
+      aria-haspopup="true"
+      aria-expanded="false"
+      aria-label="Mostra indice pagina"
+    >
+      <span class="docs-outline-spine__mini" data-docs-outline-mini aria-hidden="true"></span>
+    </button>
+
+    <div class="docs-outline-spine__popover" data-docs-outline-popover role="navigation" aria-label="In questa pagina" hidden>
+      <div class="docs-outline-spine__viewport">
+        <span class="docs-outline-spine__track" aria-hidden="true"></span>
+        <span class="docs-outline-spine__indicator" data-docs-outline-indicator aria-hidden="true"></span>
+        <div class="docs-outline-spine__list" data-docs-outline-list></div>
+      </div>
+    </div>
+  </aside>
+
   <div class="docs-editor-modal" data-docs-editor-modal hidden>
-    <div class="docs-editor-modal__backdrop"></div>
-    <section class="docs-editor-modal__panel" role="dialog" aria-modal="true" aria-labelledby="docs-editor-title">
-      <header class="docs-editor-modal__head">
-        <h3 id="docs-editor-title" data-docs-editor-title>Modifica pagina</h3>
-        <button type="button" class="docs-editor-modal__icon-btn" data-docs-editor-close aria-label="Chiudi editor"
-          title="Chiudi editor" data-tooltip="Chiudi editor">
-          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-        </button>
-      </header>
+  <div class="docs-editor-modal__backdrop"></div>
 
-      <form class="docs-editor-form" data-docs-editor-form>
-        <label class="docs-editor-form__title-field">
-          Titolo
-          <input type="text" name="title" required />
-        </label>
+  <section class="docs-editor-modal__panel" role="dialog" aria-modal="true" aria-labelledby="docs-editor-title">
+    <header class="docs-editor-modal__head">
+      <h3 id="docs-editor-title" data-docs-editor-title>Modifica pagina</h3>
+      <button
+        type="button"
+        class="docs-editor-modal__icon-btn"
+        data-docs-editor-close
+        aria-label="Chiudi editor"
+        title="Chiudi editor"
+        data-tooltip="Chiudi editor"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </header>
 
-        <label class="docs-editor-form__content-wrap">
-          Contenuto markdown
-          <div class="docs-md-toolbar" data-docs-md-toolbar role="toolbar" aria-label="Strumenti markdown">
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="h2" aria-label="Titolo H2"
-              title="Titolo H2" data-tooltip="Titolo H2">
-              <i class="fa-solid fa-heading" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="h3" aria-label="Titolo H3"
-              title="Titolo H3" data-tooltip="Titolo H3">
-              <i class="fa-solid fa-text-height" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="bold" aria-label="Grassetto"
-              title="Grassetto" data-tooltip="Grassetto">
-              <i class="fa-solid fa-bold" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="italic" aria-label="Corsivo"
-              title="Corsivo" data-tooltip="Corsivo">
-              <i class="fa-solid fa-italic" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="ul" aria-label="Lista puntata"
-              title="Lista puntata" data-tooltip="Lista puntata">
-              <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="ol" aria-label="Lista numerata"
-              title="Lista numerata" data-tooltip="Lista numerata">
-              <i class="fa-solid fa-list-ol" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="quote" aria-label="Citazione"
-              title="Citazione" data-tooltip="Citazione">
-              <i class="fa-solid fa-quote-left" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="divider" aria-label="Divisore"
-              title="Divisore" data-tooltip="Divisore">
-              <i class="fa-solid fa-minus" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="link" aria-label="Link" title="Link"
-              data-tooltip="Link">
-              <i class="fa-solid fa-link" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="internal-link" aria-label="Link interno"
-              title="Link interno" data-tooltip="Link interno">
-              <i class="fa-solid fa-book-bookmark" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="image" aria-label="Immagine"
-              title="Immagine" data-tooltip="Immagine">
-              <i class="fa-solid fa-image" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="text-color" aria-label="Colore testo"
-              title="Colore testo" data-tooltip="Colore testo">
-              <i class="fa-solid fa-palette" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="inline-code" aria-label="Codice inline"
-              title="Codice inline" data-tooltip="Codice inline">
-              <i class="fa-solid fa-code" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-md-toolbar__btn" data-md-action="code-block" aria-label="Blocco codice"
-              title="Blocco codice" data-tooltip="Blocco codice">
-              <i class="fa-solid fa-file-code" aria-hidden="true"></i>
-            </button>
-          </div>
-
-          <div class="docs-internal-link-picker" data-docs-internal-link-panel hidden>
-            <label class="docs-internal-link-picker__label" for="docs-internal-link-input">Link interno</label>
-            <div class="docs-internal-link-picker__field">
-              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-              <input id="docs-internal-link-input" type="search" data-docs-internal-link-input
-                placeholder="Cerca pagina wiki..." autocomplete="off" spellcheck="false" />
-            </div>
-            <div class="docs-internal-link-picker__results" data-docs-internal-link-results aria-live="polite"></div>
-          </div>
-
-          <div class="docs-color-picker" data-docs-color-picker hidden>
-            <p class="docs-color-picker__label">Colore testo</p>
-            <div class="docs-color-picker__grid">
-              <button type="button" class="docs-color-picker__swatch wiki-color-sage" data-docs-color-choice="sage"
-                aria-label="Sage" title="Sage" data-tooltip="Sage"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-sea" data-docs-color-choice="sea"
-                aria-label="Sea" title="Sea" data-tooltip="Sea"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-teal" data-docs-color-choice="teal"
-                aria-label="Teal" title="Teal" data-tooltip="Teal"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-moss" data-docs-color-choice="moss"
-                aria-label="Moss" title="Moss" data-tooltip="Moss"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-amber" data-docs-color-choice="amber"
-                aria-label="Amber" title="Amber" data-tooltip="Amber"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-ochre" data-docs-color-choice="ochre"
-                aria-label="Ochre" title="Ochre" data-tooltip="Ochre"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-slate" data-docs-color-choice="slate"
-                aria-label="Slate" title="Slate" data-tooltip="Slate"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-stone" data-docs-color-choice="stone"
-                aria-label="Stone" title="Stone" data-tooltip="Stone"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-plum" data-docs-color-choice="plum"
-                aria-label="Plum" title="Plum" data-tooltip="Plum"></button>
-              <button type="button" class="docs-color-picker__swatch wiki-color-rose" data-docs-color-choice="rose"
-                aria-label="Rose" title="Rose" data-tooltip="Rose"></button>
-            </div>
-          </div>
-
-          <textarea name="content_md" rows="16" required data-docs-content-md></textarea>
-        </label>
-
-        <section class="docs-editor-section">
-          <div class="docs-editor-section__head">
-            <h4>Metadati</h4>
-          </div>
-
-          <div class="docs-editor-form__grid">
-            <label>
-              Sezione
-              <select name="section" required>
-                <option value="lore">Lore</option>
-                <option value="regole">Regole</option>
-              </select>
-            </label>
-
-            <label>
-              Slug
-              <input type="text" name="slug" required />
-            </label>
-
-            <label>
-              Gruppo navigazione
-              <input type="text" name="nav_group" />
-            </label>
-
-            <label>
-              Ordine gruppo
-              <input type="number" name="nav_group_order" step="1" />
-            </label>
-
-            <label>
-              Icona gruppo (Font Awesome)
-              <input type="text" name="nav_group_icon" placeholder="fa-solid fa-book-open" />
-            </label>
-
-            <label>
-              Etichetta navigazione
-              <input type="text" name="nav_label" />
-            </label>
-
-            <label>
-              Icona pagina (Font Awesome)
-              <input type="text" name="page_icon" placeholder="fa-solid fa-file-lines" />
-            </label>
-
-            <label>
-              Pagina genitore
-              <select name="parent_slug" data-docs-parent-select>
-                <option value="">Nessuna pagina genitore</option>
-              </select>
-            </label>
-
-            <label>
-              Ordine
-              <input type="number" name="sort_order" step="1" />
-            </label>
-
-            <label>
-              Profondita
-              <input type="number" name="depth" step="1" min="0" />
-            </label>
-
-            <label class="docs-editor-form__checkbox">
-              <input type="checkbox" name="is_published" />
-              <span>Pubblicata</span>
-            </label>
-          </div>
-
-          <label>
-            Estratto
-            <textarea name="excerpt" rows="3"></textarea>
-          </label>
-        </section>
-
-        <section class="docs-editor-section docs-editor-upload" aria-label="Upload immagine wiki">
-          <div class="docs-editor-section__head">
-            <h4>Immagini</h4>
-          </div>
-
-          <div class="docs-editor-upload__grid">
-            <label>
-              File immagine
-              <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
-                data-docs-image-file />
-            </label>
-            <label>
-              Alt text (facoltativo)
-              <input type="text" data-docs-image-alt placeholder="Immagine" />
-            </label>
-          </div>
-
-          <div class="docs-editor-upload__actions">
-            <button type="button" class="docs-editor-form__btn docs-editor-form__btn--icon-only" data-docs-image-upload
-              aria-label="Carica immagine" title="Carica immagine" data-tooltip="Carica immagine">
-              <i class="fa-solid fa-image" aria-hidden="true"></i>
-            </button>
-            <button type="button" class="docs-editor-form__btn docs-editor-form__btn--icon-only" data-docs-media-open
-              aria-label="Libreria immagini" title="Libreria immagini" data-tooltip="Libreria immagini">
-              <i class="fa-solid fa-photo-film" aria-hidden="true"></i>
-            </button>
-          </div>
-
-          <div class="docs-media-library" data-docs-media-library-panel hidden>
-            <label class="docs-media-library__label" for="docs-media-library-search">Libreria immagini</label>
-            <div class="docs-media-library__field">
-              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-              <input id="docs-media-library-search" type="search" data-docs-media-search
-                placeholder="Cerca per nome o percorso..." autocomplete="off" spellcheck="false" />
-            </div>
-            <div class="docs-media-library__results" data-docs-media-results aria-live="polite"></div>
-            <p class="docs-media-library__status" data-docs-media-status aria-live="polite"></p>
-          </div>
-
-          <p class="docs-editor-upload__status" data-docs-image-status aria-live="polite"></p>
-        </section>
-
-        <p class="docs-editor-form__status" data-docs-editor-status aria-live="polite"></p>
-
-        <div class="docs-editor-form__actions">
-          <button type="button" class="docs-editor-form__btn docs-editor-form__btn--icon-only" data-docs-editor-close
-            aria-label="Annulla" title="Annulla" data-tooltip="Annulla">
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    <form class="docs-editor-form" data-docs-editor-form>
+      <div class="docs-editor-form__topbar">
+        <div class="docs-editor-form__tabs" role="tablist" aria-label="Modalita editor" data-docs-editor-tabs>
+          <button
+            type="button"
+            class="docs-editor-form__tab is-active"
+            data-docs-editor-tab="editor"
+            role="tab"
+            aria-selected="true"
+            aria-controls="docs-editor-pane-editor"
+            id="docs-editor-tab-editor"
+          >
+            Editor
           </button>
-          <button type="submit"
-            class="docs-editor-form__btn docs-editor-form__btn--primary docs-editor-form__btn--icon-only"
-            data-docs-editor-submit aria-label="Salva pagina" title="Salva pagina" data-tooltip="Salva pagina">
-            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+          <button
+            type="button"
+            class="docs-editor-form__tab"
+            data-docs-editor-tab="metadata"
+            role="tab"
+            aria-selected="false"
+            aria-controls="docs-editor-pane-metadata"
+            id="docs-editor-tab-metadata"
+          >
+            Metadati
           </button>
         </div>
-      </form>
-    </section>
-  </div>
+
+        <label class="docs-editor-form__title-field">
+          <span>Titolo</span>
+          <input type="text" name="title" required placeholder="Titolo pagina" />
+        </label>
+      </div>
+
+      <div class="docs-editor-workspace" data-docs-editor-workspace>
+        <section
+          class="docs-editor-pane docs-editor-pane--editor"
+          data-docs-editor-pane="editor"
+          id="docs-editor-pane-editor"
+          role="tabpanel"
+          aria-labelledby="docs-editor-tab-editor"
+        >
+          <div class="docs-editor-writing-column">
+            <div class="docs-editor-form__content-wrap">
+              <div class="docs-md-toolbar" data-docs-md-toolbar role="toolbar" aria-label="Strumenti markdown">
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="h2" aria-label="Titolo H2" title="Titolo H2" data-tooltip="Titolo H2">
+                  <i class="fa-solid fa-heading" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="h3" aria-label="Titolo H3" title="Titolo H3" data-tooltip="Titolo H3">
+                  <i class="fa-solid fa-text-height" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="bold" aria-label="Grassetto" title="Grassetto" data-tooltip="Grassetto">
+                  <i class="fa-solid fa-bold" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="italic" aria-label="Corsivo" title="Corsivo" data-tooltip="Corsivo">
+                  <i class="fa-solid fa-italic" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="ul" aria-label="Lista puntata" title="Lista puntata" data-tooltip="Lista puntata">
+                  <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="ol" aria-label="Lista numerata" title="Lista numerata" data-tooltip="Lista numerata">
+                  <i class="fa-solid fa-list-ol" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="quote" aria-label="Citazione" title="Citazione" data-tooltip="Citazione">
+                  <i class="fa-solid fa-quote-left" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="divider" aria-label="Divisore" title="Divisore" data-tooltip="Divisore">
+                  <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="link" aria-label="Link" title="Link" data-tooltip="Link">
+                  <i class="fa-solid fa-link" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="internal-link" aria-label="Link interno" title="Link interno" data-tooltip="Link interno">
+                  <i class="fa-solid fa-book-bookmark" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="tooltip" aria-label="Tooltip" title="Tooltip" data-tooltip="Tooltip">
+                  <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="image" aria-label="Immagine" title="Immagine" data-tooltip="Immagine">
+                  <i class="fa-solid fa-image" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="text-color" aria-label="Colore testo" title="Colore testo" data-tooltip="Colore testo">
+                  <i class="fa-solid fa-palette" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="inline-code" aria-label="Codice inline" title="Codice inline" data-tooltip="Codice inline">
+                  <i class="fa-solid fa-code" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="docs-md-toolbar__btn" data-md-action="code-block" aria-label="Blocco codice" title="Blocco codice" data-tooltip="Blocco codice">
+                  <i class="fa-solid fa-file-code" aria-hidden="true"></i>
+                </button>
+              </div>
+
+              <div class="docs-internal-link-picker" data-docs-internal-link-panel hidden>
+                <label class="docs-internal-link-picker__label" for="docs-internal-link-input">Link interno</label>
+                <div class="docs-internal-link-picker__field">
+                  <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                  <input
+                    id="docs-internal-link-input"
+                    type="search"
+                    data-docs-internal-link-input
+                    placeholder="Cerca pagina wiki..."
+                    autocomplete="off"
+                    spellcheck="false"
+                  />
+                </div>
+                <div class="docs-internal-link-picker__results" data-docs-internal-link-results aria-live="polite"></div>
+              </div>
+
+              <div class="docs-color-picker" data-docs-color-picker hidden>
+                <p class="docs-color-picker__label">Colore testo</p>
+                <div class="docs-color-picker__grid">
+                  <button type="button" class="docs-color-picker__swatch wiki-color-sage" data-docs-color-choice="sage" aria-label="Sage" title="Sage" data-tooltip="Sage"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-sea" data-docs-color-choice="sea" aria-label="Sea" title="Sea" data-tooltip="Sea"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-teal" data-docs-color-choice="teal" aria-label="Teal" title="Teal" data-tooltip="Teal"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-moss" data-docs-color-choice="moss" aria-label="Moss" title="Moss" data-tooltip="Moss"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-amber" data-docs-color-choice="amber" aria-label="Amber" title="Amber" data-tooltip="Amber"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-ochre" data-docs-color-choice="ochre" aria-label="Ochre" title="Ochre" data-tooltip="Ochre"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-slate" data-docs-color-choice="slate" aria-label="Slate" title="Slate" data-tooltip="Slate"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-stone" data-docs-color-choice="stone" aria-label="Stone" title="Stone" data-tooltip="Stone"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-plum" data-docs-color-choice="plum" aria-label="Plum" title="Plum" data-tooltip="Plum"></button>
+                  <button type="button" class="docs-color-picker__swatch wiki-color-rose" data-docs-color-choice="rose" aria-label="Rose" title="Rose" data-tooltip="Rose"></button>
+                </div>
+              </div>
+
+              <div class="docs-tooltip-editor" data-docs-tooltip-editor hidden>
+                <p class="docs-tooltip-editor__label">Tooltip</p>
+                <label class="docs-tooltip-editor__field">
+                  <span>Testo visibile</span>
+                  <input type="text" data-docs-tooltip-visible placeholder="Trama" autocomplete="off" spellcheck="false" />
+                </label>
+                <label class="docs-tooltip-editor__field">
+                  <span>Contenuto tooltip</span>
+                  <textarea data-docs-tooltip-text rows="4" placeholder="Descrizione mostrata nel tooltip"></textarea>
+                </label>
+                <div class="docs-tooltip-editor__actions">
+                  <button type="button" class="docs-tooltip-editor__btn" data-docs-tooltip-cancel>Annulla</button>
+                  <button type="button" class="docs-tooltip-editor__btn docs-tooltip-editor__btn--primary" data-docs-tooltip-apply>Inserisci</button>
+                </div>
+              </div>
+
+              <textarea id="docs-editor-content-md" name="content_md" rows="16" required data-docs-content-md></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="docs-editor-pane docs-editor-pane--meta"
+          data-docs-editor-pane="metadata"
+          id="docs-editor-pane-metadata"
+          role="tabpanel"
+          aria-labelledby="docs-editor-tab-metadata"
+          hidden
+        >
+          <section class="docs-editor-section">
+            <div class="docs-editor-section__head">
+              <h4>Metadati</h4>
+            </div>
+
+            <div class="docs-editor-form__grid">
+              <label>
+                Sezione
+                <select name="section" required>
+                  <option value="lore">Lore</option>
+                  <option value="regole">Regole</option>
+                </select>
+              </label>
+
+              <label>
+                Slug
+                <input type="text" name="slug" required />
+              </label>
+
+              <label>
+                Gruppo navigazione
+                <input type="text" name="nav_group" />
+              </label>
+
+              <label>
+                Ordine gruppo
+                <input type="number" name="nav_group_order" step="1" />
+              </label>
+
+              <label>
+                Icona gruppo (Font Awesome)
+                <input type="text" name="nav_group_icon" placeholder="fa-solid fa-book-open" />
+              </label>
+
+              <label>
+                Etichetta navigazione
+                <input type="text" name="nav_label" />
+              </label>
+
+              <label>
+                Icona pagina (Font Awesome)
+                <input type="text" name="page_icon" placeholder="fa-solid fa-file-lines" />
+              </label>
+
+              <label>
+                Pagina genitore
+                <select name="parent_slug" data-docs-parent-select>
+                  <option value="">Nessuna pagina genitore</option>
+                </select>
+              </label>
+
+              <label>
+                Ordine
+                <input type="number" name="sort_order" step="1" />
+              </label>
+
+              <label>
+                Profondita
+                <input type="number" name="depth" step="1" min="0" />
+              </label>
+
+              <label class="docs-editor-form__checkbox">
+                <input type="checkbox" name="is_published" />
+                <span>Pubblicata</span>
+              </label>
+            </div>
+
+            <label>
+              Estratto
+              <textarea name="excerpt" rows="3"></textarea>
+            </label>
+          </section>
+
+          <section class="docs-editor-section docs-editor-upload" aria-label="Upload immagine wiki">
+            <div class="docs-editor-section__head">
+              <h4>Immagini</h4>
+            </div>
+
+            <div class="docs-editor-upload__grid">
+              <label>
+                File immagine
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+                  data-docs-image-file
+                />
+              </label>
+
+              <label>
+                Alt text (facoltativo)
+                <input type="text" data-docs-image-alt placeholder="Immagine" />
+              </label>
+            </div>
+
+            <div class="docs-editor-upload__actions">
+              <button
+                type="button"
+                class="docs-editor-form__btn docs-editor-form__btn--icon-only"
+                data-docs-image-upload
+                aria-label="Carica immagine"
+                title="Carica immagine"
+                data-tooltip="Carica immagine"
+              >
+                <i class="fa-solid fa-image" aria-hidden="true"></i>
+              </button>
+
+              <button
+                type="button"
+                class="docs-editor-form__btn docs-editor-form__btn--icon-only"
+                data-docs-media-open
+                aria-label="Libreria immagini"
+                title="Libreria immagini"
+                data-tooltip="Libreria immagini"
+              >
+                <i class="fa-solid fa-photo-film" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <div class="docs-media-library" data-docs-media-library-panel hidden>
+              <label class="docs-media-library__label" for="docs-media-library-search">Libreria immagini</label>
+              <div class="docs-media-library__field">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input
+                  id="docs-media-library-search"
+                  type="search"
+                  data-docs-media-search
+                  placeholder="Cerca per nome o percorso..."
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+              <div class="docs-media-library__results" data-docs-media-results aria-live="polite"></div>
+              <p class="docs-media-library__status" data-docs-media-status aria-live="polite"></p>
+            </div>
+
+            <p class="docs-editor-upload__status" data-docs-image-status aria-live="polite"></p>
+          </section>
+        </section>
+      </div>
+
+      <p class="docs-editor-form__status" data-docs-editor-status aria-live="polite"></p>
+
+      <div class="docs-editor-form__actions">
+        <button
+          type="button"
+          class="docs-editor-form__btn docs-editor-form__btn--icon-only"
+          data-docs-editor-close
+          aria-label="Annulla"
+          title="Annulla"
+          data-tooltip="Annulla"
+        >
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+
+        <button
+          type="submit"
+          class="docs-editor-form__btn docs-editor-form__btn--primary docs-editor-form__btn--icon-only"
+          data-docs-editor-submit
+          aria-label="Salva pagina"
+          title="Salva pagina"
+          data-tooltip="Salva pagina"
+        >
+          <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
   <script src="scripts/layout.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
   <script src="scripts/docs.js" defer></script>
