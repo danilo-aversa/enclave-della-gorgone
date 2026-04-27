@@ -5,6 +5,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mappa Strategica | Enclave della Gorgone</title>
+  <style>
+      html {background: #0f171b;}
+      body {margin: 0; background: #0f171b; opacity: 0; transition: opacity 160ms ease;}
+      body.is-page-ready {opacity: 1;}
+      body.is-page-leaving {opacity: 0;}
+      @media (prefers-reduced-motion: reduce) {body {transition: none;}}
+  </style>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -108,7 +115,7 @@
 
               <label class="world-map-layer-toggle" title="Missioni">
                 <input type="checkbox" data-world-map-layer="mission" checked />
-                <i class="fa-solid fa-crosshairs"></i>
+                <i class="fa-solid fa-exclamation"></i>
               </label>
 
               <label class="world-map-layer-toggle" title="Rumors">
@@ -123,12 +130,12 @@
 
               <label class="world-map-layer-toggle" title="Domini">
                 <input type="checkbox" data-world-map-layer="domain" checked />
-                <i class="fa-solid fa-vector-square"></i>
+                <i class="fa-solid fa-draw-polygon"></i>
               </label>
 
               <label class="world-map-layer-toggle" title="Guerre">
                 <input type="checkbox" data-world-map-layer="war" checked />
-                <i class="fa-solid fa-khanda"></i>
+                <i class="fa-solid fa-hand-fist"></i>
               </label>
 
               <label class="world-map-layer-toggle" title="Tesori">
@@ -164,6 +171,7 @@
       </main>
     </div>
 
+    <script src="../scripts/page-transition.js"></script>
     <script src="../scripts/layout.js" defer></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     <script src="world-map.js" defer></script>

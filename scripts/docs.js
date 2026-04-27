@@ -26,47 +26,187 @@
     success: { label: "Successo", icon: "fa-solid fa-circle-check" },
     danger: { label: "Pericolo", icon: "fa-solid fa-skull-crossbones" },
   };
+  var WIKI_TOOLTIP_TYPES = {
+    base: { label: "Base", icon: "fa-solid fa-circle-info" },
+    lore: { label: "Lore", icon: "fa-solid fa-scroll" },
+    spell: { label: "Incantesimo", icon: "fa-solid fa-wand-magic-sparkles" },
+    monster: { label: "Mostro", icon: "fa-solid fa-dragon" },
+    npc: { label: "PNG", icon: "fa-solid fa-user" },
+    location: { label: "Luogo", icon: "fa-solid fa-location-dot" },
+    item: { label: "Oggetto", icon: "fa-solid fa-gem" },
+    rule: { label: "Regola", icon: "fa-solid fa-gavel" },
+  };
   var WIKI_BOX_ICON_CHOICES = [
     "fa-solid fa-circle-info",
     "fa-solid fa-note-sticky",
     "fa-solid fa-triangle-exclamation",
     "fa-solid fa-circle-check",
+    "fa-solid fa-circle-xmark",
+    "fa-solid fa-circle-question",
+    "fa-solid fa-circle-exclamation",
     "fa-solid fa-skull-crossbones",
     "fa-solid fa-lightbulb",
+    "fa-solid fa-book",
     "fa-solid fa-book-open",
+    "fa-solid fa-book-bookmark",
+    "fa-solid fa-book-atlas",
+    "fa-solid fa-book-bible",
     "fa-solid fa-scroll",
+    "fa-solid fa-scroll-torah",
+    "fa-solid fa-file",
+    "fa-solid fa-file-lines",
+    "fa-solid fa-file-signature",
+    "fa-solid fa-folder",
+    "fa-solid fa-folder-open",
+    "fa-solid fa-folder-tree",
+    "fa-solid fa-bookmark",
+    "fa-solid fa-tags",
+    "fa-solid fa-tag",
+    "fa-solid fa-feather",
+    "fa-solid fa-feather-pointed",
+    "fa-solid fa-pen-nib",
+    "fa-solid fa-signature",
+    "fa-solid fa-language",
+    "fa-solid fa-quote-left",
+    "fa-solid fa-heading",
+    "fa-solid fa-list-ul",
+    "fa-solid fa-list-ol",
+    "fa-solid fa-square-check",
+    "fa-solid fa-table",
+    "fa-solid fa-table-columns",
     "fa-solid fa-eye",
     "fa-solid fa-eye-slash",
-    "fa-solid fa-shield-halved",
-    "fa-solid fa-gavel",
-    "fa-solid fa-landmark",
-    "fa-solid fa-compass",
-    "fa-solid fa-map-location-dot",
+    "fa-solid fa-magnifying-glass",
+    "fa-solid fa-binoculars",
     "fa-solid fa-location-dot",
+    "fa-solid fa-map-pin",
+    "fa-solid fa-map",
+    "fa-solid fa-map-location-dot",
+    "fa-solid fa-compass",
+    "fa-solid fa-route",
+    "fa-solid fa-road",
+    "fa-solid fa-signs-post",
+    "fa-solid fa-mountain",
+    "fa-solid fa-water",
+    "fa-solid fa-tree",
+    "fa-solid fa-seedling",
+    "fa-solid fa-leaf",
+    "fa-solid fa-campground",
+    "fa-solid fa-tent",
+    "fa-solid fa-fire",
+    "fa-solid fa-fire-flame-curved",
+    "fa-solid fa-droplet",
+    "fa-solid fa-wind",
+    "fa-solid fa-snowflake",
+    "fa-solid fa-cloud",
+    "fa-solid fa-cloud-bolt",
+    "fa-solid fa-cloud-moon",
+    "fa-solid fa-cloud-sun",
+    "fa-solid fa-sun",
+    "fa-solid fa-moon",
+    "fa-solid fa-star",
+    "fa-solid fa-bolt",
+    "fa-solid fa-meteor",
+    "fa-solid fa-volcano",
     "fa-solid fa-dungeon",
     "fa-solid fa-door-open",
+    "fa-solid fa-landmark",
+    "fa-solid fa-monument",
+    "fa-solid fa-archway",
+    "fa-solid fa-place-of-worship",
+    "fa-solid fa-church",
+    "fa-solid fa-house",
+    "fa-solid fa-house-chimney",
+    "fa-solid fa-city",
+    "fa-solid fa-warehouse",
+    "fa-solid fa-bridge",
+    "fa-solid fa-bridge-water",
+    "fa-solid fa-anchor",
+    "fa-solid fa-ship",
+    "fa-solid fa-user",
+    "fa-solid fa-user-shield",
+    "fa-solid fa-user-secret",
+    "fa-solid fa-user-ninja",
+    "fa-solid fa-user-tie",
+    "fa-solid fa-users",
+    "fa-solid fa-user-group",
+    "fa-solid fa-people-group",
+    "fa-solid fa-person",
+    "fa-solid fa-person-walking",
+    "fa-solid fa-person-hiking",
+    "fa-solid fa-person-rays",
+    "fa-solid fa-mask",
+    "fa-solid fa-masks-theater",
+    "fa-solid fa-crown",
+    "fa-solid fa-chess-king",
+    "fa-solid fa-chess-queen",
+    "fa-solid fa-chess-rook",
+    "fa-solid fa-chess-knight",
+    "fa-solid fa-chess-bishop",
+    "fa-solid fa-chess-pawn",
+    "fa-solid fa-shield",
+    "fa-solid fa-shield-halved",
+    "fa-solid fa-gavel",
+    "fa-solid fa-scale-balanced",
+    "fa-solid fa-handshake",
+    "fa-solid fa-hand-fist",
+    "fa-solid fa-crosshairs",
+    "fa-solid fa-bullseye",
+    "fa-solid fa-flag",
+    "fa-solid fa-flag-checkered",
     "fa-solid fa-key",
     "fa-solid fa-lock",
     "fa-solid fa-unlock",
-    "fa-solid fa-wand-magic-sparkles",
-    "fa-solid fa-fire",
-    "fa-solid fa-droplet",
-    "fa-solid fa-leaf",
-    "fa-solid fa-moon",
-    "fa-solid fa-sun",
-    "fa-solid fa-star",
-    "fa-solid fa-bolt",
-    "fa-solid fa-heart",
-    "fa-solid fa-skull",
-    "fa-solid fa-dragon",
-    "fa-solid fa-crow",
-    "fa-solid fa-spider",
+    "fa-solid fa-vault",
+    "fa-solid fa-box-archive",
+    "fa-solid fa-box-open",
+    "fa-solid fa-briefcase",
+    "fa-solid fa-toolbox",
+    "fa-solid fa-hammer",
+    "fa-solid fa-screwdriver-wrench",
+    "fa-solid fa-helmet-safety",
     "fa-solid fa-flask",
     "fa-solid fa-vial",
-    "fa-solid fa-coins",
+    "fa-solid fa-mortar-pestle",
+    "fa-solid fa-prescription-bottle",
+    "fa-solid fa-wand-magic-sparkles",
+    "fa-solid fa-hat-wizard",
+    "fa-solid fa-hand-sparkles",
+    "fa-solid fa-khanda",
+    "fa-solid fa-ankh",
+    "fa-solid fa-cross",
+    "fa-solid fa-ghost",
+    "fa-solid fa-skull",
+    "fa-solid fa-dragon",
+    "fa-solid fa-paw",
+    "fa-solid fa-horse",
+    "fa-solid fa-frog",
+    "fa-solid fa-fish",
+    "fa-solid fa-dove",
+    "fa-solid fa-crow",
+    "fa-solid fa-kiwi-bird",
+    "fa-solid fa-spider",
+    "fa-solid fa-bug",
+    "fa-solid fa-worm",
+    "fa-solid fa-heart",
+    "fa-solid fa-heart-crack",
+    "fa-solid fa-droplet-slash",
+    "fa-solid fa-radiation",
+    "fa-solid fa-biohazard",
+    "fa-solid fa-bomb",
     "fa-solid fa-gem",
-    "fa-solid fa-scroll-torah",
-    "fa-solid fa-user-shield",
+    "fa-solid fa-ring",
+    "fa-solid fa-coins",
+    "fa-solid fa-sack-dollar",
+    "fa-solid fa-dice",
+    "fa-solid fa-dice-d20",
+    "fa-solid fa-dice-d6",
+    "fa-solid fa-hourglass",
+    "fa-solid fa-hourglass-half",
+    "fa-solid fa-clock",
+    "fa-solid fa-calendar-days",
+    "fa-solid fa-triangle-exclamation",
+    "fa-solid fa-circle-radiation"
   ];
   var EDITOR_MARKDOWN_CONTEXT_ACTIONS = [
     { action: "h1", icon: "fa-solid fa-heading", label: "Titolo H1" },
@@ -201,22 +341,34 @@
     editorHistoryPendingSnapshot: null,
     editorHistoryRestoring: false,
     editorHistoryLimit: 120,
+    editorCodeMirror: null,
+    codeMirrorAssetsReady: false,
+    codeMirrorAssetsLoading: false,
+    codeMirrorAssetCallbacks: [],
     wikiColorChoices: [
-      { value: "sage", label: "Sage" },
-      { value: "sea", label: "Sea" },
-      { value: "teal", label: "Teal" },
-      { value: "moss", label: "Moss" },
-      { value: "amber", label: "Amber" },
-      { value: "ochre", label: "Ochre" },
-      { value: "slate", label: "Slate" },
-      { value: "stone", label: "Stone" },
-      { value: "plum", label: "Plum" },
-      { value: "rose", label: "Rose" },
-      { value: "clay", label: "Clay Red" },
-      { value: "copper", label: "Copper" },
-      { value: "indigo", label: "Indigo" },
-      { value: "olive", label: "Olive" },
-      { value: "ash", label: "Ash" },
+      { value: "sage", label: "Sage", group: "standard" },
+      { value: "sea", label: "Sea", group: "standard" },
+      { value: "teal", label: "Teal", group: "standard" },
+      { value: "moss", label: "Moss", group: "standard" },
+      { value: "amber", label: "Amber", group: "standard" },
+      { value: "ochre", label: "Ochre", group: "standard" },
+      { value: "slate", label: "Slate", group: "standard" },
+      { value: "stone", label: "Stone", group: "standard" },
+      { value: "plum", label: "Plum", group: "standard" },
+      { value: "rose", label: "Rose", group: "standard" },
+      { value: "clay", label: "Clay Red", group: "standard" },
+      { value: "copper", label: "Copper", group: "standard" },
+      { value: "indigo", label: "Indigo", group: "standard" },
+      { value: "olive", label: "Olive", group: "standard" },
+      { value: "ash", label: "Ash", group: "standard" },
+      { value: "tooltip-base", label: "Tooltip Base", group: "tooltip", tooltipType: "base" },
+      { value: "tooltip-lore", label: "Tooltip Lore", group: "tooltip", tooltipType: "lore" },
+      { value: "tooltip-spell", label: "Tooltip Incantesimo", group: "tooltip", tooltipType: "spell" },
+      { value: "tooltip-monster", label: "Tooltip Mostro", group: "tooltip", tooltipType: "monster" },
+      { value: "tooltip-npc", label: "Tooltip PNG", group: "tooltip", tooltipType: "npc" },
+      { value: "tooltip-location", label: "Tooltip Luogo", group: "tooltip", tooltipType: "location" },
+      { value: "tooltip-item", label: "Tooltip Oggetto", group: "tooltip", tooltipType: "item" },
+      { value: "tooltip-rule", label: "Tooltip Regola", group: "tooltip", tooltipType: "rule" },
     ],
     wikiTooltipActive: null,
     wikiTooltipBubble: null,
@@ -271,6 +423,8 @@
       editorColorPicker: document.querySelector("[data-docs-color-picker]"),
       editorTooltipPanel: document.querySelector("[data-docs-tooltip-editor]"),
       editorTooltipVisible: document.querySelector("[data-docs-tooltip-visible]"),
+      editorTooltipTitle: document.querySelector("[data-docs-tooltip-title]"),
+      editorTooltipType: document.querySelector("[data-docs-tooltip-type]"),
       editorTooltipText: document.querySelector("[data-docs-tooltip-text]"),
       editorTooltipApply: document.querySelector("[data-docs-tooltip-apply]"),
       editorTooltipCancel: document.querySelector("[data-docs-tooltip-cancel]"),
@@ -703,6 +857,12 @@
 
     if (state.elements.editorMarkdownToolbar) {
       state.elements.editorMarkdownToolbar.addEventListener("mousedown", function onMarkdownToolbarMouseDown(event) {
+        var formatTrigger = event.target.closest("button[data-md-format-trigger]");
+        if (formatTrigger && state.elements.editorMarkdownToolbar.contains(formatTrigger)) {
+          event.preventDefault();
+          return;
+        }
+
         var button = event.target.closest("button[data-md-action]");
         if (!button || button.disabled) {
           return;
@@ -712,6 +872,14 @@
       });
 
       state.elements.editorMarkdownToolbar.addEventListener("click", function onMarkdownToolbarClick(event) {
+        var formatTrigger = event.target.closest("button[data-md-format-trigger]");
+        if (formatTrigger && state.elements.editorMarkdownToolbar.contains(formatTrigger)) {
+          event.preventDefault();
+          event.stopPropagation();
+          toggleEditorFormatMenu(formatTrigger, document.querySelector("[data-md-format-menu]"));
+          return;
+        }
+
         var button = event.target.closest("button[data-md-action]");
         if (!button || button.disabled) {
           return;
@@ -757,6 +925,7 @@
     }
 
     ensureEditorColorPickerChoices();
+    ensureEditorTooltipPanelEnhancements();
 
     if (state.elements.editorColorPicker) {
       state.elements.editorColorPicker.addEventListener("click", function onColorPickerClick(event) {
@@ -792,6 +961,14 @@
 
     if (state.elements.editorTooltipVisible) {
       state.elements.editorTooltipVisible.addEventListener("keydown", handleTooltipEditorKeydown);
+    }
+
+    if (state.elements.editorTooltipTitle) {
+      state.elements.editorTooltipTitle.addEventListener("keydown", handleTooltipEditorKeydown);
+    }
+
+    if (state.elements.editorTooltipType) {
+      state.elements.editorTooltipType.addEventListener("keydown", handleTooltipEditorKeydown);
     }
 
     if (state.elements.editorTooltipText) {
@@ -986,6 +1163,7 @@
       closeDocsTreeContextMenu();
       closeDocsTreeIconPicker();
       closeEditorMarkdownContextMenu();
+      closeEditorFormatMenu();
       closeLinkEditor();
       closeInternalLinkPicker();
       closeTooltipEditor();
@@ -1169,6 +1347,14 @@
       }
 
       closeEditorMarkdownContextMenu();
+    });
+
+    document.addEventListener("click", function onEditorFormatMenuOutsideClick(event) {
+      if (isEventInsideEditorFormatMenu(event.target)) {
+        return;
+      }
+
+      closeEditorFormatMenu();
     });
 
     document.addEventListener("click", function onInternalLinkPanelOutsideClick(event) {
@@ -1380,6 +1566,14 @@
         handleVisualEditorClick(event);
       });
 
+      visualEditor.addEventListener("mouseup", function onVisualEditorMouseUp() {
+        normalizeVisualSelectionWhitespace();
+      });
+
+      visualEditor.addEventListener("keyup", function onVisualEditorKeyUp() {
+        normalizeVisualSelectionWhitespace();
+      });
+
       visualEditor.addEventListener("mousemove", function onVisualEditorMouseMove(event) {
         handleVisualTableMouseMove(event);
         handleVisualEditorMouseMove(event);
@@ -1439,10 +1633,18 @@
       syncVisualEditorToMarkdown();
     }
 
+    if (!opts.skipSync && previous === "html" && normalized === "visual") {
+      syncCodeMirrorToTextarea();
+    }
+
     state.editorSourceMode = normalized;
 
     if (!opts.skipSync && normalized === "visual") {
       syncMarkdownToVisualEditor();
+    }
+
+    if (normalized === "html") {
+      ensureEditorCodeMirror({ refresh: true });
     }
 
     syncEditorSourceModeUi();
@@ -1454,13 +1656,27 @@
     }
 
     var isVisual = state.editorSourceMode !== "html";
+    var codeMirror = state.editorCodeMirror;
+    var codeMirrorWrapper = codeMirror && codeMirror.getWrapperElement ? codeMirror.getWrapperElement() : null;
 
     if (state.elements.editorVisualEditor) {
       state.elements.editorVisualEditor.hidden = !isVisual;
     }
 
     if (state.elements.editorContentMd) {
-      state.elements.editorContentMd.hidden = isVisual;
+      state.elements.editorContentMd.hidden = isVisual || !!codeMirrorWrapper;
+    }
+
+    if (codeMirrorWrapper) {
+      codeMirrorWrapper.hidden = isVisual;
+      if (!isVisual) {
+        window.requestAnimationFrame(function refreshCodeMirrorAfterModeSwitch() {
+          if (state.editorCodeMirror && state.editorCodeMirror.refresh) {
+            state.editorCodeMirror.refresh();
+            state.editorCodeMirror.focus();
+          }
+        });
+      }
     }
 
     if (state.elements.editorVisualTabButtons && state.elements.editorVisualTabButtons.length) {
@@ -1478,8 +1694,7 @@
       return;
     }
 
-    var textarea = getEditorMarkdownTextarea();
-    var source = textarea ? String(textarea.value || "") : "";
+    var source = getEditorMarkdownSource();
     state.elements.editorVisualEditor.innerHTML = storedContentToVisualEditorHtml(source);
     prepareVisualEditorDomForEditing(state.elements.editorVisualEditor);
   }
@@ -1494,7 +1709,7 @@
       return;
     }
 
-    textarea.value = visualEditorDomToHtml(state.elements.editorVisualEditor);
+    setEditorMarkdownSource(formatEditorHtmlSource(visualEditorDomToHtml(state.elements.editorVisualEditor)));
   }
 
   function storedContentToVisualEditorHtml(sourceValue) {
@@ -1534,6 +1749,180 @@
     var clone = root.cloneNode(true);
     cleanVisualHtmlForStorage(clone);
     return clone.innerHTML.trim();
+  }
+
+  function formatEditorHtmlSource(sourceValue) {
+    var source = String(sourceValue || "").trim();
+    if (!source) {
+      return "";
+    }
+
+    if (!isStoredHtmlContent(source)) {
+      return source;
+    }
+
+    var template = document.createElement("template");
+    template.innerHTML = source;
+
+    var lines = [];
+    for (var i = 0; i < template.content.childNodes.length; i += 1) {
+      appendFormattedHtmlNode(template.content.childNodes[i], 0, lines);
+    }
+
+    return lines.join(String.fromCharCode(10)).trim();
+  }
+
+  function appendFormattedHtmlNode(node, depth, lines) {
+    if (!node || !Array.isArray(lines)) {
+      return;
+    }
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      var text = readString(node.nodeValue, "");
+      if (text) {
+        lines.push(createHtmlIndent(depth) + text);
+      }
+      return;
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return;
+    }
+
+    var tag = String(node.tagName || "").toLowerCase();
+    var inlineTags = {
+      a: true,
+      abbr: true,
+      b: true,
+      br: true,
+      code: true,
+      em: true,
+      i: true,
+      mark: true,
+      small: true,
+      span: true,
+      strong: true,
+      u: true,
+    };
+
+    if (isCompactHtmlElement(node, inlineTags)) {
+      lines.push(createHtmlIndent(depth) + serializeCompactHtmlElement(node));
+      return;
+    }
+
+    var openTag = buildHtmlOpenTag(node);
+    var closeTag = "</" + tag + ">";
+
+    if (isVoidHtmlTag(tag)) {
+      lines.push(createHtmlIndent(depth) + openTag);
+      return;
+    }
+
+    lines.push(createHtmlIndent(depth) + openTag);
+
+    for (var i = 0; i < node.childNodes.length; i += 1) {
+      appendFormattedHtmlNode(node.childNodes[i], depth + 1, lines);
+    }
+
+    lines.push(createHtmlIndent(depth) + closeTag);
+  }
+
+  function createHtmlIndent(depth) {
+    var count = Math.max(0, Number(depth) || 0);
+    return new Array(count + 1).join("  ");
+  }
+
+  function isCompactHtmlElement(node, inlineTags) {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+      return false;
+    }
+
+    var tag = String(node.tagName || "").toLowerCase();
+    if (isVoidHtmlTag(tag)) {
+      return true;
+    }
+
+    var children = node.childNodes || [];
+    if (!children.length) {
+      return true;
+    }
+
+    if (tag === "p" || tag === "h1" || tag === "h2" || tag === "h3" || tag === "li" || tag === "td" || tag === "th" || tag === "summary") {
+      for (var i = 0; i < children.length; i += 1) {
+        var child = children[i];
+        if (child.nodeType === Node.TEXT_NODE) {
+          continue;
+        }
+
+        if (child.nodeType !== Node.ELEMENT_NODE) {
+          return false;
+        }
+
+        var childTag = String(child.tagName || "").toLowerCase();
+        if (!inlineTags[childTag]) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    if (!inlineTags[tag]) {
+      return false;
+    }
+
+    for (var j = 0; j < children.length; j += 1) {
+      var inlineChild = children[j];
+      if (inlineChild.nodeType === Node.TEXT_NODE) {
+        continue;
+      }
+
+      if (inlineChild.nodeType !== Node.ELEMENT_NODE || !inlineTags[String(inlineChild.tagName || "").toLowerCase()]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function serializeCompactHtmlElement(node) {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+
+    var tag = String(node.tagName || "").toLowerCase();
+    var openTag = buildHtmlOpenTag(node);
+
+    if (isVoidHtmlTag(tag)) {
+      return openTag;
+    }
+
+    return openTag + node.innerHTML.trim() + "</" + tag + ">";
+  }
+
+  function buildHtmlOpenTag(node) {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+
+    var tag = String(node.tagName || "").toLowerCase();
+    var attrs = [];
+
+    for (var i = 0; i < node.attributes.length; i += 1) {
+      var attr = node.attributes[i];
+      if (!attr || !attr.name) {
+        continue;
+      }
+
+      attrs.push(attr.name + '="' + escapeInlineHtmlText(attr.value) + '"');
+    }
+
+    return "<" + tag + (attrs.length ? " " + attrs.join(" ") : "") + ">";
+  }
+
+  function isVoidHtmlTag(tagName) {
+    var tag = String(tagName || "").toLowerCase();
+    return tag === "br" || tag === "hr" || tag === "img" || tag === "input";
   }
 
   function prepareVisualEditorDomForEditing(root) {
@@ -1843,7 +2232,12 @@
     }
 
     if (node.classList && node.classList.contains("wiki-tooltip")) {
-      return buildTooltipShortcode(text || readString(node.textContent, "testo visibile"), readString(node.getAttribute("data-tooltip"), ""));
+      return buildTooltipHtml(
+        text || readString(node.textContent, "testo visibile"),
+        readString(node.getAttribute("data-tooltip"), ""),
+        readString(node.getAttribute("data-tooltip-title"), ""),
+        normalizeWikiTooltipType(node.getAttribute("data-tooltip-type"))
+      );
     }
 
     if (node.classList && node.classList.contains("wiki-color")) {
@@ -3779,6 +4173,7 @@
     closeLinkEditor();
     closeInternalLinkPicker();
     closeEditorMarkdownContextMenu();
+    closeEditorFormatMenu();
     closeMediaLibraryPanel();
     closeTooltipEditor();
     closeEditorImagePicker();
@@ -3827,6 +4222,7 @@
     closeLinkEditor();
     closeInternalLinkPicker();
     closeEditorMarkdownContextMenu();
+    closeEditorFormatMenu();
     closeMediaLibraryPanel();
     closeColorPicker();
     closeTooltipEditor();
@@ -4131,6 +4527,10 @@
     }
 
     field.value = value;
+
+    if (name === "content_md") {
+      setEditorMarkdownSource(value);
+    }
   }
 
   function setFormCheckboxValue(form, name, isChecked) {
@@ -4268,6 +4668,11 @@
       var toolbarSelects = state.elements.editorMarkdownToolbar.querySelectorAll("select[data-md-block-style]");
       for (var selectIndex = 0; selectIndex < toolbarSelects.length; selectIndex += 1) {
         toolbarSelects[selectIndex].disabled = shouldDisable;
+      }
+
+      var toolbarFormatButtons = state.elements.editorMarkdownToolbar.querySelectorAll("button[data-md-format-trigger], button[data-md-format-action]");
+      for (var formatButtonIndex = 0; formatButtonIndex < toolbarFormatButtons.length; formatButtonIndex += 1) {
+        toolbarFormatButtons[formatButtonIndex].disabled = shouldDisable;
       }
     }
 
@@ -6608,6 +7013,7 @@
   }
 
   function saveVisualSelectionSnapshot() {
+    normalizeVisualSelectionWhitespace();
     var range = getCurrentVisualRange();
     state.visualTooltipSelection = range ? range.cloneRange() : null;
     state.editorContextSelection = null;
@@ -6632,8 +7038,9 @@
   }
 
   function getVisualSelectionText() {
+    normalizeVisualSelectionWhitespace();
     var range = getCurrentVisualRange() || state.visualTooltipSelection;
-    return range ? readString(range.toString(), "") : "";
+    return range ? readString(String(range.toString() || "").trim(), "") : "";
   }
 
   function getVisualSelectionAnchorPoint() {
@@ -6656,6 +7063,98 @@
     };
   }
 
+  function normalizeVisualSelectionWhitespace() {
+    if (!state.elements || !state.elements.editorVisualEditor || !window.getSelection) {
+      return false;
+    }
+
+    var editor = state.elements.editorVisualEditor;
+    var selection = window.getSelection();
+    if (!selection || selection.rangeCount < 1 || selection.isCollapsed) {
+      return false;
+    }
+
+    var range = selection.getRangeAt(0);
+    if (!range || !editor.contains(range.commonAncestorContainer)) {
+      return false;
+    }
+
+    var trimmed = trimVisualRangeWhitespace(range, editor);
+    if (!trimmed) {
+      return false;
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(trimmed);
+    state.visualTooltipSelection = trimmed.cloneRange();
+    return true;
+  }
+
+  function trimVisualRangeWhitespace(range, root) {
+    if (!range || !root) {
+      return null;
+    }
+
+    var text = String(range.toString() || "");
+    var clean = text.trim();
+    if (!text || text === clean) {
+      return null;
+    }
+
+    var leading = text.indexOf(clean);
+    var trailing = text.length - leading - clean.length;
+    var startPoint = leading > 0 ? getRangeTextPoint(range, leading, root) : null;
+    var endPoint = trailing > 0 ? getRangeTextPoint(range, leading + clean.length, root) : null;
+    var nextRange = range.cloneRange();
+
+    if (startPoint) {
+      nextRange.setStart(startPoint.node, startPoint.offset);
+    }
+
+    if (endPoint) {
+      nextRange.setEnd(endPoint.node, endPoint.offset);
+    }
+
+    if (nextRange.collapsed || !String(nextRange.toString() || "").trim()) {
+      return null;
+    }
+
+    return nextRange;
+  }
+
+  function getRangeTextPoint(range, targetOffset, root) {
+    if (!range || !root || !document.createTreeWalker) {
+      return null;
+    }
+
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function acceptRangeTextNode(node) {
+        return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      },
+    });
+
+    var consumed = 0;
+    var node = walker.nextNode();
+
+    while (node) {
+      var nodeStart = node === range.startContainer ? range.startOffset : 0;
+      var nodeEnd = node === range.endContainer ? range.endOffset : String(node.nodeValue || "").length;
+      var length = Math.max(0, nodeEnd - nodeStart);
+
+      if (targetOffset <= consumed + length) {
+        return {
+          node: node,
+          offset: nodeStart + Math.max(0, targetOffset - consumed),
+        };
+      }
+
+      consumed += length;
+      node = walker.nextNode();
+    }
+
+    return null;
+  }
+
   function positionEditorPopoverAtPoint(panel, point) {
     if (!panel || !point) {
       return;
@@ -6668,7 +7167,7 @@
     panel.style.top = "0px";
     panel.style.right = "auto";
     panel.style.bottom = "auto";
-    panel.style.maxHeight = Math.max(180, window.innerHeight - viewportPadding * 2) + "px";
+    applyEditorPopoverScrollBounds(panel, viewportPadding);
     panel.style.visibility = "hidden";
 
     var panelRect = panel.getBoundingClientRect();
@@ -7310,6 +7809,8 @@
     var selectedText = getVisualSelectionText() || "testo visibile";
     var existingTooltip = findVisualTooltipElementFromSelection();
     var tooltipText = existingTooltip ? readString(existingTooltip.getAttribute("data-tooltip"), "") : "";
+    var tooltipTitle = existingTooltip ? readString(existingTooltip.getAttribute("data-tooltip-title"), "") : "";
+    var tooltipType = existingTooltip ? normalizeWikiTooltipType(existingTooltip.getAttribute("data-tooltip-type")) : "base";
 
     if (existingTooltip) {
       selectedText = readString(existingTooltip.textContent, selectedText);
@@ -7328,13 +7829,7 @@
     closeEditorImagePicker();
     closeMediaLibraryPanel();
 
-    if (state.elements.editorTooltipVisible) {
-      state.elements.editorTooltipVisible.value = selectedText;
-    }
-
-    if (state.elements.editorTooltipText) {
-      state.elements.editorTooltipText.value = tooltipText;
-    }
+    setTooltipEditorFields(selectedText, tooltipText, tooltipTitle, tooltipType);
 
     state.elements.editorTooltipPanel.hidden = false;
     positionEditorPopoverAtPoint(state.elements.editorTooltipPanel, getVisualSelectionAnchorPoint());
@@ -7364,14 +7859,24 @@
 
   function applyVisualTooltipEditorSelection() {
     var snapshot = state.tooltipSelection || {};
-    var visibleText = readString(state.elements && state.elements.editorTooltipVisible && state.elements.editorTooltipVisible.value, snapshot.selectedText || "testo visibile");
-    var tooltipText = readString(state.elements && state.elements.editorTooltipText && state.elements.editorTooltipText.value, "testo tooltip");
+    var tooltipValues = readEditorTooltipFormValues(snapshot.selectedText || "testo visibile", "testo tooltip");
+    var visibleText = tooltipValues.visibleText;
+    var tooltipText = tooltipValues.tooltipText;
+    var tooltipTitle = tooltipValues.tooltipTitle;
+    var tooltipType = tooltipValues.tooltipType;
 
     if (snapshot.element && snapshot.element.isConnected) {
       rememberVisualEditorHistoryBeforeProgrammaticChange();
       snapshot.element.textContent = visibleText;
       snapshot.element.setAttribute("data-tooltip", tooltipText);
+      snapshot.element.setAttribute("data-tooltip-type", tooltipType);
       snapshot.element.setAttribute("tabindex", "0");
+      if (tooltipTitle) {
+        snapshot.element.setAttribute("data-tooltip-title", tooltipTitle);
+      } else {
+        snapshot.element.removeAttribute("data-tooltip-title");
+      }
+      applyWikiTooltipTypeClass(snapshot.element, tooltipType);
       closeTooltipEditor();
       return;
     }
@@ -7381,10 +7886,8 @@
       return;
     }
 
-    var safeVisible = escapeInlineHtmlText(visibleText);
-    var safeTooltip = escapeInlineHtmlText(tooltipText);
     rememberVisualEditorHistoryBeforeProgrammaticChange();
-    document.execCommand("insertHTML", false, '<span class="wiki-tooltip" tabindex="0" data-tooltip="' + safeTooltip + '">' + safeVisible + '</span>');
+    document.execCommand("insertHTML", false, buildTooltipHtml(visibleText, tooltipText, tooltipTitle, tooltipType));
     closeTooltipEditor();
   }
 
@@ -7970,6 +8473,12 @@
 
     var key = String(event.key || "").toLowerCase();
 
+    if (key === "1" || key === "2" || key === "3") {
+      event.preventDefault();
+      applyMarkdownToolbarAction("h" + key);
+      return;
+    }
+
     if (key === "z") {
       if (event.shiftKey) {
         if (canRedoEditorHistory()) {
@@ -8005,6 +8514,12 @@
 
     var key = String(event.key || "").toLowerCase();
     if (!key) {
+      return;
+    }
+
+    if (key === "1" || key === "2" || key === "3") {
+      event.preventDefault();
+      applyMarkdownToolbarAction("h" + key);
       return;
     }
 
@@ -8067,32 +8582,69 @@
     formatGroup.className = "docs-md-toolbar__group docs-md-toolbar__group--format";
     formatGroup.setAttribute("data-md-toolbar-group", "format");
 
-    var formatSelect = document.createElement("select");
-    formatSelect.className = "docs-md-toolbar__select";
-    formatSelect.setAttribute("data-md-block-style", "");
-    formatSelect.setAttribute("aria-label", "Formato contenuto");
-    formatSelect.setAttribute("data-tooltip", "Formato contenuto");
-    formatSelect.removeAttribute("title");
+    var formatTrigger = document.createElement("button");
+    formatTrigger.type = "button";
+    formatTrigger.className = "docs-md-toolbar__format-trigger";
+    formatTrigger.setAttribute("data-md-format-trigger", "");
+    formatTrigger.setAttribute("aria-haspopup", "true");
+    formatTrigger.setAttribute("aria-expanded", "false");
+    formatTrigger.setAttribute("aria-label", "Formato contenuto");
+    formatTrigger.setAttribute("data-tooltip", "Formato contenuto");
+    formatTrigger.innerHTML =
+      '<i class="fa-solid fa-paragraph" aria-hidden="true"></i>' +
+      '<span data-md-format-label>Formato</span>' +
+      '<i class="fa-solid fa-chevron-down docs-md-toolbar__format-chevron" aria-hidden="true"></i>';
+
+    var formatMenu = document.createElement("div");
+    formatMenu.className = "docs-editor-md-context docs-md-format-menu";
+    formatMenu.setAttribute("data-md-format-menu", "");
+    formatMenu.setAttribute("role", "menu");
+    formatMenu.setAttribute("aria-label", "Formato contenuto");
+    formatMenu.hidden = true;
 
     var options = [
-      { value: "", label: "Formato" },
-      { value: "paragraph", label: "Testo base" },
-      { value: "h1", label: "H1" },
-      { value: "h2", label: "H2" },
-      { value: "h3", label: "H3" },
-      { value: "ul", label: "Lista puntata" },
-      { value: "ol", label: "Lista numerata" },
-      { value: "checklist", label: "Lista checkbox" },
+      { action: "paragraph", icon: "fa-solid fa-paragraph", label: "Testo base" },
+      { separator: true },
+      { action: "h1", icon: "fa-solid fa-heading", label: "H1" },
+      { action: "h2", icon: "fa-solid fa-heading", label: "H2" },
+      { action: "h3", icon: "fa-solid fa-text-height", label: "H3" },
+      { separator: true },
+      { action: "ul", icon: "fa-solid fa-list-ul", label: "Lista puntata" },
+      { action: "ol", icon: "fa-solid fa-list-ol", label: "Lista numerata" },
+      { action: "checklist", icon: "fa-solid fa-square-check", label: "Lista checkbox" },
     ];
 
-    for (var i = 0; i < options.length; i += 1) {
-      var option = document.createElement("option");
-      option.value = options[i].value;
-      option.textContent = options[i].label;
-      formatSelect.appendChild(option);
-    }
+    renderEditorFormatMenuActions(formatMenu, options);
 
-    formatGroup.appendChild(formatSelect);
+    formatTrigger.addEventListener("mousedown", function onFormatTriggerMouseDown(event) {
+      event.preventDefault();
+    });
+
+    formatTrigger.addEventListener("click", function onFormatTriggerClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleEditorFormatMenu(formatTrigger, formatMenu);
+    });
+
+    formatMenu.addEventListener("mousedown", function onFormatMenuMouseDown(event) {
+      event.preventDefault();
+    });
+
+    formatMenu.addEventListener("click", function onFormatMenuClick(event) {
+      var button = event.target.closest("button[data-md-format-action]");
+      if (!button || button.disabled) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      var action = readString(button.getAttribute("data-md-format-action"), "");
+      closeEditorFormatMenu(formatTrigger, formatMenu);
+      applyMarkdownToolbarAction(action);
+    });
+
+    formatGroup.appendChild(formatTrigger);
+    document.body.appendChild(formatMenu);
     toolbar.appendChild(formatGroup);
 
     appendEditorToolbarGroup(toolbar, [
@@ -8128,6 +8680,145 @@
       { action: "inline-code", icon: "fa-solid fa-code", label: "Codice inline" },
       { action: "code-block", icon: "fa-solid fa-file-code", label: "Blocco codice" },
     ]);
+  }
+
+  function renderEditorFormatMenuActions(menu, actions) {
+    if (!menu || !Array.isArray(actions)) {
+      return;
+    }
+
+    menu.innerHTML = "";
+
+    for (var i = 0; i < actions.length; i += 1) {
+      var item = actions[i];
+
+      if (item.separator) {
+        var separator = document.createElement("span");
+        separator.className = "docs-editor-md-context__separator";
+        separator.setAttribute("aria-hidden", "true");
+        menu.appendChild(separator);
+        continue;
+      }
+
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "docs-editor-md-context__action";
+      button.setAttribute("data-md-format-action", item.action);
+      button.setAttribute("role", "menuitem");
+      button.setAttribute("aria-label", item.label);
+
+      var icon = document.createElement("i");
+      icon.className = item.icon;
+      icon.setAttribute("aria-hidden", "true");
+      button.appendChild(icon);
+
+      var label = document.createElement("span");
+      label.textContent = item.label;
+      button.appendChild(label);
+
+      menu.appendChild(button);
+    }
+  }
+
+  function toggleEditorFormatMenu(trigger, menu) {
+    if (!trigger) {
+      return;
+    }
+
+    var resolvedMenu = menu || document.querySelector("[data-md-format-menu]");
+    if (!resolvedMenu) {
+      return;
+    }
+
+    if (!resolvedMenu.hidden) {
+      closeEditorFormatMenu(trigger, resolvedMenu);
+      return;
+    }
+
+    closeEditorMarkdownContextMenu();
+    closeLinkEditor();
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeEditorImagePicker();
+    closeEditorBoxPicker();
+    closeEditorBoxIconPicker();
+    closeMediaLibraryPanel();
+
+    resolvedMenu.hidden = false;
+    positionEditorFormatMenu(trigger, resolvedMenu);
+    trigger.classList.add("is-open");
+    trigger.setAttribute("aria-expanded", "true");
+  }
+
+  function positionEditorFormatMenu(trigger, menu) {
+    if (!trigger || !menu) {
+      return;
+    }
+
+    prepareEditorPopoverPanel(menu);
+
+    var viewportPadding = 8;
+    var rect = trigger.getBoundingClientRect();
+    menu.style.left = "0px";
+    menu.style.top = "0px";
+    menu.style.right = "auto";
+    menu.style.bottom = "auto";
+    menu.style.maxHeight = Math.max(180, window.innerHeight - viewportPadding * 2) + "px";
+    menu.style.visibility = "hidden";
+
+    var menuRect = menu.getBoundingClientRect();
+    var left = rect.left;
+    var top = rect.bottom + 8;
+
+    if (left + menuRect.width > window.innerWidth - viewportPadding) {
+      left = Math.max(viewportPadding, window.innerWidth - menuRect.width - viewportPadding);
+    }
+
+    if (top + menuRect.height > window.innerHeight - viewportPadding) {
+      top = Math.max(viewportPadding, rect.top - menuRect.height - 8);
+    }
+
+    menu.style.left = Math.round(left) + "px";
+    menu.style.top = Math.round(top) + "px";
+    menu.style.visibility = "";
+  }
+
+  function closeEditorFormatMenu(trigger, menu) {
+    var resolvedMenu = menu || document.querySelector("[data-md-format-menu]");
+    var resolvedTrigger = trigger || (state.elements && state.elements.editorMarkdownToolbar ? state.elements.editorMarkdownToolbar.querySelector("[data-md-format-trigger]") : null);
+
+    if (resolvedMenu) {
+      resolvedMenu.hidden = true;
+      resetEditorPopoverPlacement(resolvedMenu);
+    }
+
+    if (resolvedTrigger) {
+      resolvedTrigger.classList.remove("is-open");
+      resolvedTrigger.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function isEventInsideEditorFormatMenu(target) {
+    if (!target) {
+      return false;
+    }
+
+    if (target.closest && target.closest("[data-md-format-menu]")) {
+      return true;
+    }
+
+    if (
+      state.elements &&
+      state.elements.editorMarkdownToolbar &&
+      target.closest &&
+      target.closest("[data-md-format-trigger]") &&
+      state.elements.editorMarkdownToolbar.contains(target)
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   function appendEditorToolbarGroup(toolbar, items) {
@@ -8198,6 +8889,108 @@
     return button;
   }
 
+  function buildEditorMarkdownContextActions(mode) {
+    if (mode === "insert") {
+      return EDITOR_BLOCK_INSERT_ACTIONS;
+    }
+
+    return [
+      {
+        submenu: true,
+        icon: "fa-solid fa-heading",
+        label: "Titolo",
+        items: [
+          { action: "h1", icon: "fa-solid fa-heading", label: "Titolo H1" },
+          { action: "h2", icon: "fa-solid fa-heading", label: "Titolo H2" },
+          { action: "h3", icon: "fa-solid fa-text-height", label: "Titolo H3" },
+        ],
+      },
+      {
+        submenu: true,
+        icon: "fa-solid fa-font",
+        label: "Formattazione",
+        items: [
+          { action: "bold", icon: "fa-solid fa-bold", label: "Grassetto" },
+          { action: "italic", icon: "fa-solid fa-italic", label: "Corsivo" },
+          { action: "underline", icon: "fa-solid fa-underline", label: "Sottolineato" },
+        ],
+      },
+      {
+        submenu: true,
+        icon: "fa-solid fa-palette",
+        label: "Colore testo",
+        items: buildEditorColorContextActions(),
+      },
+      { separator: true },
+      { action: "ul", icon: "fa-solid fa-list-ul", label: "Lista puntata" },
+      { action: "ol", icon: "fa-solid fa-list-ol", label: "Lista numerata" },
+      { action: "checklist", icon: "fa-solid fa-square-check", label: "Checklist" },
+      { separator: true },
+      { action: "quote", icon: "fa-solid fa-quote-left", label: "Citazione" },
+      { action: "box", icon: "fa-solid fa-square-caret-right", label: "Box" },
+      { action: "stepper", icon: "fa-solid fa-list-ol", label: "Stepper" },
+      { action: "expandable", icon: "fa-solid fa-square-caret-down", label: "Expandable" },
+      { action: "columns", icon: "fa-solid fa-table-columns", label: "Columns" },
+      { action: "table", icon: "fa-solid fa-table", label: "Tabella" },
+      { action: "divider", icon: "fa-solid fa-minus", label: "Divisore" },
+      { separator: true },
+      { action: "link", icon: "fa-solid fa-link", label: "Link" },
+      { action: "internal-link", icon: "fa-solid fa-book-bookmark", label: "Link interno" },
+      { action: "tooltip", icon: "fa-solid fa-circle-info", label: "Tooltip" },
+      { action: "image", icon: "fa-solid fa-image", label: "Immagine" },
+      { separator: true },
+      { action: "inline-code", icon: "fa-solid fa-code", label: "Codice inline" },
+      { action: "code-block", icon: "fa-solid fa-file-code", label: "Blocco codice" },
+    ];
+  }
+
+  function buildEditorColorContextActions() {
+    var choices = Array.isArray(state.wikiColorChoices) ? state.wikiColorChoices : [];
+    var actions = [
+      { action: "color-clear", icon: "fa-solid fa-droplet-slash", label: "Colore base" },
+    ];
+    var standard = [];
+    var tooltip = [];
+
+    for (var i = 0; i < choices.length; i += 1) {
+      var choice = choices[i];
+      if (!choice || !choice.value) {
+        continue;
+      }
+
+      var color = normalizeWikiColor(choice.value);
+      var item = {
+        action: "color:" + color,
+        icon: "fa-solid fa-circle wiki-color wiki-color-" + color,
+        label: choice.label,
+      };
+
+      if (choice.tooltipType) {
+        var type = normalizeWikiTooltipType(choice.tooltipType);
+        var meta = readWikiTooltipTypeMeta(type);
+        item.icon = meta.icon + " wiki-color wiki-color-" + color;
+      }
+
+      if (choice.group === "tooltip") {
+        tooltip.push(item);
+      } else {
+        standard.push(item);
+      }
+    }
+
+    if (standard.length) {
+      actions.push({ separator: true });
+      actions = actions.concat(standard);
+    }
+
+    if (tooltip.length) {
+      actions.push({ separator: true });
+      actions = actions.concat(tooltip);
+    }
+
+    return actions;
+  }
+
   function ensureEditorMarkdownContextMenu() {
     if (state.editorContextMenu && state.editorContextMenu.isConnected) {
       return state.editorContextMenu;
@@ -8218,6 +9011,14 @@
     });
 
     menu.addEventListener("click", function onEditorContextClick(event) {
+      var submenuTrigger = event.target.closest("button[data-md-context-submenu-trigger]");
+      if (submenuTrigger && menu.contains(submenuTrigger)) {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleEditorContextSubmenu(submenuTrigger);
+        return;
+      }
+
       var button = event.target.closest("button[data-md-context-action]");
       if (!button || button.disabled) {
         return;
@@ -8226,6 +9027,15 @@
       event.preventDefault();
       event.stopPropagation();
       runEditorMarkdownContextAction(button.getAttribute("data-md-context-action"));
+    });
+
+    menu.addEventListener("mouseover", function onEditorContextMouseOver(event) {
+      var submenuTrigger = event.target.closest("button[data-md-context-submenu-trigger]");
+      if (!submenuTrigger || !menu.contains(submenuTrigger) || submenuTrigger.disabled) {
+        return;
+      }
+
+      openEditorContextSubmenu(submenuTrigger);
     });
 
     document.body.appendChild(menu);
@@ -8241,6 +9051,13 @@
     menu.innerHTML = "";
 
     var items = Array.isArray(actions) && actions.length ? actions : EDITOR_MARKDOWN_CONTEXT_ACTIONS;
+    appendEditorMarkdownContextMenuItems(menu, items);
+  }
+
+  function appendEditorMarkdownContextMenuItems(container, items) {
+    if (!container || !Array.isArray(items)) {
+      return;
+    }
 
     for (var i = 0; i < items.length; i += 1) {
       var item = items[i];
@@ -8249,28 +9066,190 @@
         var separator = document.createElement("span");
         separator.className = "docs-editor-md-context__separator";
         separator.setAttribute("aria-hidden", "true");
-        menu.appendChild(separator);
+        container.appendChild(separator);
         continue;
       }
 
-      var button = document.createElement("button");
-      button.type = "button";
-      button.className = "docs-editor-md-context__action";
-      button.setAttribute("data-md-context-action", item.action);
-      button.setAttribute("role", "menuitem");
-      button.setAttribute("aria-label", item.label);
+      if (item.submenu && Array.isArray(item.items) && item.items.length) {
+        container.appendChild(createEditorContextSubmenuItem(item));
+        continue;
+      }
 
-      var icon = document.createElement("i");
-      icon.className = item.icon;
-      icon.setAttribute("aria-hidden", "true");
-      button.appendChild(icon);
-
-      var label = document.createElement("span");
-      label.textContent = item.label;
-      button.appendChild(label);
-
-      menu.appendChild(button);
+      container.appendChild(createEditorContextActionButton(item, "data-md-context-action"));
     }
+  }
+
+  function createEditorContextActionButton(item, actionAttribute) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "docs-editor-md-context__action";
+    button.setAttribute(actionAttribute, item.action || "");
+    button.setAttribute("role", "menuitem");
+    button.setAttribute("aria-label", item.label || "Azione");
+
+    var icon = document.createElement("i");
+    icon.className = item.icon || "fa-solid fa-circle";
+    icon.setAttribute("aria-hidden", "true");
+    button.appendChild(icon);
+
+    var label = document.createElement("span");
+    label.textContent = item.label || "Azione";
+    button.appendChild(label);
+
+    return button;
+  }
+
+  function createEditorContextSubmenuItem(item) {
+    var wrapper = document.createElement("div");
+    wrapper.className = "docs-editor-md-context__submenu-wrap";
+    wrapper.style.position = "relative";
+
+    var trigger = createEditorContextActionButton(item, "data-md-context-submenu-trigger");
+    trigger.classList.add("docs-editor-md-context__action--submenu");
+    trigger.style.display = "flex";
+    trigger.style.alignItems = "center";
+    trigger.style.width = "100%";
+    trigger.setAttribute("aria-haspopup", "true");
+    trigger.setAttribute("aria-expanded", "false");
+
+    var chevron = document.createElement("i");
+    chevron.className = "fa-solid fa-chevron-right docs-editor-md-context__submenu-chevron";
+    chevron.style.marginLeft = "auto";
+    chevron.setAttribute("aria-hidden", "true");
+    trigger.appendChild(chevron);
+
+    var submenu = document.createElement("div");
+    submenu.className = "docs-editor-md-context docs-editor-md-context__submenu";
+    submenu.setAttribute("role", "menu");
+    submenu.setAttribute("aria-label", item.label || "Sottomenu");
+    submenu.hidden = true;
+    submenu.style.position = "absolute";
+    submenu.style.left = "calc(100% + 6px)";
+    submenu.style.top = "0px";
+    submenu.style.minWidth = "210px";
+    submenu.style.zIndex = "10070";
+
+    appendEditorMarkdownContextMenuItems(submenu, item.items);
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(submenu);
+    return wrapper;
+  }
+
+  function toggleEditorContextSubmenu(trigger) {
+    if (!trigger) {
+      return;
+    }
+
+    var wrapper = trigger.closest(".docs-editor-md-context__submenu-wrap");
+    var submenu = wrapper ? wrapper.querySelector(":scope > .docs-editor-md-context__submenu") : null;
+    if (!submenu) {
+      return;
+    }
+
+    if (!submenu.hidden) {
+      closeEditorContextSubmenu(wrapper);
+      return;
+    }
+
+    openEditorContextSubmenu(trigger);
+  }
+
+  function openEditorContextSubmenu(trigger) {
+    if (!trigger || trigger.disabled) {
+      return;
+    }
+
+    var wrapper = trigger.closest(".docs-editor-md-context__submenu-wrap");
+    var submenu = wrapper ? wrapper.querySelector(":scope > .docs-editor-md-context__submenu") : null;
+    if (!wrapper || !submenu) {
+      return;
+    }
+
+    closeSiblingEditorContextSubmenus(wrapper);
+    submenu.hidden = false;
+    trigger.classList.add("is-open");
+    trigger.setAttribute("aria-expanded", "true");
+    positionEditorContextSubmenu(wrapper, submenu);
+  }
+
+  function closeEditorContextSubmenu(wrapper) {
+    if (!wrapper) {
+      return;
+    }
+
+    var trigger = wrapper.querySelector(":scope > button[data-md-context-submenu-trigger]");
+    var submenu = wrapper.querySelector(":scope > .docs-editor-md-context__submenu");
+    if (submenu) {
+      closeEditorContextSubmenus(submenu);
+      submenu.hidden = true;
+      resetEditorPopoverPlacement(submenu);
+      submenu.style.position = "absolute";
+      submenu.style.left = "calc(100% + 6px)";
+      submenu.style.top = "0px";
+      submenu.style.minWidth = "210px";
+      submenu.style.zIndex = "10070";
+    }
+
+    if (trigger) {
+      trigger.classList.remove("is-open");
+      trigger.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function closeSiblingEditorContextSubmenus(wrapper) {
+    var parent = wrapper && wrapper.parentElement;
+    if (!parent) {
+      return;
+    }
+
+    var siblings = parent.querySelectorAll(":scope > .docs-editor-md-context__submenu-wrap");
+    for (var i = 0; i < siblings.length; i += 1) {
+      if (siblings[i] !== wrapper) {
+        closeEditorContextSubmenu(siblings[i]);
+      }
+    }
+  }
+
+  function closeEditorContextSubmenus(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    var wrappers = root.querySelectorAll(".docs-editor-md-context__submenu-wrap");
+    for (var i = 0; i < wrappers.length; i += 1) {
+      closeEditorContextSubmenu(wrappers[i]);
+    }
+  }
+
+  function positionEditorContextSubmenu(wrapper, submenu) {
+    if (!wrapper || !submenu) {
+      return;
+    }
+
+    submenu.style.left = "calc(100% + 6px)";
+    submenu.style.right = "auto";
+    submenu.style.top = "0px";
+    submenu.style.bottom = "auto";
+    submenu.style.maxHeight = Math.max(180, window.innerHeight - 16) + "px";
+    submenu.style.visibility = "hidden";
+
+    var trigger = wrapper.querySelector(":scope > button[data-md-context-submenu-trigger]");
+    var triggerRect = trigger ? trigger.getBoundingClientRect() : wrapper.getBoundingClientRect();
+    var submenuRect = submenu.getBoundingClientRect();
+    var viewportPadding = 8;
+
+    if (triggerRect.right + 6 + submenuRect.width > window.innerWidth - viewportPadding) {
+      submenu.style.left = "auto";
+      submenu.style.right = "calc(100% + 6px)";
+    }
+
+    var overflowBottom = triggerRect.top + submenuRect.height - (window.innerHeight - viewportPadding);
+    if (overflowBottom > 0) {
+      submenu.style.top = Math.round(Math.max(-triggerRect.top + viewportPadding, -overflowBottom)) + "px";
+    }
+
+    submenu.style.visibility = "";
   }
 
   function isEditorMarkdownContextMenuOpen() {
@@ -8295,12 +9274,34 @@
     closeTooltipEditor();
     closeMediaLibraryPanel();
 
-    try {
-      textarea.focus({ preventScroll: true });
-    } catch (_error) {
-      textarea.focus();
+    focusEditorMarkdownSourceAtRange(null);
+
+    var snapshot = getSelectionInfo(textarea);
+    state.editorContextSelection = {
+      start: snapshot.start,
+      end: snapshot.end,
+      selectedText: snapshot.selectedText,
+    };
+
+    openEditorMarkdownContextMenu(event.clientX, event.clientY);
+  }
+
+  function handleEditorCodeMirrorContextMenu(event) {
+    if (!state.editorCodeMirror || state.editorSourceMode !== "html" || !isEditorOpen()) {
+      return;
     }
 
+    event.preventDefault();
+    event.stopPropagation();
+
+    closeInternalLinkPicker();
+    closeColorPicker();
+    closeTooltipEditor();
+    closeMediaLibraryPanel();
+
+    state.editorCodeMirror.focus();
+
+    var textarea = getEditorMarkdownTextarea();
     var snapshot = getSelectionInfo(textarea);
     state.editorContextSelection = {
       start: snapshot.start,
@@ -8319,10 +9320,7 @@
 
     var opts = options || {};
     state.editorContextMenuMode = opts.mode === "insert" ? "insert" : "full";
-    renderEditorMarkdownContextMenuActions(
-      menu,
-      state.editorContextMenuMode === "insert" ? EDITOR_BLOCK_INSERT_ACTIONS : EDITOR_MARKDOWN_CONTEXT_ACTIONS
-    );
+    renderEditorMarkdownContextMenuActions(menu, buildEditorMarkdownContextActions(state.editorContextMenuMode));
 
     syncEditorMarkdownContextMenuButtons();
     menu.hidden = false;
@@ -8357,6 +9355,7 @@
     var opts = options || {};
     var snapshot = state.editorContextSelection;
 
+    closeEditorContextSubmenus(state.editorContextMenu);
     state.editorContextMenu.hidden = true;
     state.editorContextMenuMode = "full";
     state.editorContextMenu.style.left = "";
@@ -8373,9 +9372,26 @@
   }
 
   function restoreEditorContextSelection(snapshot) {
+    focusEditorMarkdownSourceAtRange(snapshot);
+  }
+
+  function focusEditorMarkdownSourceAtRange(snapshot) {
     var textarea = getEditorMarkdownTextarea();
-    if (!textarea || !snapshot) {
-      return;
+
+    if (state.editorCodeMirror && typeof state.editorCodeMirror.focus === "function") {
+      var cm = state.editorCodeMirror;
+      var value = String(cm.getValue() || "");
+      var start = snapshot ? Math.max(0, Math.min(Number(snapshot.start) || 0, value.length)) : cm.indexFromPos(cm.getCursor("from"));
+      var end = snapshot ? Math.max(start, Math.min(Number(snapshot.end) || start, value.length)) : cm.indexFromPos(cm.getCursor("to"));
+      cm.focus();
+      if (typeof cm.posFromIndex === "function" && typeof cm.setSelection === "function") {
+        cm.setSelection(cm.posFromIndex(start), cm.posFromIndex(end));
+      }
+      return true;
+    }
+
+    if (!textarea) {
+      return false;
     }
 
     try {
@@ -8384,12 +9400,14 @@
       textarea.focus();
     }
 
-    if (typeof textarea.setSelectionRange === "function") {
-      var value = String(textarea.value || "");
-      var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
-      var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
-      textarea.setSelectionRange(start, end);
+    if (snapshot && typeof textarea.setSelectionRange === "function") {
+      var textValue = String(textarea.value || "");
+      var textStart = Math.max(0, Math.min(Number(snapshot.start) || 0, textValue.length));
+      var textEnd = Math.max(textStart, Math.min(Number(snapshot.end) || textStart, textValue.length));
+      textarea.setSelectionRange(textStart, textEnd);
     }
+
+    return true;
   }
 
   function runEditorMarkdownContextAction(action) {
@@ -8404,8 +9422,59 @@
     }
 
     closeEditorMarkdownContextMenu({ keepSelection: true });
+
+    if (action === "color-clear" || action.indexOf("color:") === 0) {
+      applyEditorContextColorAction(action, snapshot);
+      state.editorContextSelection = null;
+      return;
+    }
+
     applyMarkdownToolbarAction(action);
     state.editorContextSelection = null;
+  }
+
+  function applyEditorContextColorAction(action, snapshot) {
+    if (isVisualEditorMode()) {
+      if (!restoreVisualSelectionSnapshot()) {
+        return;
+      }
+
+      var existingColor = findVisualColorElementFromSelection();
+      var range = getCurrentVisualRange();
+      state.visualColorSelection = range ? range.cloneRange() : state.visualTooltipSelection;
+      state.colorSelection = {
+        mode: "visual",
+        selectedText: getVisualSelectionText() || (existingColor ? readString(existingColor.textContent, "") : "testo colorato"),
+        element: existingColor || null,
+      };
+
+      if (action === "color-clear") {
+        clearColoredText();
+        return;
+      }
+
+      insertColoredText(action.slice("color:".length));
+      return;
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    var selection = snapshot || getSelectionInfo(textarea);
+    state.colorSelection = {
+      start: selection.start,
+      end: selection.end,
+      selectedText: selection.selectedText,
+    };
+
+    if (action === "color-clear") {
+      clearColoredText();
+      return;
+    }
+
+    insertColoredText(action.slice("color:".length));
   }
 
   function syncEditorMarkdownContextMenuButtons() {
@@ -8414,7 +9483,7 @@
     }
 
     var disabled = !!(state.editorSaving || state.imageUploading);
-    var buttons = state.editorContextMenu.querySelectorAll("button[data-md-context-action]");
+    var buttons = state.editorContextMenu.querySelectorAll("button[data-md-context-action], button[data-md-context-submenu-trigger]");
     for (var i = 0; i < buttons.length; i += 1) {
       buttons[i].disabled = disabled;
     }
@@ -8683,6 +9752,9 @@
     label.textContent = "Icona box";
     picker.appendChild(label);
 
+    var search = createIconPickerSearchInput("Cerca icona box...");
+    picker.appendChild(search);
+
     var grid = document.createElement("div");
     grid.className = "docs-box-icon-picker__grid";
 
@@ -8692,6 +9764,7 @@
       button.type = "button";
       button.className = "docs-box-icon-picker__choice";
       button.setAttribute("data-docs-box-icon-choice", iconClass);
+      button.setAttribute("data-icon-search", buildIconPickerSearchText(iconClass));
       button.setAttribute("role", "menuitem");
       button.setAttribute("aria-label", iconClassToLabel(iconClass));
 
@@ -8704,7 +9777,15 @@
 
     picker.appendChild(grid);
 
+    search.addEventListener("input", function onBoxIconSearchInput(event) {
+      filterIconPickerChoices(picker, event.target.value);
+    });
+
     picker.addEventListener("mousedown", function onBoxIconPickerMouseDown(event) {
+      if (event.target && event.target.closest && event.target.closest("input")) {
+        return;
+      }
+
       event.preventDefault();
     });
 
@@ -8729,6 +9810,90 @@
     var parts = text.split(" ");
     var last = parts.length ? parts[parts.length - 1] : text;
     return last.replace(/^fa-/, "").replace(/-/g, " ");
+  }
+
+  function createIconPickerSearchInput(placeholder) {
+    var input = document.createElement("input");
+    input.type = "search";
+    input.className = "docs-box-icon-picker__search";
+    input.setAttribute("data-docs-icon-picker-search", "");
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("spellcheck", "false");
+    input.setAttribute("aria-label", "Cerca icona");
+    input.placeholder = readString(placeholder, "Cerca icona...");
+    return input;
+  }
+
+  function buildIconPickerSearchText(iconClass) {
+    var icon = readString(iconClass, "");
+    var label = iconClassToLabel(icon);
+    return normalizeSearchText(icon + " " + label);
+  }
+
+  function resetIconPickerSearch(picker) {
+    if (!picker) {
+      return;
+    }
+
+    var input = picker.querySelector("[data-docs-icon-picker-search]");
+    if (input) {
+      input.value = "";
+    }
+
+    filterIconPickerChoices(picker, "");
+  }
+
+  function focusIconPickerSearch(picker) {
+    if (!picker) {
+      return;
+    }
+
+    var input = picker.querySelector("[data-docs-icon-picker-search]");
+    if (input && typeof input.focus === "function") {
+      input.focus();
+    }
+  }
+
+  function filterIconPickerChoices(picker, query) {
+    if (!picker || !picker.querySelectorAll) {
+      return;
+    }
+
+    var normalizedQuery = normalizeSearchText(query);
+    var terms = normalizedQuery.split(" ").filter(function filterIconSearchTerm(term) {
+      return !!term;
+    });
+    var buttons = picker.querySelectorAll("button[data-docs-box-icon-choice], button[data-docs-tree-icon-choice]");
+    var visibleCount = 0;
+
+    for (var i = 0; i < buttons.length; i += 1) {
+      var button = buttons[i];
+      var haystack = readString(button.getAttribute("data-icon-search"), "");
+      var matches = true;
+
+      for (var termIndex = 0; termIndex < terms.length; termIndex += 1) {
+        if (haystack.indexOf(terms[termIndex]) === -1) {
+          matches = false;
+          break;
+        }
+      }
+
+      button.hidden = !matches;
+      if (matches) {
+        visibleCount += 1;
+      }
+    }
+
+    var empty = picker.querySelector("[data-docs-icon-picker-empty]");
+    if (!empty) {
+      empty = document.createElement("p");
+      empty.className = "docs-box-icon-picker__empty";
+      empty.setAttribute("data-docs-icon-picker-empty", "");
+      empty.textContent = "Nessuna icona trovata.";
+      picker.appendChild(empty);
+    }
+
+    empty.hidden = visibleCount > 0;
   }
 
   function isEditorBoxIconPickerOpen() {
@@ -8762,12 +9927,14 @@
     closeMediaLibraryPanel();
 
     state.boxIconTargetElement = box;
+    resetIconPickerSearch(picker);
     syncEditorBoxIconPickerSelection(box);
     picker.hidden = false;
 
     var rect = iconWrap && typeof iconWrap.getBoundingClientRect === "function" ? iconWrap.getBoundingClientRect() : null;
     var point = rect ? { x: rect.left + rect.width / 2, y: rect.bottom } : getVisualSelectionAnchorPoint();
     positionEditorPopoverAtPoint(picker, point);
+    focusIconPickerSearch(picker);
   }
 
   function closeEditorBoxIconPicker(options) {
@@ -9232,7 +10399,7 @@
       return;
     }
 
-    var value = String(textarea.value || "");
+    var value = getEditorMarkdownSource();
     var snapshot = state.imagePickerSelection || getSelectionInfo(textarea);
     var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
     var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
@@ -9294,6 +10461,23 @@
   }
 
   function getEditorHistorySnapshot(textarea) {
+    if (state.editorCodeMirror && typeof state.editorCodeMirror.getValue === "function") {
+      var cm = state.editorCodeMirror;
+      var wrapper = cm.getWrapperElement ? cm.getWrapperElement() : null;
+      var panel = getEditorModalScrollContainer(wrapper || textarea);
+      var scrollInfo = cm.getScrollInfo ? cm.getScrollInfo() : { top: 0, left: 0 };
+
+      return {
+        mode: "html",
+        value: String(cm.getValue() || ""),
+        selectionStart: cm.indexFromPos(cm.getCursor("from")),
+        selectionEnd: cm.indexFromPos(cm.getCursor("to")),
+        scrollTop: typeof scrollInfo.top === "number" ? scrollInfo.top : 0,
+        scrollLeft: typeof scrollInfo.left === "number" ? scrollInfo.left : 0,
+        panelScrollTop: panel && typeof panel.scrollTop === "number" ? panel.scrollTop : 0,
+      };
+    }
+
     if (!textarea) {
       return null;
     }
@@ -9487,7 +10671,241 @@
     return state.elements.editorContentMd;
   }
 
+  function getEditorMarkdownSource() {
+    if (state.editorCodeMirror && typeof state.editorCodeMirror.getValue === "function") {
+      return String(state.editorCodeMirror.getValue() || "");
+    }
+
+    var textarea = getEditorMarkdownTextarea();
+    return textarea ? String(textarea.value || "") : "";
+  }
+
+  function setEditorMarkdownSource(value) {
+    var source = String(value || "");
+    var textarea = getEditorMarkdownTextarea();
+
+    if (textarea) {
+      textarea.value = source;
+    }
+
+    if (state.editorCodeMirror && typeof state.editorCodeMirror.setValue === "function") {
+      if (state.editorCodeMirror.getValue() !== source) {
+        state.editorCodeMirror.setValue(source);
+      }
+    }
+  }
+
+  function syncCodeMirrorToTextarea() {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea || !state.editorCodeMirror || typeof state.editorCodeMirror.getValue !== "function") {
+      return;
+    }
+
+    textarea.value = state.editorCodeMirror.getValue();
+  }
+
+  function ensureEditorCodeMirror(options) {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
+      return null;
+    }
+
+    if (state.editorCodeMirror && state.editorCodeMirror.getWrapperElement) {
+      if (options && options.refresh) {
+        window.requestAnimationFrame(function refreshExistingCodeMirror() {
+          if (state.editorCodeMirror && state.editorCodeMirror.refresh) {
+            state.editorCodeMirror.refresh();
+          }
+        });
+      }
+      return state.editorCodeMirror;
+    }
+
+    if (!window.CodeMirror) {
+      loadCodeMirrorAssets(function onCodeMirrorReady() {
+        ensureEditorCodeMirror({ refresh: true });
+        syncEditorSourceModeUi();
+      });
+      return null;
+    }
+
+    var codeMirrorOptions = {
+      mode: "htmlmixed",
+      lineNumbers: true,
+      lineWrapping: true,
+      tabSize: 2,
+      indentUnit: 2,
+      smartIndent: true,
+      autoCloseTags: true,
+      viewportMargin: Infinity,
+      extraKeys: {
+        "Ctrl-1": function applyH1(cm) { applyCodeMirrorToolbarAction(cm, "h1"); },
+        "Cmd-1": function applyH1Mac(cm) { applyCodeMirrorToolbarAction(cm, "h1"); },
+        "Ctrl-2": function applyH2(cm) { applyCodeMirrorToolbarAction(cm, "h2"); },
+        "Cmd-2": function applyH2Mac(cm) { applyCodeMirrorToolbarAction(cm, "h2"); },
+        "Ctrl-3": function applyH3(cm) { applyCodeMirrorToolbarAction(cm, "h3"); },
+        "Cmd-3": function applyH3Mac(cm) { applyCodeMirrorToolbarAction(cm, "h3"); },
+        "Ctrl-B": function applyBold(cm) { applyCodeMirrorToolbarAction(cm, "bold"); },
+        "Cmd-B": function applyBoldMac(cm) { applyCodeMirrorToolbarAction(cm, "bold"); },
+        "Ctrl-I": function applyItalic(cm) { applyCodeMirrorToolbarAction(cm, "italic"); },
+        "Cmd-I": function applyItalicMac(cm) { applyCodeMirrorToolbarAction(cm, "italic"); },
+        "Ctrl-K": function applyLink(cm) { applyCodeMirrorToolbarAction(cm, "link"); },
+        "Cmd-K": function applyLinkMac(cm) { applyCodeMirrorToolbarAction(cm, "link"); },
+      },
+    };
+
+    if (
+      window.CodeMirror.prototype &&
+      typeof window.CodeMirror.prototype.findMatchingTag === "function"
+    ) {
+      codeMirrorOptions.matchTags = { bothTags: true };
+    }
+
+    state.editorCodeMirror = window.CodeMirror.fromTextArea(textarea, codeMirrorOptions);
+
+    state.editorCodeMirror.on("change", function onCodeMirrorChange(cm) {
+      textarea.value = cm.getValue();
+      if (state.editorSourceMode === "html") {
+        setEditorStatus("", "");
+      }
+    });
+
+    var wrapper = state.editorCodeMirror.getWrapperElement();
+    if (wrapper) {
+      wrapper.classList.add("docs-code-editor");
+      wrapper.hidden = state.editorSourceMode !== "html";
+      wrapper.addEventListener("contextmenu", handleEditorCodeMirrorContextMenu);
+    }
+
+    syncEditorSourceModeUi();
+    return state.editorCodeMirror;
+  }
+
+  function applyCodeMirrorToolbarAction(cm, action) {
+    if (!cm || !action) {
+      return;
+    }
+
+    syncCodeMirrorToTextarea();
+    applyMarkdownToolbarAction(action);
+    if (state.editorCodeMirror && state.editorSourceMode === "html") {
+      state.editorCodeMirror.focus();
+    }
+  }
+
+  function loadCodeMirrorAssets(callback) {
+    if (window.CodeMirror) {
+      state.codeMirrorAssetsReady = true;
+      if (typeof callback === "function") {
+        callback();
+      }
+      return;
+    }
+
+    if (typeof callback === "function") {
+      state.codeMirrorAssetCallbacks.push(callback);
+    }
+
+    if (state.codeMirrorAssetsLoading) {
+      return;
+    }
+
+    state.codeMirrorAssetsLoading = true;
+
+    loadCodeMirrorCss("https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css");
+
+    loadScriptSequence([
+      "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js",
+      "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/xml/xml.min.js",
+      "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.min.js",
+      "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/css/css.min.js",
+      "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/htmlmixed/htmlmixed.min.js",
+      "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closetag.min.js",
+      "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/xml-fold.min.js",
+      "https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchtags.min.js",
+    ], function onAssetsLoaded(error) {
+      state.codeMirrorAssetsLoading = false;
+      state.codeMirrorAssetsReady = !error && !!window.CodeMirror;
+
+      if (error) {
+        console.warn("CodeMirror non disponibile, fallback al textarea HTML.", error);
+      }
+
+      var callbacks = state.codeMirrorAssetCallbacks.slice();
+      state.codeMirrorAssetCallbacks = [];
+
+      for (var i = 0; i < callbacks.length; i += 1) {
+        callbacks[i](error || null);
+      }
+    });
+  }
+
+  function loadCodeMirrorCss(href) {
+    if (!href || document.querySelector('link[data-codemirror-css="true"]')) {
+      return;
+    }
+
+    var link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.setAttribute("data-codemirror-css", "true");
+    document.head.appendChild(link);
+  }
+
+  function loadScriptSequence(urls, done) {
+    var index = 0;
+
+    function next(error) {
+      if (error) {
+        done(error);
+        return;
+      }
+
+      if (index >= urls.length) {
+        done(null);
+        return;
+      }
+
+      var src = urls[index];
+      index += 1;
+      loadExternalScript(src, next);
+    }
+
+    next(null);
+  }
+
+  function loadExternalScript(src, done) {
+    var existing = document.querySelector('script[src="' + src + '"]');
+    if (existing) {
+      done(null);
+      return;
+    }
+
+    var script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    script.onload = function onScriptLoad() { done(null); };
+    script.onerror = function onScriptError() { done(new Error("Impossibile caricare " + src)); };
+    document.head.appendChild(script);
+  }
+
   function getSelectionInfo(textarea) {
+    if (state.editorCodeMirror && typeof state.editorCodeMirror.getValue === "function") {
+      var cm = state.editorCodeMirror;
+      var value = String(cm.getValue() || "");
+      var from = cm.indexFromPos(cm.getCursor("from"));
+      var to = cm.indexFromPos(cm.getCursor("to"));
+      var start = Math.max(0, Math.min(from, to));
+      var end = Math.max(start, Math.max(from, to));
+
+      return {
+        value: value,
+        start: start,
+        end: end,
+        selectedText: value.slice(start, end),
+      };
+    }
+
     var value = String(textarea.value || "");
     var start = typeof textarea.selectionStart === "number" ? textarea.selectionStart : value.length;
     var end = typeof textarea.selectionEnd === "number" ? textarea.selectionEnd : start;
@@ -9507,6 +10925,18 @@
   }
 
   function getTextareaCaretViewportPoint(textarea, position) {
+    if (state.editorCodeMirror && typeof state.editorCodeMirror.posFromIndex === "function") {
+      var cm = state.editorCodeMirror;
+      var value = String(cm.getValue() || "");
+      var caretIndex = Math.max(0, Math.min(Number(position) || 0, value.length));
+      var cursor = cm.posFromIndex(caretIndex);
+      var coords = cm.cursorCoords(cursor, "window");
+      return {
+        x: coords.left,
+        y: coords.bottom,
+      };
+    }
+
     if (!textarea || typeof textarea.getBoundingClientRect !== "function") {
       return null;
     }
@@ -9605,6 +11035,29 @@
     panel.style.zIndex = "10050";
   }
 
+  function getEditorPopoverMaxHeight(panel, viewportPadding) {
+    var availableHeight = Math.max(180, window.innerHeight - viewportPadding * 2);
+
+    if (panel && panel.classList && panel.classList.contains("docs-box-icon-picker")) {
+      return Math.max(180, Math.min(450, availableHeight));
+    }
+
+    return availableHeight;
+  }
+
+  function applyEditorPopoverScrollBounds(panel, viewportPadding) {
+    if (!panel) {
+      return;
+    }
+
+    panel.style.maxHeight = getEditorPopoverMaxHeight(panel, viewportPadding) + "px";
+
+    if (panel.classList && panel.classList.contains("docs-box-icon-picker")) {
+      panel.style.overflowY = "auto";
+      panel.style.overflowX = "hidden";
+    }
+  }
+
   function resetEditorPopoverPlacement(panel) {
     if (!panel) {
       return;
@@ -9617,6 +11070,8 @@
     panel.style.bottom = "";
     panel.style.zIndex = "";
     panel.style.maxHeight = "";
+    panel.style.overflowY = "";
+    panel.style.overflowX = "";
     panel.style.visibility = "";
   }
 
@@ -9644,7 +11099,7 @@
     panel.style.top = "0px";
     panel.style.right = "auto";
     panel.style.bottom = "auto";
-    panel.style.maxHeight = Math.max(180, window.innerHeight - viewportPadding * 2) + "px";
+    applyEditorPopoverScrollBounds(panel, viewportPadding);
     panel.style.visibility = "hidden";
 
     var panelRect = panel.getBoundingClientRect();
@@ -9666,6 +11121,52 @@
   function setTextareaSelection(textarea, value, selectionStart, selectionEnd, options) {
     var opts = options || {};
     var previousSnapshot = !opts.skipHistory ? getEditorHistorySnapshot(textarea) : null;
+
+    if (state.editorCodeMirror && typeof state.editorCodeMirror.setValue === "function") {
+      var cm = state.editorCodeMirror;
+      var wrapper = cm.getWrapperElement ? cm.getWrapperElement() : null;
+      var panel = getEditorModalScrollContainer(wrapper || textarea);
+      var scrollInfo = cm.getScrollInfo ? cm.getScrollInfo() : { top: 0, left: 0 };
+      var preservedScrollTop = typeof opts.preserveScrollTop === "number" ? opts.preserveScrollTop : scrollInfo.top || 0;
+      var preservedScrollLeft = typeof opts.preserveScrollLeft === "number" ? opts.preserveScrollLeft : scrollInfo.left || 0;
+      var preservedPanelScrollTop = typeof opts.preservePanelScrollTop === "number"
+        ? opts.preservePanelScrollTop
+        : panel && typeof panel.scrollTop === "number"
+        ? panel.scrollTop
+        : 0;
+      var nextValue = String(value || "");
+      var start = Math.max(0, Math.min(Number(selectionStart) || 0, nextValue.length));
+      var end = Math.max(start, Math.min(Number(selectionEnd) || start, nextValue.length));
+
+      cm.operation(function updateCodeMirrorSelection() {
+        cm.setValue(nextValue);
+        if (textarea) {
+          textarea.value = nextValue;
+        }
+        cm.setSelection(cm.posFromIndex(start), cm.posFromIndex(end));
+        cm.scrollTo(preservedScrollLeft, preservedScrollTop);
+      });
+
+      if (panel && typeof panel.scrollTop === "number") {
+        panel.scrollTop = preservedPanelScrollTop;
+      }
+
+      window.requestAnimationFrame(function restoreCodeMirrorScrollPosition() {
+        if (state.editorCodeMirror && state.editorCodeMirror.scrollTo) {
+          state.editorCodeMirror.scrollTo(preservedScrollLeft, preservedScrollTop);
+        }
+
+        if (panel && typeof panel.scrollTop === "number") {
+          panel.scrollTop = preservedPanelScrollTop;
+        }
+      });
+
+      if (!opts.skipHistory) {
+        pushEditorHistorySnapshot(previousSnapshot, textarea);
+      }
+      return;
+    }
+
     var panel = getEditorModalScrollContainer(textarea);
     var preservedScrollTop = typeof opts.preserveScrollTop === "number" ? opts.preserveScrollTop : textarea.scrollTop;
     var preservedScrollLeft = typeof opts.preserveScrollLeft === "number" ? opts.preserveScrollLeft : textarea.scrollLeft;
@@ -10434,26 +11935,164 @@
     clearButton.setAttribute("data-docs-color-choice", "");
     clearButton.setAttribute("data-docs-color-clear", "");
     clearButton.setAttribute("aria-label", "Colore base");
-    clearButton.setAttribute("title", "Colore base");
+    clearButton.removeAttribute("title");
     clearButton.textContent = "Base";
     picker.appendChild(clearButton);
+
+    appendEditorColorPickerGroup(picker, "Colori standard", choices.filter(function filterStandardColor(choice) {
+      return !choice || choice.group !== "tooltip";
+    }));
+
+    appendEditorColorPickerGroup(picker, "Colori tooltip", choices.filter(function filterTooltipColor(choice) {
+      return choice && choice.group === "tooltip";
+    }));
+  }
+
+  function appendEditorColorPickerGroup(picker, title, choices) {
+    if (!picker || !Array.isArray(choices) || !choices.length) {
+      return;
+    }
+
+    var group = document.createElement("section");
+    group.className = "docs-color-picker__section";
+
+    var heading = document.createElement("p");
+    heading.className = "docs-color-picker__section-title";
+    heading.textContent = title;
+    group.appendChild(heading);
 
     var grid = document.createElement("div");
     grid.className = "docs-color-picker__grid";
 
     for (var i = 0; i < choices.length; i += 1) {
       var choice = choices[i];
+      var color = normalizeWikiColor(choice.value);
       var button = document.createElement("button");
       button.type = "button";
-      button.className = "docs-color-picker__choice wiki-color wiki-color-" + choice.value;
-      button.setAttribute("data-docs-color-choice", choice.value);
+      button.className = "docs-color-picker__choice wiki-color wiki-color-" + color;
+      button.setAttribute("data-docs-color-choice", color);
       button.setAttribute("aria-label", choice.label);
-      button.setAttribute("title", choice.label);
+      button.removeAttribute("title");
       button.textContent = "Aa";
+
+      if (choice.tooltipType) {
+        var tooltipType = normalizeWikiTooltipType(choice.tooltipType);
+        var tooltipMeta = readWikiTooltipTypeMeta(tooltipType);
+        button.classList.add("docs-color-picker__choice--tooltip");
+        button.setAttribute("data-docs-tooltip-color-type", tooltipType);
+        button.style.color = "rgb(var(--docs-tooltip-" + tooltipType + "-rgb))";
+        button.innerHTML = "";
+
+        var tooltipIcon = document.createElement("i");
+        tooltipIcon.className = tooltipMeta.icon;
+        tooltipIcon.setAttribute("aria-hidden", "true");
+        button.appendChild(tooltipIcon);
+      }
+
       grid.appendChild(button);
     }
 
-    picker.appendChild(grid);
+    group.appendChild(grid);
+    picker.appendChild(group);
+  }
+
+  function ensureEditorTooltipPanelEnhancements() {
+    if (!state.elements || !state.elements.editorTooltipPanel) {
+      return;
+    }
+
+    var panel = state.elements.editorTooltipPanel;
+    var visibleField = state.elements.editorTooltipVisible || panel.querySelector("[data-docs-tooltip-visible]");
+    var textField = state.elements.editorTooltipText || panel.querySelector("[data-docs-tooltip-text]");
+
+    if (!state.elements.editorTooltipTitle) {
+      var titleLabel = document.createElement("label");
+      titleLabel.className = "docs-tooltip-editor__field docs-tooltip-editor__field--title";
+      titleLabel.innerHTML = '<span>Titolo tooltip</span><input type="text" data-docs-tooltip-title placeholder="Facoltativo" autocomplete="off" spellcheck="false">';
+      panel.insertBefore(titleLabel, visibleField && visibleField.closest ? visibleField.closest("label") : panel.firstChild);
+      state.elements.editorTooltipTitle = titleLabel.querySelector("[data-docs-tooltip-title]");
+    }
+
+    if (!state.elements.editorTooltipType) {
+      var typeLabel = document.createElement("label");
+      typeLabel.className = "docs-tooltip-editor__field docs-tooltip-editor__field--type";
+
+      var typeText = document.createElement("span");
+      typeText.textContent = "Tipologia";
+      typeLabel.appendChild(typeText);
+
+      var select = document.createElement("select");
+      select.setAttribute("data-docs-tooltip-type", "");
+      select.autocomplete = "off";
+
+      var keys = Object.keys(WIKI_TOOLTIP_TYPES);
+      for (var i = 0; i < keys.length; i += 1) {
+        var key = keys[i];
+        var option = document.createElement("option");
+        option.value = key;
+        option.textContent = WIKI_TOOLTIP_TYPES[key].label;
+        select.appendChild(option);
+      }
+
+      typeLabel.appendChild(select);
+      panel.insertBefore(typeLabel, textField && textField.closest ? textField.closest("label") : panel.firstChild);
+      state.elements.editorTooltipType = select;
+    }
+  }
+
+  function normalizeWikiTooltipType(value) {
+    var type = cleanSegment(readString(value, "base"));
+    return WIKI_TOOLTIP_TYPES[type] ? type : "base";
+  }
+
+  function readWikiTooltipTypeMeta(type) {
+    var normalized = normalizeWikiTooltipType(type);
+    return WIKI_TOOLTIP_TYPES[normalized] || WIKI_TOOLTIP_TYPES.base;
+  }
+
+  function applyWikiTooltipTypeClass(element, type) {
+    if (!element || !element.classList) {
+      return;
+    }
+
+    var keys = Object.keys(WIKI_TOOLTIP_TYPES);
+    for (var i = 0; i < keys.length; i += 1) {
+      element.classList.remove("wiki-tooltip--" + keys[i]);
+    }
+  }
+
+  function readEditorTooltipFormValues(fallbackVisible, fallbackText) {
+    var title = readString(state.elements && state.elements.editorTooltipTitle && state.elements.editorTooltipTitle.value, "");
+    var type = normalizeWikiTooltipType(state.elements && state.elements.editorTooltipType && state.elements.editorTooltipType.value);
+    var visible = readString(state.elements && state.elements.editorTooltipVisible && state.elements.editorTooltipVisible.value, fallbackVisible || "testo visibile");
+    var text = readString(state.elements && state.elements.editorTooltipText && state.elements.editorTooltipText.value, fallbackText || "testo tooltip");
+
+    return {
+      visibleText: visible,
+      tooltipTitle: title,
+      tooltipType: type,
+      tooltipText: text,
+    };
+  }
+
+  function setTooltipEditorFields(visibleText, tooltipText, tooltipTitle, tooltipType) {
+    ensureEditorTooltipPanelEnhancements();
+
+    if (state.elements.editorTooltipVisible) {
+      state.elements.editorTooltipVisible.value = readString(visibleText, "testo visibile");
+    }
+
+    if (state.elements.editorTooltipTitle) {
+      state.elements.editorTooltipTitle.value = readString(tooltipTitle, "");
+    }
+
+    if (state.elements.editorTooltipType) {
+      state.elements.editorTooltipType.value = normalizeWikiTooltipType(tooltipType);
+    }
+
+    if (state.elements.editorTooltipText) {
+      state.elements.editorTooltipText.value = readString(tooltipText, "");
+    }
   }
 
   function applyTooltipAction(textarea) {
@@ -10481,7 +12120,7 @@
       return;
     }
 
-    var snippet = buildTooltipHtml(visibleText, tooltipInput);
+    var snippet = buildTooltipHtml(visibleText, tooltipInput, "", "base");
 
     replaceSelectionByRange(textarea, info.start, info.end, snippet, {
       start: snippet.length,
@@ -10489,10 +12128,14 @@
     });
   }
 
-  function buildTooltipHtml(visibleText, tooltipText) {
+  function buildTooltipHtml(visibleText, tooltipText, tooltipTitle, tooltipType) {
     var visible = escapeInlineHtmlText(readString(visibleText, "testo visibile"));
     var tooltip = escapeInlineHtmlText(readString(tooltipText, "testo tooltip"));
-    return '<span class="wiki-tooltip" tabindex="0" data-tooltip="' + tooltip + '">' + visible + '</span>';
+    var title = escapeInlineHtmlText(readString(tooltipTitle, ""));
+    var type = normalizeWikiTooltipType(tooltipType);
+    var titleAttr = title ? ' data-tooltip-title="' + title + '"' : "";
+
+    return '<span class="wiki-tooltip" tabindex="0" data-tooltip="' + tooltip + '" data-tooltip-type="' + type + '"' + titleAttr + '>' + visible + '</span>';
   }
 
   function buildTooltipShortcode(visibleText, tooltipText) {
@@ -10552,9 +12195,11 @@
     }
 
     var info = getSelectionInfo(editorTextarea);
-    var existing = findTooltipShortcodeAroundSelection(info);
+    var existing = findHtmlTooltipAroundTextareaSelection(info) || findTooltipShortcodeAroundSelection(info);
     var visibleText = existing ? existing.label : info.selectedText || "testo visibile";
     var tooltipText = existing ? existing.tooltipText : "";
+    var tooltipTitle = existing ? readString(existing.tooltipTitle, "") : "";
+    var tooltipType = existing ? normalizeWikiTooltipType(existing.tooltipType) : "base";
 
     state.tooltipSelection = {
       start: existing ? existing.start : info.start,
@@ -10566,13 +12211,7 @@
     closeColorPicker();
     closeMediaLibraryPanel();
 
-    if (state.elements.editorTooltipVisible) {
-      state.elements.editorTooltipVisible.value = visibleText;
-    }
-
-    if (state.elements.editorTooltipText) {
-      state.elements.editorTooltipText.value = tooltipText;
-    }
+    setTooltipEditorFields(visibleText, tooltipText, tooltipTitle, tooltipType);
 
     state.elements.editorTooltipPanel.hidden = false;
     positionEditorPopoverPanel(state.elements.editorTooltipPanel, editorTextarea, {
@@ -10602,6 +12241,14 @@
 
     if (state.elements.editorTooltipVisible) {
       state.elements.editorTooltipVisible.value = "";
+    }
+
+    if (state.elements.editorTooltipTitle) {
+      state.elements.editorTooltipTitle.value = "";
+    }
+
+    if (state.elements.editorTooltipType) {
+      state.elements.editorTooltipType.value = "base";
     }
 
     if (state.elements.editorTooltipText) {
@@ -10669,14 +12316,18 @@
       return;
     }
 
-    var value = String(textarea.value || "");
+    var value = getEditorMarkdownSource();
     var snapshot = state.tooltipSelection || getSelectionInfo(textarea);
     var start = Math.max(0, Math.min(Number(snapshot.start) || 0, value.length));
     var end = Math.max(start, Math.min(Number(snapshot.end) || start, value.length));
     var selectedText = value.slice(start, end) || readString(snapshot.selectedText, "");
-    var visibleText = readString(state.elements && state.elements.editorTooltipVisible && state.elements.editorTooltipVisible.value, selectedText || "testo visibile");
-    var tooltipText = readString(state.elements && state.elements.editorTooltipText && state.elements.editorTooltipText.value, "testo tooltip");
-    var snippet = buildTooltipHtml(visibleText, tooltipText);
+    var tooltipValues = readEditorTooltipFormValues(selectedText || "testo visibile", "testo tooltip");
+    var snippet = buildTooltipHtml(
+      tooltipValues.visibleText,
+      tooltipValues.tooltipText,
+      tooltipValues.tooltipTitle,
+      tooltipValues.tooltipType
+    );
 
     replaceSelectionByRange(textarea, start, end, snippet, {
       start: snippet.length,
@@ -10684,6 +12335,53 @@
     });
 
     closeTooltipEditor();
+  }
+
+  function findHtmlTooltipAroundTextareaSelection(info) {
+    if (!info || !info.value) {
+      return null;
+    }
+
+    var value = String(info.value || "");
+    var start = Math.max(0, Math.min(Number(info.start) || 0, value.length));
+    var end = Math.max(start, Math.min(Number(info.end) || start, value.length));
+    var spanStart = value.lastIndexOf("<span", start);
+
+    while (spanStart !== -1) {
+      var openEnd = value.indexOf(">", spanStart);
+      var closeStart = value.indexOf("</span>", Math.max(end, openEnd));
+
+      if (openEnd === -1 || closeStart === -1) {
+        return null;
+      }
+
+      var closeEnd = closeStart + "</span>".length;
+      var openTag = value.slice(spanStart, openEnd + 1);
+
+      if (end >= spanStart && start <= closeEnd && /class=["'][^"']*wiki-tooltip[^"']*["']/i.test(openTag)) {
+        return {
+          start: spanStart,
+          end: closeEnd,
+          raw: value.slice(spanStart, closeEnd),
+          label: stripHtmlForEditorLabel(value.slice(openEnd + 1, closeStart)) || "testo visibile",
+          tooltipText: readAttributeFromGenericHtmlTag(openTag, "data-tooltip", "span"),
+          tooltipTitle: readAttributeFromGenericHtmlTag(openTag, "data-tooltip-title", "span"),
+          tooltipType: normalizeWikiTooltipType(readAttributeFromGenericHtmlTag(openTag, "data-tooltip-type", "span")),
+        };
+      }
+
+      spanStart = value.lastIndexOf("<span", spanStart - 1);
+    }
+
+    return null;
+  }
+
+  function readAttributeFromGenericHtmlTag(tagHtml, attrName, tagName) {
+    var tag = cleanSegment(tagName || "span") || "span";
+    var template = document.createElement("template");
+    template.innerHTML = String(tagHtml || "") + "</" + tag + ">";
+    var element = template.content.querySelector(tag);
+    return element ? readString(element.getAttribute(attrName), "") : "";
   }
 
   function findTooltipShortcodeAroundSelection(info) {
@@ -10720,6 +12418,8 @@
       raw: value.slice(shortcodeStart, shortcodeEnd),
       label: decodeTooltipShortcodeSegment(labelResult.value, "testo visibile"),
       tooltipText: decodeTooltipShortcodeSegment(textResult.value, ""),
+      tooltipTitle: "",
+      tooltipType: "base",
     };
   }
 
@@ -10894,6 +12594,14 @@
       indigo: true,
       olive: true,
       ash: true,
+      "tooltip-base": true,
+      "tooltip-lore": true,
+      "tooltip-spell": true,
+      "tooltip-monster": true,
+      "tooltip-npc": true,
+      "tooltip-location": true,
+      "tooltip-item": true,
+      "tooltip-rule": true,
     };
 
     var color = cleanSegment(readString(value, ""));
@@ -11433,7 +13141,9 @@
   }
 
   function replaceSelectionByRange(textarea, start, end, replacement, selectionRange) {
-    var value = String(textarea.value || "");
+    var value = state.editorCodeMirror && typeof state.editorCodeMirror.getValue === "function"
+      ? String(state.editorCodeMirror.getValue() || "")
+      : String(textarea.value || "");
     var safeStart = Math.max(0, Math.min(start, value.length));
     var safeEnd = Math.max(safeStart, Math.min(end, value.length));
 
@@ -11518,56 +13228,13 @@
   }
 
   function insertMarkdownInEditor(markdownLine) {
-    if (!state.elements || !state.elements.editorForm) {
+    var textarea = getEditorMarkdownTextarea();
+    if (!textarea) {
       return;
     }
 
-    var field = state.elements.editorForm.elements.namedItem("content_md");
-    if (!field) {
-      return;
-    }
-
-    var textarea = field;
-    var currentValue = String(textarea.value || "");
-    var start = typeof textarea.selectionStart === "number" ? textarea.selectionStart : currentValue.length;
-    var end = typeof textarea.selectionEnd === "number" ? textarea.selectionEnd : start;
-
-    var before = currentValue.slice(0, start);
-    var after = currentValue.slice(end);
-
-    var prefix = "";
-    if (before) {
-      if (/\n\n$/.test(before)) {
-        prefix = "";
-      } else if (/\n$/.test(before)) {
-        prefix = "\n";
-      } else {
-        prefix = "\n\n";
-      }
-    }
-
-    var suffix = "";
-    if (after) {
-      if (/^\n\n/.test(after)) {
-        suffix = "";
-      } else if (/^\n/.test(after)) {
-        suffix = "\n";
-      } else {
-        suffix = "\n\n";
-      }
-    } else {
-      suffix = "\n";
-    }
-
-    var insertion = prefix + markdownLine + suffix;
-    textarea.value = before + insertion + after;
-
-    var caret = before.length + insertion.length;
-
-    textarea.focus();
-    if (typeof textarea.setSelectionRange === "function") {
-      textarea.setSelectionRange(caret, caret);
-    }
+    insertBlockAtCursor(textarea, markdownLine);
+    focusEditorMarkdownSourceAtRange(null);
   }
 
   function escapeMarkdownAltText(value) {
@@ -11583,6 +13250,8 @@
   function buildEditorPayload() {
     if (state.editorSourceMode === "visual") {
       syncVisualEditorToMarkdown();
+    } else {
+      syncCodeMirrorToTextarea();
     }
 
     if (!state.elements || !state.elements.editorForm) {
@@ -11696,6 +13365,11 @@
   }
 
   function getFormValue(form, name) {
+    if (name === "content_md") {
+      syncCodeMirrorToTextarea();
+      return getEditorMarkdownSource();
+    }
+
     var field = form.elements.namedItem(name);
     return field ? field.value : "";
   }
@@ -12855,12 +14529,7 @@
         tooltipText = label;
       }
 
-      output +=
-        '<span class="wiki-tooltip" tabindex="0" data-tooltip="' +
-        escapeInlineHtmlText(tooltipText) +
-        '">' +
-        escapeInlineHtmlText(label) +
-        "</span>";
+      output += buildTooltipHtml(label, tooltipText, "", "base");
 
       cursor = textResult.nextIndex;
     }
@@ -12997,6 +14666,226 @@
     bubble.style.visibility = "visible";
   }
 
+  function renderTooltipMarkdownContent(value) {
+    var carriageReturn = String.fromCharCode(13);
+    var lineFeed = String.fromCharCode(10);
+    var source = String(value || "")
+      .split(carriageReturn + lineFeed).join(lineFeed)
+      .split(carriageReturn).join(lineFeed)
+      .trim();
+
+    if (!source) {
+      return "";
+    }
+
+    var lines = source.split(lineFeed);
+    var output = [];
+    var paragraph = [];
+    var index = 0;
+
+    function flushParagraph() {
+      if (!paragraph.length) {
+        return;
+      }
+
+      output.push("<p>" + renderTooltipInlineMarkdown(paragraph.join(" ")) + "</p>");
+      paragraph = [];
+    }
+
+    while (index < lines.length) {
+      var line = String(lines[index] || "").trim();
+
+      if (!line) {
+        flushParagraph();
+        index += 1;
+        continue;
+      }
+
+      if (isTooltipMarkdownHr(line)) {
+        flushParagraph();
+        output.push("<hr>");
+        index += 1;
+        continue;
+      }
+
+      var headingLevel = readTooltipMarkdownHeadingLevel(line);
+      if (headingLevel) {
+        flushParagraph();
+        output.push("<h" + String(headingLevel) + ">" + renderTooltipInlineMarkdown(line.slice(headingLevel + 1).trim()) + "</h" + String(headingLevel) + ">");
+        index += 1;
+        continue;
+      }
+
+      if (isTooltipMarkdownUnorderedListLine(line)) {
+        flushParagraph();
+        var unorderedItems = [];
+        while (index < lines.length) {
+          var unorderedLine = String(lines[index] || "").trim();
+          if (!isTooltipMarkdownUnorderedListLine(unorderedLine)) {
+            break;
+          }
+          unorderedItems.push(unorderedLine.slice(2).trim());
+          index += 1;
+        }
+        output.push("<ul>" + unorderedItems.map(function mapTooltipUlItem(item) {
+          return "<li>" + renderTooltipInlineMarkdown(item) + "</li>";
+        }).join("") + "</ul>");
+        continue;
+      }
+
+      if (isTooltipMarkdownOrderedListLine(line)) {
+        flushParagraph();
+        var orderedItems = [];
+        while (index < lines.length) {
+          var orderedLine = String(lines[index] || "").trim();
+          if (!isTooltipMarkdownOrderedListLine(orderedLine)) {
+            break;
+          }
+          orderedItems.push(stripTooltipMarkdownOrderedMarker(orderedLine));
+          index += 1;
+        }
+        output.push("<ol>" + orderedItems.map(function mapTooltipOlItem(item) {
+          return "<li>" + renderTooltipInlineMarkdown(item) + "</li>";
+        }).join("") + "</ol>");
+        continue;
+      }
+
+      paragraph.push(line);
+      index += 1;
+    }
+
+    flushParagraph();
+    return output.join("");
+  }
+
+  function isTooltipMarkdownHr(line) {
+    var text = String(line || "").trim();
+    if (text.length < 3) {
+      return false;
+    }
+
+    var first = text.charAt(0);
+    if (first !== "-" && first !== "*" && first !== "_") {
+      return false;
+    }
+
+    for (var i = 0; i < text.length; i += 1) {
+      if (text.charAt(i) !== first) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function readTooltipMarkdownHeadingLevel(line) {
+    var text = String(line || "");
+    var level = 0;
+
+    while (level < text.length && text.charAt(level) === "#" && level < 3) {
+      level += 1;
+    }
+
+    if (!level || text.charAt(level) !== " ") {
+      return 0;
+    }
+
+    return level;
+  }
+
+  function isTooltipMarkdownUnorderedListLine(line) {
+    var text = String(line || "");
+    if (text.length < 3) {
+      return false;
+    }
+
+    var marker = text.charAt(0);
+    return (marker === "-" || marker === "*" || marker === "+") && text.charAt(1) === " ";
+  }
+
+  function isTooltipMarkdownOrderedListLine(line) {
+    var text = String(line || "");
+    var index = 0;
+
+    while (index < text.length && text.charAt(index) >= "0" && text.charAt(index) <= "9") {
+      index += 1;
+    }
+
+    if (!index || index + 1 >= text.length) {
+      return false;
+    }
+
+    var marker = text.charAt(index);
+    return (marker === "." || marker === ")") && text.charAt(index + 1) === " ";
+  }
+
+  function stripTooltipMarkdownOrderedMarker(line) {
+    var text = String(line || "");
+    var index = 0;
+
+    while (index < text.length && text.charAt(index) >= "0" && text.charAt(index) <= "9") {
+      index += 1;
+    }
+
+    return text.slice(index + 2).trim();
+  }
+
+  function renderTooltipInlineMarkdown(value) {
+    var source = escapeInlineHtmlText(value || "");
+    source = renderTooltipInlineCode(source);
+    source = renderTooltipInlineStrong(source, "**");
+    source = renderTooltipInlineStrong(source, "__");
+    source = renderTooltipInlineEmphasis(source, "*");
+    source = renderTooltipInlineEmphasis(source, "_");
+    return source;
+  }
+
+  function renderTooltipInlineCode(source) {
+    return replaceTooltipDelimitedInline(source, "`", "code");
+  }
+
+  function renderTooltipInlineStrong(source, delimiter) {
+    return replaceTooltipDelimitedInline(source, delimiter, "strong");
+  }
+
+  function renderTooltipInlineEmphasis(source, delimiter) {
+    return replaceTooltipDelimitedInline(source, delimiter, "em");
+  }
+
+  function replaceTooltipDelimitedInline(sourceValue, delimiter, tagName) {
+    var source = String(sourceValue || "");
+    var token = String(delimiter || "");
+    var tag = cleanSegment(tagName || "span") || "span";
+    var output = "";
+    var cursor = 0;
+
+    while (cursor < source.length) {
+      var start = source.indexOf(token, cursor);
+      if (start === -1) {
+        output += source.slice(cursor);
+        break;
+      }
+
+      var end = source.indexOf(token, start + token.length);
+      if (end === -1) {
+        output += source.slice(cursor);
+        break;
+      }
+
+      var inner = source.slice(start + token.length, end);
+      if (!inner.trim()) {
+        output += source.slice(cursor, end + token.length);
+        cursor = end + token.length;
+        continue;
+      }
+
+      output += source.slice(cursor, start) + "<" + tag + ">" + inner + "</" + tag + ">";
+      cursor = end + token.length;
+    }
+
+    return output;
+  }
+
   function openWikiTooltip(trigger) {
     if (!trigger) {
       return;
@@ -13008,6 +14897,9 @@
       return;
     }
 
+    var title = readString(trigger.getAttribute("data-tooltip-title"), "");
+    var type = normalizeWikiTooltipType(trigger.getAttribute("data-tooltip-type"));
+    var meta = readWikiTooltipTypeMeta(type);
     var bubble = ensureWikiTooltipBubble();
 
     if (state.wikiTooltipActive && state.wikiTooltipActive !== trigger) {
@@ -13019,7 +14911,14 @@
     trigger.classList.add("is-open");
     trigger.setAttribute("aria-describedby", bubble.id);
 
-    bubble.textContent = text;
+    var hasHeader = !!title || type !== "base";
+    var headerText = title || (type !== "base" ? meta.label : "");
+    var headerHtml = hasHeader
+      ? '<div class="wiki-tooltip-bubble__header"><i class="' + escapeInlineHtmlText(meta.icon) + '" aria-hidden="true"></i><span>' + escapeInlineHtmlText(headerText) + '</span></div>'
+      : "";
+
+    bubble.className = "wiki-tooltip-bubble wiki-tooltip-bubble--" + type + (hasHeader ? " has-header" : "");
+    bubble.innerHTML = headerHtml + '<div class="wiki-tooltip-bubble__body">' + renderTooltipMarkdownContent(text) + "</div>";
     bubble.hidden = false;
     bubble.classList.add("is-visible");
 
@@ -13035,7 +14934,7 @@
 
     if (state.wikiTooltipBubble) {
       state.wikiTooltipBubble.hidden = true;
-      state.wikiTooltipBubble.classList.remove("is-visible");
+      state.wikiTooltipBubble.className = "wiki-tooltip-bubble";
       state.wikiTooltipBubble.style.visibility = "";
       state.wikiTooltipBubble.removeAttribute("data-placement");
     }
@@ -13592,6 +15491,9 @@
     label.textContent = "Icona TOC";
     picker.appendChild(label);
 
+    var search = createIconPickerSearchInput("Cerca icona pagina o gruppo...");
+    picker.appendChild(search);
+
     var grid = document.createElement("div");
     grid.className = "docs-box-icon-picker__grid";
 
@@ -13601,6 +15503,7 @@
       button.type = "button";
       button.className = "docs-box-icon-picker__choice";
       button.setAttribute("data-docs-tree-icon-choice", iconClass);
+      button.setAttribute("data-icon-search", buildIconPickerSearchText(iconClass));
       button.setAttribute("role", "menuitem");
       button.setAttribute("aria-label", iconClassToLabel(iconClass));
 
@@ -13613,7 +15516,15 @@
 
     picker.appendChild(grid);
 
+    search.addEventListener("input", function onTreeIconSearchInput(event) {
+      filterIconPickerChoices(picker, event.target.value);
+    });
+
     picker.addEventListener("mousedown", function onTreeIconPickerMouseDown(event) {
+      if (event.target && event.target.closest && event.target.closest("input")) {
+        return;
+      }
+
       event.preventDefault();
     });
 
@@ -13669,6 +15580,7 @@
       group: group,
     };
 
+    resetIconPickerSearch(picker);
     syncDocsTreeIconPickerSelection();
     picker.hidden = false;
 
@@ -13680,6 +15592,7 @@
       : { x: 24, y: 24 };
 
     positionEditorPopoverAtPoint(picker, point);
+    focusIconPickerSearch(picker);
     closeDocsTreeContextMenu();
   }
 

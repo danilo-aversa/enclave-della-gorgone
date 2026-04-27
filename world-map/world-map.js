@@ -1,8 +1,8 @@
 (function () {
   "use strict";
 
-  var MAP_WIDTH = 9888;
-  var MAP_HEIGHT = 6278;
+  var MAP_WIDTH = 10200;
+  var MAP_HEIGHT = 6600;
 
   var MAP_BASE_MODE = "tiles"; // "tiles" oppure "image"
   var MAP_IMAGE = "assets/map-placeholder.webp";
@@ -22,6 +22,9 @@
   var WORLD_MAP_OVERLAYS_ENDPOINT =
     SUPABASE_URL +
     "/rest/v1/world_map_overlays?select=*&visibility=eq.public&order=updated_at.desc";
+  var WORLD_MAP_LABELS_ENDPOINT =
+    SUPABASE_URL +
+    "/rest/v1/world_map_labels?select=*&visibility=eq.public&order=updated_at.desc";
 
   var layerGroups = {};
   var zoomManagedLayers = [];
@@ -29,6 +32,7 @@
   var mapSearchIndex = [];
   var selectedLayer = null;
   var imageBounds = null;
+  var labelLayers = [];
 
   document.addEventListener("DOMContentLoaded", initWorldMap);
 
@@ -73,7 +77,7 @@
       clearSelection();
     });
 
-    await Promise.all([loadMarkers(map), loadOverlays(map)]);
+    await Promise.all([loadMarkers(map), loadOverlays(map), loadLabels(map)]);
 
     bindLayerFilters(map);
     bindLayerFilterActions(map);
@@ -86,7 +90,9 @@
     bindMapEditor(map);
     bindMapPermissionState();
     bindZoomVisibility(map);
+    bindLabelScaling(map);
     updateZoomVisibility(map);
+    updateLabelScaling(map);
     updateLayerDockState(map);
   }
 
@@ -330,6 +336,7 @@
       assignedGroup: m.assignedGroup || m.assigned_group || null,
       reward: m.reward || null,
       risk: m.risk || null,
+      priority: isTruthyPermission(m.priority),
     };
   }
 
@@ -344,14 +351,14 @@
         }
 
         var marker = L.marker(toMapLatLng(m.x, m.y), {
-          icon: createMarkerIcon(m.type),
+          icon: createMarkerIcon(m.type, m.priority),
         }).addTo(getLayerGroup(map, getLayerName(m.type)));
 
         marker._worldMapData = m;
         marker._worldMapKind = "marker";
         marker._worldMapType = m.type;
         marker._worldMapLayerName = getLayerName(m.type);
-        marker._worldMapMinZoom = getMarkerMinZoom(m.type);
+        marker._worldMapMinZoom = getMarkerMinZoom(m.type, m.priority);
         zoomManagedLayers.push(marker);
 
         marker.bindTooltip(m.title || "Segnalino", {
@@ -385,7 +392,12 @@
       return supabaseData;
     }
 
-    return loadMapCollectionFromJson(fallbackPath);
+    try {
+      return await loadMapCollectionFromJson(fallbackPath);
+    } catch (error) {
+      console.warn("JSON locale mappa non disponibile:", fallbackPath, error);
+      return [];
+    }
   }
 
   async function loadMapCollectionFromSupabase(endpoint) {
@@ -418,6 +430,103 @@
 
     var payload = await response.json();
     return Array.isArray(payload) ? payload : [];
+  }
+
+  function normalizeLabel(l) {
+    return {
+      id: l.id || "",
+      type: "label",
+      title: l.title || "Senza titolo",
+      x: Number(l.x) || 0,
+      y: Number(l.y) || 0,
+      size: Number(l.size) || 18,
+      angle: Number(l.angle) || 0,
+      color: l.color || "black",
+      visibility: l.visibility || "public",
+    };
+  }
+
+  async function loadLabels(map) {
+    try {
+      var data = await loadMapCollection(WORLD_MAP_LABELS_ENDPOINT, "data/world-map-labels.json");
+
+      data.forEach(function (raw) {
+        var label = normalizeLabel(raw);
+        if (label.visibility && label.visibility !== "public") {
+          return;
+        }
+
+        var layer = createLabelLayer(map, label);
+        layer.addTo(getLayerGroup(map, getLayerName(label.type)));
+      });
+    } catch (err) {
+      console.warn("Errore label:", err);
+    }
+  }
+
+  function createLabelLayer(map, data) {
+    var layer = L.marker(toMapLatLng(data.x, data.y), {
+      icon: createLabelIcon(data),
+      interactive: true,
+    });
+
+    layer._worldMapData = data;
+    layer._worldMapKind = "label";
+    layer._worldMapType = "label";
+    layer._worldMapLayerName = getLayerName("label");
+    layer._worldMapMinZoom = getLabelMinZoom(data.size);
+    zoomManagedLayers.push(layer);
+    labelLayers.push(layer);
+    mapSearchIndex.push({ layer: layer, data: data, kind: "label" });
+
+    layer.on("click", function (e) {
+      L.DomEvent.stopPropagation(e);
+      selectLayer(layer);
+      showDetail(data);
+
+      map.flyTo(toMapLatLng(data.x, data.y), Math.max(map.getZoom(), 0), {
+        animate: true,
+        duration: 0.45,
+      });
+    });
+
+    return layer;
+  }
+
+  function createLabelIcon(data) {
+    var size = clampNumber(Number(data.size) || 18, 10, 48);
+    var labelClass = size < 35 ? "world-map-label--secondary" : "world-map-label--primary";
+    var colorClass = getLabelColorClass(data.color);
+
+    return L.divIcon({
+      className: "",
+      html:
+        '<span class="world-map-label ' +
+        labelClass +
+        " " +
+        colorClass +
+        '" style="font-size:' +
+        size +
+        'px; --world-map-label-angle:' +
+        (Number(data.angle) || 0) +
+        'deg">' +
+        escapeHtml(data.title || "Etichetta") +
+        "</span>",
+      iconSize: null,
+      iconAnchor: [0, 0],
+    });
+  }
+
+  function getLabelColorClass(color) {
+    var colorMap = {
+      black: "world-map-label--black",
+      water: "world-map-label--water",
+      forest: "world-map-label--forest",
+      mountain: "world-map-label--mountain",
+      hill: "world-map-label--hill",
+    };
+
+    return colorMap[color] || colorMap.black;
   }
 
   function normalizeOverlay(o) {
@@ -594,7 +703,7 @@
       '<h2 class="world-map-detail__title">' +
       escapeHtml(item.title || "Senza titolo") +
       "</h2>" +
-      (item.status || item.urgency || item.risk
+      (item.status || item.urgency || item.risk || item.priority
         ? '<div class="world-map-detail__meta">' +
           (item.status
             ? "<span>Stato: " + escapeHtml(labelStatus(item.status)) + "</span>"
@@ -605,6 +714,7 @@
           (item.risk
             ? "<span>Rischio: " + escapeHtml(item.risk) + "</span>"
             : "") +
+          (item.priority ? "<span>Prioritario</span>" : "") +
           "</div>"
         : "") +
       (item.description
@@ -650,7 +760,7 @@
     );
   }
 
-  function createMarkerIcon(type) {
+  function createMarkerIcon(type, priority) {
     var iconMap = {
       enclave: "fa-shield-halved",
       mission: "fa-crosshairs",
@@ -669,6 +779,9 @@
       className: "",
       html:
         '<span class="world-map-marker world-map-marker--' +
+        escapeHtml(safeType) +
+        (priority ? ' world-map-marker--priority' : '') +
+        '" data-marker-type="' +
         escapeHtml(safeType) +
         '">' +
         '<i class="fa-solid ' +
@@ -698,6 +811,7 @@
       route: "Rotta",
       border: "Confine",
       "unknown-zone": "Zona Ignota",
+      label: "Etichetta",
     };
 
     return labels[type] || type || "Elemento";
@@ -717,7 +831,11 @@
     return labels[status] || status;
   }
 
-  function getMarkerMinZoom(type) {
+  function getMarkerMinZoom(type, priority) {
+    if (priority) {
+      return MAP_MIN_TILE_ZOOM;
+    }
+
     var thresholds = {
       enclave: -2,
       fracture: -2,
@@ -730,6 +848,24 @@
     };
 
     return thresholds[type] != null ? thresholds[type] : 0;
+  }
+
+  function getLabelMinZoom(size) {
+    var normalizedSize = Number(size) || 18;
+
+    if (normalizedSize >= 36) {
+      return MAP_MIN_TILE_ZOOM;
+    }
+
+    if (normalizedSize >= 28) {
+      return -2;
+    }
+
+    if (normalizedSize >= 16) {
+      return -1;
+    }
+
+    return 0;
   }
 
   function getOverlayMinZoom(type) {
@@ -765,6 +901,10 @@
       }
     }
 
+    if (!document.querySelector('[data-world-map-layer="label"]')) {
+      enabledLayers.add("label");
+    }
+
     for (var j = 0; j < zoomManagedLayers.length; j += 1) {
       var layer = zoomManagedLayers[j];
       var layerName = layer._worldMapLayerName || "location";
@@ -791,6 +931,40 @@
     }
 
     updateLayerDockState(map);
+    updateLabelScaling(map);
+  }
+
+  function bindLabelScaling(map) {
+    map.on("zoomend", function () {
+      updateLabelScaling(map);
+    });
+  }
+
+  function updateLabelScaling(map) {
+    var zoom = map.getZoom();
+    var scale = getLabelScaleForZoom(zoom);
+
+    for (var i = 0; i < labelLayers.length; i += 1) {
+      applyLabelScale(labelLayers[i], scale);
+    }
+  }
+
+  function getLabelScaleForZoom(zoom) {
+    var scale = Math.pow(1.28, zoom);
+    return clampNumber(scale, 0.48, 1.85);
+  }
+
+  function applyLabelScale(layer, scale) {
+    if (!layer || !layer._icon) {
+      return;
+    }
+
+    var label = layer._icon.querySelector(".world-map-label");
+    if (!label) {
+      return;
+    }
+
+    label.style.setProperty("--world-map-label-scale", String(scale));
   }
 
   async function reloadWorldMapData(map) {
@@ -801,7 +975,7 @@
     clearSelection();
     clearWorldMapDataLayers();
 
-    await Promise.all([loadMarkers(map), loadOverlays(map)]);
+    await Promise.all([loadMarkers(map), loadOverlays(map), loadLabels(map)]);
 
     updateZoomVisibility(map);
     updateLayerDockState(map);
@@ -817,6 +991,7 @@
     zoomManagedLayers.length = 0;
     markersIndex.length = 0;
     mapSearchIndex.length = 0;
+    labelLayers.length = 0;
   }
 
   function syncSelectedDockLayer(layer) {
@@ -890,6 +1065,7 @@
       mystery: "mystery",
       "unknown-zone": "mystery",
       location: "location",
+      label: "label",
       route: "location",
       border: "location",
     };
@@ -1065,6 +1241,7 @@
       var saveButton = event.target.closest("[data-world-map-save-selected]");
       var deleteButton = event.target.closest("[data-world-map-delete-selected]");
 
+
       if (!selectedLayer || !selectedLayer._worldMapData || !canManageMap()) {
         return;
       }
@@ -1101,8 +1278,15 @@
     });
 
     floatingPanel.addEventListener("click", function onEditorPanelClick(event) {
+      var typeChoice = event.target.closest("[data-world-map-editor-type-choice]");
       var saveButton = event.target.closest("[data-world-map-save-selected]");
       var deleteButton = event.target.closest("[data-world-map-delete-selected]");
+
+      if (typeChoice) {
+        event.preventDefault();
+        selectEditorType(typeChoice);
+        return;
+      }
 
       if (!selectedLayer || !selectedLayer._worldMapData || !canManageMap()) {
         return;
@@ -1110,6 +1294,14 @@
 
       if (saveButton) {
         event.preventDefault();
+        var form = saveButton.closest("[data-world-map-editor-form]");
+
+        if (form) {
+          applyEditorForm(map, floatingPanel, selectedLayer, form, {
+            keepEditorOpen: true,
+          });
+        }
+
         saveSelectedLayerToSupabase(saveButton, selectedLayer);
         return;
       }
@@ -1121,7 +1313,42 @@
     });
   }
 
-  function openSelectedEditor(panel, layer) {
+  function selectEditorType(button) {
+    var wrap = button.closest("[data-world-map-editor-type]");
+
+    if (!wrap) {
+      return;
+    }
+
+    var input = wrap.querySelector("[data-world-map-editor-type-value]");
+    var buttons = wrap.querySelectorAll("[data-world-map-editor-type-choice]");
+    var value = button.getAttribute("data-world-map-editor-type-choice") || "location";
+
+    if (input) {
+      input.value = value;
+    }
+
+    for (var i = 0; i < buttons.length; i += 1) {
+      var isActive = buttons[i] === button;
+      buttons[i].classList.toggle("is-active", isActive);
+      buttons[i].setAttribute("aria-pressed", String(isActive));
+    }
+
+    syncConditionalEditorFields(wrap.closest("[data-world-map-editor-form]"), value);
+  }
+
+  function syncConditionalEditorFields(form, type) {
+    var mount = form ? form.querySelector("[data-world-map-conditional-fields]") : null;
+
+    if (!mount) {
+      return;
+    }
+
+    var data = selectedLayer && selectedLayer._worldMapData ? selectedLayer._worldMapData : {};
+    mount.innerHTML = buildConditionalEditorFields(type, data);
+  }
+
+  function openSelectedEditor(panel, layer, screenPoint) {
     if (!canManageMap()) {
       return;
     }
@@ -1129,6 +1356,10 @@
     var data = layer._worldMapData || {};
     var kind = layer._worldMapKind || "marker";
     var json = buildLayerJson(data, kind);
+    var point = screenPoint || {
+      x: window.innerWidth - 380,
+      y: 90,
+    };
 
     panel.hidden = false;
     panel.style.position = "fixed";
@@ -1138,50 +1369,137 @@
     panel.dataset.draftJson = json;
     panel.innerHTML = buildEditorMarkup(data, kind);
 
-    positionFloatingPanel(panel, {
-      x: window.innerWidth - 380,
-      y: 90,
-    });
+    positionFloatingPanel(panel, point);
   }
 
   function buildEditorMarkup(data, kind) {
     var isOverlay = kind === "overlay";
+    var isLabel = kind === "label";
     var tags = Array.isArray(data.tags) ? data.tags.join(", ") : "";
 
     return (
       '<article class="world-map-marker-draft__card world-map-editor-card">' +
       '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
       '<p class="world-map-marker-draft__eyebrow">Editor ' +
-      escapeHtml(isOverlay ? "overlay" : "marker") +
+      escapeHtml(isLabel ? "label" : isOverlay ? "overlay" : "marker") +
       "</p>" +
       '<form class="world-map-editor-form" data-world-map-editor-form>' +
       buildEditorField("id", "ID", data.id || "") +
-      buildEditorSelect("type", "Tipo", data.type || "location", getEditorTypeOptions(isOverlay)) +
-      buildEditorField("title", "Titolo", data.title || "") +
-      (isOverlay
+      (isLabel ? "" : buildEditorTypeToggle(isOverlay, data.type || "location")) +
+      buildEditorField("title", isLabel ? "Testo" : "Titolo", data.title || "") +
+      (isLabel
+        ? '<div class="world-map-editor-form__row world-map-editor-form__row--xy">' +
+          buildEditorField("x", "X", String(data.x || 0)) +
+          buildEditorField("y", "Y", String(data.y || 0)) +
+          "</div>" +
+          buildEditorField("size", "Dimensione", String(data.size || 18)) +
+          buildEditorField("angle", "Angolo", String(data.angle || 0)) +
+          buildEditorSelect("color", "Colore", data.color || "black", getLabelColorOptions())
+        : isOverlay
         ? buildEditorColorField("color", "Colore", data.color || "#7b3ff2") +
           buildEditorField("opacity", "Opacità", data.opacity != null ? String(data.opacity) : "0.24") +
           buildEditorTextarea("points", "Punti", JSON.stringify(data.points || [], null, 2))
-        : buildEditorField("x", "X", String(data.x || 0)) +
+        : '<div class="world-map-editor-form__row world-map-editor-form__row--xy">' +
+          buildEditorField("x", "X", String(data.x || 0)) +
           buildEditorField("y", "Y", String(data.y || 0)) +
-          buildEditorField("urgency", "Urgenza", data.urgency != null ? String(data.urgency) : "")) +
-      buildEditorSelect("status", "Stato", data.status || "", getEditorStatusOptions()) +
+          "</div>" +
+          '<div data-world-map-conditional-fields>' +
+          buildConditionalEditorFields(data.type || "location", data) +
+          "</div>" +
+          buildEditorCheckbox("priority", "Prioritario", !!data.priority)) +
       buildEditorSelect("visibility", "Visibilità", data.visibility || "public", getEditorVisibilityOptions()) +
-      buildEditorField("risk", "Rischio", data.risk || "") +
-      buildEditorTextarea("description", "Descrizione", data.description || "") +
-      buildEditorField("tags", "Tag", tags) +
+      (isLabel ? "" : buildEditorTextarea("description", "Descrizione", data.description || "")) +
+      (isLabel ? "" : buildEditorField("tags", "Tag", tags)) +
       '<div class="world-map-marker-draft__actions world-map-marker-draft__actions--editor">' +
-      '<button type="submit" class="world-map-context-action world-map-context-action--primary"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Applica</span></button>' +
-      '<button type="button" class="world-map-context-action world-map-context-action--primary" data-world-map-save-selected><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i><span>Salva</span></button>' +
-      '<button type="button" class="world-map-context-action" data-world-map-copy-draft-json>' +
-      '<i class="fa-solid fa-copy" aria-hidden="true"></i>' +
-      '<span>Copia JSON</span>' +
-      '</button>' +
-      '<button type="button" class="world-map-context-action world-map-context-action--danger" data-world-map-delete-selected><i class="fa-solid fa-trash" aria-hidden="true"></i><span>Elimina</span></button>' +
+      '<button type="button" class="world-map-context-action world-map-context-action--primary world-map-context-action--icon" data-world-map-save-selected aria-label="Salva" title="Salva" data-tooltip="Salva"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>' +
+      '<button type="button" class="world-map-context-action world-map-context-action--icon" data-world-map-copy-draft-json aria-label="Copia JSON" title="Copia JSON" data-tooltip="Copia JSON"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>' +
+      '<button type="button" class="world-map-context-action world-map-context-action--danger world-map-context-action--icon" data-world-map-delete-selected aria-label="Elimina" title="Elimina" data-tooltip="Elimina"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
       "</div>" +
       "</form>" +
       "</article>"
     );
+  }
+
+  function buildEditorTypeToggle(isOverlay, value) {
+    var options = getEditorTypeOptions(isOverlay);
+
+    return (
+      '<fieldset class="world-map-editor-type" data-world-map-editor-type>' +
+      '<legend>Tipo</legend>' +
+      '<input type="hidden" name="type" value="' +
+      escapeHtml(value) +
+      '" data-world-map-editor-type-value />' +
+      '<div class="world-map-editor-type__grid">' +
+      options
+        .map(function (option) {
+          var optionValue = option[0];
+          var optionLabel = option[1];
+          var iconClass = getEditorTypeIcon(optionValue);
+
+          return (
+            '<button type="button" class="world-map-editor-type__button' +
+            (optionValue === value ? " is-active" : "") +
+            '" data-world-map-editor-type-choice="' +
+            escapeHtml(optionValue) +
+            '" aria-pressed="' +
+            String(optionValue === value) +
+            '" title="' +
+            escapeHtml(optionLabel) +
+            '" data-tooltip="' +
+            escapeHtml(optionLabel) +
+            '">' +
+            '<i class="fa-solid ' +
+            iconClass +
+            '" aria-hidden="true"></i>' +
+
+            "</button>"
+          );
+        })
+        .join("") +
+      "</div>" +
+      "</fieldset>"
+    );
+  }
+
+  function getEditorTypeIcon(type) {
+    var iconMap = {
+      enclave: "fa-shield-halved",
+      mission: "fa-crosshairs",
+      rumor: "fa-comment-dots",
+      fracture: "fa-burst",
+      treasure: "fa-gem",
+      war: "fa-khanda",
+      mystery: "fa-eye",
+      location: "fa-location-dot",
+      domain: "fa-vector-square",
+      "fracture-zone": "fa-burst",
+      "war-zone": "fa-khanda",
+      corruption: "fa-skull-crossbones",
+      influence: "fa-circle-nodes",
+      route: "fa-route",
+      border: "fa-draw-polygon",
+      "unknown-zone": "fa-question",
+    };
+
+    return iconMap[type] || "fa-location-dot";
+  }
+
+  function buildConditionalEditorFields(type, data) {
+    var html = "";
+
+    if (type === "mission" || type === "rumor") {
+      html += buildEditorField("urgency", "Urgenza", data.urgency != null ? String(data.urgency) : "");
+    }
+
+    if (type === "fracture") {
+      html += buildEditorSelect("status", "Stato", data.status || "", getEditorStatusOptions());
+    }
+
+    if (type === "location") {
+      html += buildEditorField("risk", "Rischio", data.risk || "");
+    }
+
+    return html;
   }
 
   function getEditorTypeOptions(isOverlay) {
@@ -1220,6 +1538,16 @@
       ["expanding", "In espansione"],
       ["resolved", "Risolta"],
       ["hidden", "Nascosta"],
+    ];
+  }
+
+  function getLabelColorOptions() {
+    return [
+      ["black", "Nero"],
+      ["water", "Acque"],
+      ["forest", "Boschi"],
+      ["mountain", "Montagne"],
+      ["hill", "Colline"],
     ];
   }
 
@@ -1277,6 +1605,21 @@
     );
   }
 
+  function buildEditorCheckbox(name, label, checked) {
+    return (
+      '<label class="world-map-editor-form__checkbox">' +
+      '<input type="checkbox" name="' +
+      escapeHtml(name) +
+      '"' +
+      (checked ? " checked" : "") +
+      ' />' +
+      '<span>' +
+      escapeHtml(label) +
+      "</span>" +
+      "</label>"
+    );
+  }
+
   function buildEditorField(name, label, value) {
     return (
       '<label class="world-map-editor-form__field">' +
@@ -1307,7 +1650,8 @@
     );
   }
 
-  function applyEditorForm(map, panel, layer, form) {
+  function applyEditorForm(map, panel, layer, form, options) {
+    options = options || {};
     var data = layer._worldMapData || {};
     var kind = layer._worldMapKind || "marker";
     var formData = new FormData(form);
@@ -1315,13 +1659,25 @@
     data.id = readFormString(formData, "id", data.id || "");
     data.type = readFormString(formData, "type", data.type || "location");
     data.title = readFormString(formData, "title", data.title || "Senza titolo");
-    data.status = readNullableFormString(formData, "status");
     data.visibility = readFormString(formData, "visibility", data.visibility || "public");
-    data.risk = readNullableFormString(formData, "risk");
-    data.description = readFormString(formData, "description", "");
-    data.tags = parseTags(readFormString(formData, "tags", ""));
 
-    if (kind === "overlay") {
+    if (kind !== "label") {
+      data.status = readNullableFormString(formData, "status");
+      data.risk = readNullableFormString(formData, "risk");
+      data.priority = formData.get("priority") === "on";
+      data.description = readFormString(formData, "description", "");
+      data.tags = parseTags(readFormString(formData, "tags", ""));
+    }
+
+    if (kind === "label") {
+      data.x = Number(readFormString(formData, "x", String(data.x || 0))) || 0;
+      data.y = Number(readFormString(formData, "y", String(data.y || 0))) || 0;
+      data.size = Number(readFormString(formData, "size", String(data.size || 18))) || 18;
+      data.angle = Number(readFormString(formData, "angle", String(data.angle || 0))) || 0;
+      data.color = readFormString(formData, "color", data.color || "black");
+      updateLabelLayer(layer, data);
+      layer._worldMapMinZoom = getLabelMinZoom(data.size);
+    } else if (kind === "overlay") {
       data.color = readFormString(formData, "color", data.color || "#7b3ff2");
       data.opacity = Number(readFormString(formData, "opacity", String(data.opacity || 0.24))) || 0.24;
       data.points = parsePoints(readFormString(formData, "points", "[]"));
@@ -1331,6 +1687,7 @@
       data.y = Number(readFormString(formData, "y", String(data.y || 0))) || 0;
       data.urgency = readNullableNumber(formData, "urgency");
       updateMarkerLayer(layer, data);
+      layer._worldMapMinZoom = getMarkerMinZoom(data.type, data.priority);
     }
 
     layer._worldMapData = data;
@@ -1338,12 +1695,26 @@
     layer._worldMapLayerName = getLayerName(data.type);
     showDetail(data);
     panel.dataset.draftJson = buildLayerJson(data, kind);
-    openSelectedEditor(panel, layer);
+
+    if (!options.keepEditorOpen) {
+      openSelectedEditor(panel, layer);
+    }
+  }
+
+  function updateLabelLayer(layer, data) {
+    layer.setLatLng(toMapLatLng(data.x, data.y));
+    layer.setIcon(createLabelIcon(data));
+    layer._worldMapMinZoom = getLabelMinZoom(data.size);
+
+    if (window.__worldMapInstance) {
+      applyLabelScale(layer, getLabelScaleForZoom(window.__worldMapInstance.getZoom()));
+    }
+
   }
 
   function updateMarkerLayer(layer, data) {
     layer.setLatLng(toMapLatLng(data.x, data.y));
-    layer.setIcon(createMarkerIcon(data.type));
+    layer.setIcon(createMarkerIcon(data.type, data.priority));
     layer.bindTooltip(data.title || "Segnalino", {
       direction: "top",
       opacity: 0.95,
@@ -1372,6 +1743,19 @@
       delete payload.color;
       delete payload.opacity;
       delete payload.points;
+      delete payload.size;
+    }
+
+    if (kind === "label") {
+      delete payload.color;
+      delete payload.opacity;
+      delete payload.points;
+      delete payload.status;
+      delete payload.urgency;
+      delete payload.description;
+      delete payload.tags;
+      delete payload.risk;
+      delete payload.priority;
     }
 
     return JSON.stringify(payload, null, 2);
@@ -1381,10 +1765,7 @@
     var originalText = button.textContent;
 
     if (!canManageMap()) {
-      button.textContent = "Permesso negato";
-      window.setTimeout(function () {
-        button.textContent = originalText;
-      }, 1300);
+      setActionButtonFeedback(button, "Permesso negato", 1300, originalLabel);
       return;
     }
 
@@ -1401,11 +1782,14 @@
     layer._worldMapData.visibility = "hidden";
     await saveSelectedLayerToSupabase(button, layer, {
       successLabel: "Eliminato",
+      reloadAfterSave: true,
+      closeEditorAfterSave: true,
     });
   }
 
   async function saveSelectedLayerToSupabase(button, layer, options) {
-    var originalText = button.textContent;
+    options = options || {};
+    var originalLabel = button.getAttribute("aria-label") || button.title || "Salva";
 
     if (!canManageMap()) {
       button.textContent = "Permesso negato";
@@ -1423,15 +1807,11 @@
     var playerCode = profile.code || "";
 
     if (!playerCode) {
-      button.textContent = "Codice mancante";
-      window.setTimeout(function () {
-        button.textContent = originalText;
-      }, 1300);
+      setActionButtonFeedback(button, "Codice mancante", 1300, originalLabel);
       return;
     }
 
-    button.disabled = true;
-    button.textContent = "Salvo...";
+    setActionButtonLoading(button, true, "Salvataggio...");
 
     try {
       var payload = await postWorldMapItem(playerCode, layer._worldMapKind || "marker", layer._worldMapData);
@@ -1440,21 +1820,51 @@
         throw new Error(readString(payload && payload.error, "Salvataggio non riuscito."));
       }
 
-      await reloadWorldMapData(window.__worldMapInstance);
+      layer._worldMapIsDraft = false;
 
-      button.textContent = options.successLabel || "Salvato";
-      window.setTimeout(function () {
-        button.textContent = originalText;
-        button.disabled = false;
-      }, 1200);
+      if (options.reloadAfterSave) {
+        await reloadWorldMapData(window.__worldMapInstance);
+      }
+
+      if (options.closeEditorAfterSave) {
+        hideDraftPanelBySelector();
+      }
+
+      setActionButtonLoading(button, false, originalLabel);
+      setActionButtonFeedback(button, options.successLabel || "Salvato", 900, originalLabel);
     } catch (error) {
-      button.textContent = "Errore";
       console.warn("Errore salvataggio mappa:", error);
-      window.setTimeout(function () {
-        button.textContent = originalText;
-        button.disabled = false;
-      }, 1600);
+      setActionButtonLoading(button, false, originalLabel);
+      setActionButtonFeedback(button, "Errore", 1400, originalLabel);
     }
+  }
+
+  function setActionButtonLoading(button, isLoading, label) {
+    if (!button) {
+      return;
+    }
+
+    button.disabled = !!isLoading;
+    button.classList.toggle("is-loading", !!isLoading);
+
+    if (label) {
+      button.setAttribute("aria-label", label);
+      button.title = label;
+    }
+  }
+
+  function setActionButtonFeedback(button, label, duration, restoreLabel) {
+    if (!button) {
+      return;
+    }
+
+    button.setAttribute("aria-label", label);
+    button.title = label;
+
+    window.setTimeout(function () {
+      button.setAttribute("aria-label", restoreLabel);
+      button.title = restoreLabel;
+    }, duration || 1000);
   }
 
   async function postWorldMapItem(playerCode, kind, item) {
@@ -1704,6 +2114,7 @@
     panel.addEventListener("click", function onPanelClick(event) {
       var markerButton = event.target.closest("[data-world-map-draft-marker]");
       var overlayButton = event.target.closest("[data-world-map-draft-overlay]");
+      var labelButton = event.target.closest("[data-world-map-draft-label]");
       var copyButton = event.target.closest("[data-world-map-copy-draft-json]");
       var copyCoordsButton = event.target.closest("[data-world-map-copy-coordinates]");
       var closeButton = event.target.closest("[data-world-map-draft-close]");
@@ -1734,6 +2145,15 @@
         }
 
         startOverlayDraft(map, panel, overlayDraft, readDraftCoords(panel), readDraftScreenPoint(panel));
+        return;
+      }
+
+      if (labelButton) {
+        if (!canManageMap()) {
+          return;
+        }
+
+        showLabelDraftPanel(panel, readDraftCoords(panel), readDraftScreenPoint(panel));
         return;
       }
 
@@ -1785,6 +2205,10 @@
           '<button type="button" class="world-map-context-action world-map-context-action--admin" data-world-map-draft-overlay>' +
           '<i class="fa-solid fa-draw-polygon" aria-hidden="true"></i>' +
           '<span>Nuovo overlay</span>' +
+          '</button>' +
+          '<button type="button" class="world-map-context-action world-map-context-action--admin" data-world-map-draft-label>' +
+          '<i class="fa-solid fa-font" aria-hidden="true"></i>' +
+          '<span>Nuova label</span>' +
           '</button>'
         : "") +
       "</div>" +
@@ -1794,33 +2218,68 @@
   }
 
   function showMarkerDraftPanel(panel, coords, screenPoint) {
-    var json = buildMarkerDraftJson(coords);
+    var map = window.__worldMapInstance;
 
-    panel.hidden = false;
-    panel.style.position = "fixed";
-    panel.style.left = "0px";
-    panel.style.top = "0px";
-    panel.style.zIndex = "9999";
-    panel.dataset.draftJson = json;
-    panel.innerHTML =
-      '<article class="world-map-marker-draft__card">' +
-      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
-      '<p class="world-map-marker-draft__eyebrow">Nuovo marker</p>' +
-      '<p class="world-map-marker-draft__coords">X ' +
-      coords.x +
-      " / Y " +
-      coords.y +
-      "</p>" +
-      '<pre class="world-map-marker-draft__code">' +
-      escapeHtml(json) +
-      "</pre>" +
-      '<button type="button" class="world-map-context-action" data-world-map-copy-draft-json>' +
-      '<i class="fa-solid fa-copy" aria-hidden="true"></i>' +
-      '<span>Copia JSON</span>' +
-      '</button>' +
-      "</article>";
+    if (!map || !canManageMap()) {
+      return;
+    }
 
-    positionFloatingPanel(panel, screenPoint);
+    var data = buildMarkerDraftData(coords);
+    var marker = createDraftMarkerLayer(map, data);
+
+    selectLayer(marker);
+    showDetail(data);
+    openSelectedEditor(panel, marker, screenPoint);
+  }
+
+  function showLabelDraftPanel(panel, coords, screenPoint) {
+    var map = window.__worldMapInstance;
+
+    if (!map || !canManageMap()) {
+      return;
+    }
+
+    var data = buildLabelDraftData(coords);
+    var layer = createDraftLabelLayer(map, data);
+
+    selectLayer(layer);
+    showDetail(data);
+    openSelectedEditor(panel, layer, screenPoint);
+  }
+
+  function createDraftLabelLayer(map, data) {
+    var layer = createLabelLayer(map, data).addTo(getLayerGroup(map, getLayerName("label")));
+    layer._worldMapIsDraft = true;
+    return layer;
+  }
+
+  function createDraftMarkerLayer(map, data) {
+    var marker = L.marker(toMapLatLng(data.x, data.y), {
+      icon: createMarkerIcon(data.type, data.priority),
+    }).addTo(getLayerGroup(map, getLayerName(data.type)));
+
+    marker._worldMapData = data;
+    marker._worldMapKind = "marker";
+    marker._worldMapType = data.type;
+    marker._worldMapLayerName = getLayerName(data.type);
+    marker._worldMapMinZoom = getMarkerMinZoom(data.type, data.priority);
+    marker._worldMapIsDraft = true;
+    zoomManagedLayers.push(marker);
+    markersIndex.push({ layer: marker, data: data });
+    mapSearchIndex.push({ layer: marker, data: data, kind: "marker" });
+
+    marker.bindTooltip(data.title || "Segnalino", {
+      direction: "top",
+      opacity: 0.95,
+    });
+
+    marker.on("click", function (e) {
+      L.DomEvent.stopPropagation(e);
+      selectLayer(marker);
+      showDetail(data);
+    });
+
+    return marker;
   }
 
   function startOverlayDraft(map, panel, overlayDraft, coords, screenPoint) {
@@ -1860,26 +2319,14 @@
       return;
     }
 
-    var json = buildOverlayDraftJson(overlayDraft.points);
-    panel.dataset.draftJson = json;
-    panel.hidden = false;
-    panel.innerHTML =
-      '<article class="world-map-marker-draft__card">' +
-      '<button type="button" class="world-map-marker-draft__close" data-world-map-draft-close aria-label="Chiudi"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
-      '<p class="world-map-marker-draft__eyebrow">Nuovo overlay</p>' +
-      '<p class="world-map-marker-draft__coords">Punti: ' +
-      overlayDraft.points.length +
-      "</p>" +
-      '<pre class="world-map-marker-draft__code">' +
-      escapeHtml(json) +
-      "</pre>" +
-      '<button type="button" class="world-map-context-action" data-world-map-copy-draft-json>' +
-      '<i class="fa-solid fa-copy" aria-hidden="true"></i>' +
-      '<span>Copia JSON</span>' +
-      '</button>' +
-      "</article>";
+    var map = window.__worldMapInstance;
+    var data = buildOverlayDraftData(overlayDraft.points);
+    var layer = createDraftOverlayLayer(map, data);
 
-    positionFloatingPanel(panel, screenPoint);
+    cancelOverlayDraft(map, overlayDraft);
+    selectLayer(layer);
+    showDetail(data);
+    openSelectedEditor(panel, layer, screenPoint);
   }
 
   function showOverlayDraftPanel(panel, overlayDraft, screenPoint, showError) {
@@ -1915,41 +2362,83 @@
     panel.dataset.draftJson = "";
   }
 
-  function buildMarkerDraftJson(coords) {
-    return JSON.stringify(
-      {
-        id: "marker-new",
-        type: "location",
-        title: "Nuovo segnalino",
-        x: coords.x,
-        y: coords.y,
-        status: "open",
-        visibility: "public",
-        description: "Descrizione del segnalino.",
-        tags: ["Luogo"],
-      },
-      null,
-      2
-    );
+  function buildMarkerDraftData(coords) {
+    return {
+      id: createDraftId("marker"),
+      type: "location",
+      title: "Nuovo segnalino",
+      x: coords.x,
+      y: coords.y,
+      status: "open",
+      visibility: "public",
+      description: "Descrizione del segnalino.",
+      tags: ["Luogo"],
+      priority: false,
+    };
   }
 
-  function buildOverlayDraftJson(points) {
-    return JSON.stringify(
-      {
-        id: "overlay-new",
-        type: "domain",
-        title: "Nuova area",
-        color: "#7b3ff2",
-        opacity: 0.24,
-        status: "active",
-        visibility: "public",
-        description: "Descrizione dell'area.",
-        points: points,
-        tags: ["Dominio"],
-      },
-      null,
-      2
-    );
+  function buildLabelDraftData(coords) {
+    return {
+      id: createDraftId("label"),
+      type: "label",
+      title: "Nuova label",
+      x: coords.x,
+      y: coords.y,
+      size: 18,
+      angle: 0,
+      color: "black",
+      visibility: "public",
+    };
+  }
+
+  function buildOverlayDraftData(points) {
+    return {
+      id: createDraftId("overlay"),
+      type: "domain",
+      title: "Nuova area",
+      color: "#7b3ff2",
+      opacity: 0.24,
+      status: "active",
+      visibility: "public",
+      description: "Descrizione dell'area.",
+      points: points,
+      tags: ["Dominio"],
+    };
+  }
+
+  function createDraftOverlayLayer(map, data) {
+    var points = data.points.map(function (point) {
+      return toMapLatLng(point[0], point[1]);
+    });
+    var style = getOverlayStyle(data);
+    var layer = L.polygon(points, style).addTo(getLayerGroup(map, getLayerName(data.type)));
+
+    layer._worldMapData = data;
+    layer._worldMapKind = "overlay";
+    layer._worldMapBaseStyle = style;
+    layer._worldMapType = data.type;
+    layer._worldMapLayerName = getLayerName(data.type);
+    layer._worldMapMinZoom = getOverlayMinZoom(data.type);
+    layer._worldMapIsDraft = true;
+    zoomManagedLayers.push(layer);
+    mapSearchIndex.push({ layer: layer, data: data, kind: "overlay" });
+
+    layer.bindTooltip(data.title || "Regione", {
+      sticky: true,
+      opacity: 0.95,
+    });
+
+    layer.on("click", function (e) {
+      L.DomEvent.stopPropagation(e);
+      selectLayer(layer);
+      showDetail(data);
+    });
+
+    return layer;
+  }
+
+  function createDraftId(prefix) {
+    return prefix + "-" + Date.now().toString(36);
   }
 
   async function copyDraftCoordinates(panel, button) {

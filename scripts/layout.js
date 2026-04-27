@@ -9,10 +9,14 @@
 
   function readSidebarPartialPath() {
     var container = document.querySelector("[data-sidebar-container]");
-    return (
-      (container && container.getAttribute("data-sidebar-partial")) ||
-      SIDEBAR_PARTIAL_PATH
-    );
+    var explicitPath =
+      container && container.getAttribute("data-sidebar-partial");
+
+    if (explicitPath) {
+      return resolveSitePath(explicitPath);
+    }
+
+    return joinSiteBasePath(SIDEBAR_PARTIAL_PATH);
   }
 
   var ACCESS_CODE_KEY = "gorgoneAccessCode";
@@ -23,6 +27,8 @@
   var RESOLVE_PLAYER_ENDPOINT = SUPABASE_URL + "/functions/v1/resolve-player";
   var FALLBACK_TOKEN_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23162229'/><circle cx='32' cy='24' r='12' fill='%234db8a6'/><rect x='14' y='40' width='36' height='16' fill='%233b5865'/></svg>";
+
+  var cachedSiteBase = "";
 
   var state = {
     code: "",
@@ -71,6 +77,9 @@
     setTheme: function setTheme(theme) {
       applyTheme(theme, { persist: true });
       syncThemeControls();
+    },
+    getSiteBase: function getSiteBase() {
+      return readSiteBase();
     },
   };
 
@@ -152,8 +161,179 @@
 
     for (var i = 0; i < dom.sidebarContainers.length; i += 1) {
       dom.sidebarContainers[i].innerHTML = html;
+      rewriteSidebarAssetUrls(dom.sidebarContainers[i]);
       rewriteSidebarLinks(dom.sidebarContainers[i]);
     }
+  }
+
+  function rewriteSidebarAssetUrls(container) {
+    if (!container) {
+      return;
+    }
+
+    var srcNodes = container.querySelectorAll("[src]");
+
+    for (var i = 0; i < srcNodes.length; i += 1) {
+      var src = srcNodes[i].getAttribute("src");
+      var resolvedSrc = resolveSiteAssetUrl(src);
+
+      if (resolvedSrc !== src) {
+        srcNodes[i].setAttribute("src", resolvedSrc);
+      }
+    }
+
+    var srcsetNodes = container.querySelectorAll("[srcset]");
+
+    for (var s = 0; s < srcsetNodes.length; s += 1) {
+      var srcset = srcsetNodes[s].getAttribute("srcset");
+      var resolvedSrcset = resolveSrcsetAssetUrls(srcset);
+
+      if (resolvedSrcset !== srcset) {
+        srcsetNodes[s].setAttribute("srcset", resolvedSrcset);
+      }
+    }
+  }
+
+  function resolveSrcsetAssetUrls(srcset) {
+    if (!srcset || typeof srcset !== "string") {
+      return srcset;
+    }
+
+    return srcset
+      .split(",")
+      .map(function mapSrcsetPart(part) {
+        var trimmed = part.trim();
+        var pieces;
+
+        if (!trimmed) {
+          return trimmed;
+        }
+
+        pieces = trimmed.split(/\s+/);
+        pieces[0] = resolveSiteAssetUrl(pieces[0]);
+
+        return pieces.join(" ");
+      })
+      .join(", ");
+  }
+
+  function resolveSiteAssetUrl(value) {
+    var cleanValue = readString(value, "");
+
+    if (!cleanValue || isExternalLikeUrl(cleanValue)) {
+      return value;
+    }
+
+    if (
+      cleanValue.indexOf("/assets/") === 0 ||
+      cleanValue.indexOf("assets/") === 0
+    ) {
+      return joinSiteBasePath(cleanValue.replace(/^\/+/, ""));
+    }
+
+    return value;
+  }
+
+  function resolveSitePath(value) {
+    var cleanValue = readString(value, "");
+
+    if (!cleanValue || isExternalLikeUrl(cleanValue)) {
+      return value;
+    }
+
+    if (cleanValue.indexOf("../") === 0 || cleanValue.indexOf("./") === 0) {
+      return cleanValue;
+    }
+
+    if (cleanValue.charAt(0) === "/") {
+      return joinSiteBasePath(cleanValue.replace(/^\/+/, ""));
+    }
+
+    return cleanValue;
+  }
+
+  function joinSiteBasePath(path) {
+    var base = readSiteBase();
+    var cleanPath = readString(path, "").replace(/^\/+/, "");
+
+    if (!cleanPath) {
+      return base;
+    }
+
+    return base + cleanPath;
+  }
+
+  function readSiteBase() {
+    var explicitBase;
+    var metaBase;
+    var htmlBase;
+    var pathParts;
+
+    if (cachedSiteBase) {
+      return cachedSiteBase;
+    }
+
+    explicitBase =
+      readString(window.EnclaveSiteBase, "") ||
+      readString(window.SITE_BASE, "");
+
+    htmlBase = document.documentElement
+      ? readString(document.documentElement.getAttribute("data-site-base"), "")
+      : "";
+
+    metaBase = readString(
+      document.querySelector('meta[name="site-base"]') &&
+        document.querySelector('meta[name="site-base"]').getAttribute("content"),
+      "",
+    );
+
+    if (explicitBase || htmlBase || metaBase) {
+      cachedSiteBase = normalizeSiteBase(explicitBase || htmlBase || metaBase);
+      return cachedSiteBase;
+    }
+
+    if (window.location.hostname.indexOf("github.io") !== -1) {
+      pathParts = (window.location.pathname || "").split("/").filter(Boolean);
+
+      if (pathParts.length) {
+        cachedSiteBase = "/" + pathParts[0] + "/";
+        return cachedSiteBase;
+      }
+    }
+
+    cachedSiteBase = "/";
+    return cachedSiteBase;
+  }
+
+  function normalizeSiteBase(value) {
+    var cleanValue = readString(value, "/");
+
+    if (isExternalLikeUrl(cleanValue)) {
+      return cleanValue.replace(/\/?$/, "/");
+    }
+
+    cleanValue = "/" + cleanValue.replace(/^\/+/, "").replace(/\/+$/, "");
+
+    if (cleanValue === "/") {
+      return "/";
+    }
+
+    return cleanValue + "/";
+  }
+
+  function isExternalLikeUrl(value) {
+    var cleanValue = readString(value, "").toLowerCase();
+
+    return (
+      cleanValue.indexOf("http://") === 0 ||
+      cleanValue.indexOf("https://") === 0 ||
+      cleanValue.indexOf("//") === 0 ||
+      cleanValue.indexOf("mailto:") === 0 ||
+      cleanValue.indexOf("tel:") === 0 ||
+      cleanValue.indexOf("data:") === 0 ||
+      cleanValue.indexOf("blob:") === 0 ||
+      cleanValue.indexOf("#") === 0
+    );
   }
 
   function rewriteSidebarLinks(container) {
@@ -183,6 +363,7 @@
       links[i].setAttribute("href", prefix + href);
     }
   }
+
   function initMobileSidebar() {
     if (!document.body || !dom.sidebarContainers.length) {
       return;
@@ -347,6 +528,7 @@
 
     dom.mobileSidebarBackdrop.setAttribute("aria-hidden", String(!open));
   }
+
   function bindThemeControls() {
     dom.themeToggle = document.querySelector("[data-theme-toggle]");
     dom.themeButtons = Array.prototype.slice.call(
