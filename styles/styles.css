@@ -1064,7 +1064,7 @@ body > * {
     align-self: stretch !important;
     transform: translateX(calc(-100% - 1rem));
     transition: transform 0.24s ease;
-    z-index: 1235 !important;
+    z-index: 1245 !important;
   }
 
   body.has-mobile-sidebar [data-sidebar-container] .sidebar {
@@ -1078,6 +1078,7 @@ body > * {
     border-left: 0 !important;
     box-shadow: 14px 0 30px rgba(4, 8, 10, 0.44);
     overflow-y: auto !important;
+    z-index: 1246 !important;
   }
 
   body.has-mobile-sidebar.sidebar-mobile-open {
@@ -2094,3 +2095,4 @@ body[data-theme="light"] .sidebar-theme__button[aria-pressed="true"] {
   color: var(--accent-button-text);
   background: linear-gradient(135deg, var(--accent-button-start), var(--accent-button-end));
 }
+

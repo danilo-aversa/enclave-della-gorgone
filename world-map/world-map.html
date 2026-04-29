@@ -6,11 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mappa Strategica | Enclave della Gorgone</title>
   <style>
-      html {background: #0f171b;}
-      body {margin: 0; background: #0f171b; opacity: 0; transition: opacity 160ms ease;}
-      body.is-page-ready {opacity: 1;}
-      body.is-page-leaving {opacity: 0;}
-      @media (prefers-reduced-motion: reduce) {body {transition: none;}}
+    html { background: #0f171b; }
+    body { margin: 0; background: #0f171b; opacity: 0; transition: opacity 160ms ease; }
+    body.is-page-ready { opacity: 1; }
+    body.is-page-leaving { opacity: 0; }
+    @media (prefers-reduced-motion: reduce) { body { transition: none; } }
   </style>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -45,20 +45,14 @@
         </section>
 
         <section class="world-map-shell" aria-label="Mappa strategica dell'Enclave">
-
           <section class="section-card world-map-stage" aria-label="Mappa">
             <div class="world-map-marker-draft" data-world-map-marker-draft hidden></div>
             <div id="world-map" class="world-map-canvas"></div>
 
-            <div class="world-map-search">
-              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-              <input type="search" data-world-map-search placeholder="Cerca segnalino..." />
-              <div class="world-map-search__results" data-world-map-search-results hidden></div>
-            </div>
-
-            <div class="world-map-coordinates" data-world-map-coordinates>
-              X — / Y —
-            </div>
+            <button type="button" class="world-map-fullscreen-toggle" data-world-map-fullscreen-toggle
+              aria-label="Espandi mappa" title="Espandi mappa">
+              <i class="fa-solid fa-expand" aria-hidden="true"></i>
+            </button>
 
             <div class="world-map-legend" data-world-map-legend hidden>
               <p class="world-map-legend__title">Legenda</p>
@@ -84,78 +78,94 @@
               </div>
             </div>
 
-            <div class="world-map-layer-dock" aria-label="Filtri mappa">
+            <div class="world-map-bottom-bar" aria-label="Strumenti mappa">
+              <div class="world-map-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" data-world-map-search placeholder="Cerca segnalino..." />
+                <div class="world-map-search__results" data-world-map-search-results hidden></div>
+              </div>
 
-              <button type="button" class="world-map-layer-action" data-world-map-legend-toggle aria-expanded="false"
-                title="Legenda">
-                <i class="fa-solid fa-circle-info"></i>
-              </button>
+              <div class="world-map-layer-dock" aria-label="Filtri mappa">
+                <button type="button" class="world-map-layer-action" data-world-map-legend-toggle aria-expanded="false"
+                  title="Legenda">
+                  <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                </button>
 
-              <button type="button" class="world-map-layer-action" data-world-map-reset-view title="Ricentra mappa">
-                <i class="fa-solid fa-crosshairs"></i>
-              </button>
+                <button type="button" class="world-map-layer-action" data-world-map-reset-view title="Ricentra mappa">
+                  <i class="fa-solid fa-crosshairs" aria-hidden="true"></i>
+                </button>
 
-              <div class="world-map-layer-separator"></div>
+                <div class="world-map-layer-separator"></div>
 
-              <button type="button" class="world-map-layer-action" data-world-map-layers-show-all title="Mostra tutto">
-                <i class="fa-solid fa-eye"></i>
-              </button>
+                <button type="button" class="world-map-layer-action" data-world-map-layers-show-all title="Mostra tutto">
+                  <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                </button>
 
-              <button type="button" class="world-map-layer-action" data-world-map-layers-hide-all
-                title="Nascondi tutto">
-                <i class="fa-solid fa-eye-slash"></i>
-              </button>
+                <button type="button" class="world-map-layer-action" data-world-map-layers-hide-all title="Nascondi tutto">
+                  <i class="fa-solid fa-eye-slash" aria-hidden="true"></i>
+                </button>
 
-              <div class="world-map-layer-separator"></div>
+                <div class="world-map-layer-separator"></div>
 
-              <label class="world-map-layer-toggle" title="Enclave">
-                <input type="checkbox" data-world-map-layer="enclave" checked />
-                <i class="fa-solid fa-shield-halved"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Enclave">
+                  <input type="checkbox" data-world-map-layer="enclave" checked />
+                  <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                </label>
 
-              <label class="world-map-layer-toggle" title="Missioni">
-                <input type="checkbox" data-world-map-layer="mission" checked />
-                <i class="fa-solid fa-exclamation"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Missioni">
+                  <input type="checkbox" data-world-map-layer="mission" checked />
+                  <i class="fa-solid fa-exclamation" aria-hidden="true"></i>
+                </label>
 
-              <label class="world-map-layer-toggle" title="Rumors">
-                <input type="checkbox" data-world-map-layer="rumor" checked />
-                <i class="fa-solid fa-comment-dots"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Rumors">
+                  <input type="checkbox" data-world-map-layer="rumor" checked />
+                  <i class="fa-solid fa-comment-dots" aria-hidden="true"></i>
+                </label>
 
-              <label class="world-map-layer-toggle" title="Fratture">
-                <input type="checkbox" data-world-map-layer="fracture" checked />
-                <i class="fa-solid fa-burst"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Fratture">
+                  <input type="checkbox" data-world-map-layer="fracture" checked />
+                  <i class="fa-solid fa-burst" aria-hidden="true"></i>
+                </label>
 
-              <label class="world-map-layer-toggle" title="Domini">
-                <input type="checkbox" data-world-map-layer="domain" checked />
-                <i class="fa-solid fa-draw-polygon"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Domini">
+                  <input type="checkbox" data-world-map-layer="domain" checked />
+                  <i class="fa-solid fa-draw-polygon" aria-hidden="true"></i>
+                </label>
 
-              <label class="world-map-layer-toggle" title="Guerre">
-                <input type="checkbox" data-world-map-layer="war" checked />
-                <i class="fa-solid fa-hand-fist"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Guerre">
+                  <input type="checkbox" data-world-map-layer="war" checked />
+                  <i class="fa-solid fa-hand-fist" aria-hidden="true"></i>
+                </label>
 
-              <label class="world-map-layer-toggle" title="Tesori">
-                <input type="checkbox" data-world-map-layer="treasure" checked />
-                <i class="fa-solid fa-gem"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Tesori">
+                  <input type="checkbox" data-world-map-layer="treasure" checked />
+                  <i class="fa-solid fa-gem" aria-hidden="true"></i>
+                </label>
 
-              <label class="world-map-layer-toggle" title="Misteri">
-                <input type="checkbox" data-world-map-layer="mystery" checked />
-                <i class="fa-solid fa-eye"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Misteri">
+                  <input type="checkbox" data-world-map-layer="mystery" checked />
+                  <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                </label>
 
-              <label class="world-map-layer-toggle" title="Luoghi">
-                <input type="checkbox" data-world-map-layer="location" checked />
-                <i class="fa-solid fa-location-dot"></i>
-              </label>
+                <label class="world-map-layer-toggle" title="Luoghi">
+                  <input type="checkbox" data-world-map-layer="location" checked />
+                  <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                </label>
+
+                <label class="world-map-layer-toggle" title="Labels">
+                  <input type="checkbox" data-world-map-layer="label" checked />
+                  <i class="fa-solid fa-font" aria-hidden="true"></i>
+                </label>
+              </div>
+
+              <div class="world-map-coordinates" data-world-map-coordinates>
+                X — / Y —
+              </div>
             </div>
           </section>
+        </section>
 
-          <aside class="world-map-side" aria-label="Pannello mappa">
+        <aside class="world-map-side" aria-label="Pannello mappa">
             <section class="section-card world-map-profile" aria-label="Profilo giocatore">
               <div data-profile-widget class="data-profile-widget"></div>
             </section>
@@ -167,14 +177,15 @@
               </p>
             </section>
           </aside>
-        </section>
       </main>
     </div>
 
     <script src="../scripts/page-transition.js"></script>
     <script src="../scripts/layout.js" defer></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="travel/travel-core.js" defer></script>
     <script src="world-map.js" defer></script>
+  </div>
 </body>
 
 </html>
