@@ -166,17 +166,43 @@
         </section>
 
         <aside class="world-map-side" aria-label="Pannello mappa">
-            <section class="section-card world-map-profile" aria-label="Profilo giocatore">
-              <div data-profile-widget class="data-profile-widget"></div>
-            </section>
 
-            <section class="section-card world-map-detail" id="world-map-detail"
-              aria-label="Dettaglio elemento selezionato">
-              <p class="world-map-detail__empty">
-                Seleziona un segnalino o una regione sulla mappa.
-              </p>
-            </section>
-          </aside>
+          <section class="section-card world-map-profile" aria-label="Profilo giocatore">
+            <div data-profile-widget class="data-profile-widget"></div>
+          </section>
+
+          <nav class="world-map-side-tabs" aria-label="Pannelli mappa" role="tablist">
+            <button type="button" class="world-map-side-tab is-active" data-world-map-side-tab="details" role="tab"
+              aria-selected="true" aria-controls="world-map-detail" aria-label="Details" title="Details">
+              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+              <span class="sr-only">Details</span>
+            </button>
+
+            <button type="button" class="world-map-side-tab" data-world-map-side-tab="editor" role="tab"
+              aria-selected="false" aria-controls="world-map-detail" aria-label="Editor" title="Editor">
+              <i class="fa-solid fa-brush" aria-hidden="true"></i>
+              <span class="sr-only">Editor</span>
+            </button>
+
+            <button type="button" class="world-map-side-tab" data-world-map-side-tab="calculator" role="tab"
+              aria-selected="false" aria-controls="world-map-detail" aria-label="Travel calculator" title="Travel calculator">
+              <i class="fa-solid fa-route" aria-hidden="true"></i>
+              <span class="sr-only">Travel calculator</span>
+            </button>
+
+            <button type="button" class="world-map-side-tab" data-world-map-side-tab="tokens" role="tab"
+              aria-selected="false" aria-controls="world-map-detail" aria-label="Travel tokens" title="Travel tokens">
+              <i class="fa-solid fa-person-hiking" aria-hidden="true"></i>
+              <span class="sr-only">Travel tokens</span>
+            </button>
+          </nav>
+
+          <section class="section-card world-map-detail" id="world-map-detail" aria-label="Dettaglio elemento selezionato">
+            <p class="world-map-detail__empty">
+              Seleziona un segnalino o una regione sulla mappa.
+            </p>
+          </section>
+        </aside>
       </main>
     </div>
 
@@ -184,6 +210,8 @@
     <script src="../scripts/layout.js" defer></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     <script src="travel/travel-core.js" defer></script>
+    <script src="travel/terrain-auto-reveal.js" defer></script>
+    <script src="travel/travel-tokens.js" defer></script>
     <script src="world-map.js" defer></script>
   </div>
 </body>

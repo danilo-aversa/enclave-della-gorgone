@@ -2096,3 +2096,48 @@ body[data-theme="light"] .sidebar-theme__button[aria-pressed="true"] {
   background: linear-gradient(135deg, var(--accent-button-start), var(--accent-button-end));
 }
 
+
+
+.quest-report-modal__panel {
+  width: min(900px, calc(100vw - 2rem));
+  max-height: min(86vh, 900px);
+}
+
+.quest-report-modal__panel textarea.import-modal__input {
+  min-height: 220px;
+}
+
+
+.quest-report-markdown-tools {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.quest-report-markdown-tools .import-modal__btn {
+  min-width: 44px;
+  min-height: 34px;
+  padding: 0.35rem 0.65rem;
+}
+
+.quest-report-card__actions {
+  margin-top: 0.85rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.quest-report-action--small {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.quest-report-action.is-danger {
+  border-color: rgba(220, 120, 120, 0.45);
+  color: #ffd8d8;
+}
+
+.quest-report-action.is-danger:hover,
+.quest-report-action.is-danger:focus-visible {
+  border-color: rgba(240, 138, 138, 0.7);
+  background: rgba(96, 38, 38, 0.45);
+}

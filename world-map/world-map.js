@@ -195,6 +195,7 @@
     bindCoordinateReadout(map);
     bindMapDraftTools(map);
     bindMapEditor(map);
+    bindWorldMapSideTabs();
     bindMapPermissionState();
     bindZoomVisibility(map);
     bindLabelScaling(map);
@@ -223,6 +224,13 @@
   function initTravelSystemBridge() {
     if (window.EnclaveTravel && typeof window.EnclaveTravel.init === "function") {
       window.EnclaveTravel.init(window.EnclaveWorldMap);
+    }
+
+    if (window.EnclaveTravelTokens && typeof window.EnclaveTravelTokens.init === "function") {
+      window.EnclaveTravelTokens.init({
+        world: window.EnclaveWorldMap,
+        travel: window.EnclaveTravel,
+      });
     }
   }
 
@@ -508,18 +516,35 @@
     }
 
     syncSelectedDockLayer(null);
+
+    if (shouldKeepCurrentToolPanelOpen()) {
+      return;
+    }
+
     showEmptyDetail();
+  }
+
+
+  function shouldKeepCurrentToolPanelOpen() {
+    var activeTab = getActiveWorldMapSideTab();
+    return activeTab === "editor" || activeTab === "calculator" || activeTab === "tokens";
+  }
+
+  function getActiveWorldMapSideTab() {
+    var active = document.querySelector("[data-world-map-side-tab].is-active");
+    return active ? active.getAttribute("data-world-map-side-tab") || "details" : "details";
   }
 
   function showEmptyDetail() {
     var panel = document.querySelector("#world-map-detail");
 
-    if (!panel) return;
+    if (!panel) {
+      return;
+    }
 
-    panel.innerHTML =
-      '<p class="world-map-detail__empty">Seleziona un segnalino o una regione sulla mappa.</p>';
+    setWorldMapDetailPanelMode();
+    panel.innerHTML = '<p class="world-map-detail__empty">Seleziona un segnalino o una regione sulla mappa.</p>';
   }
-
   function normalizeMarker(m) {
     return {
       id: m.id || "",
@@ -1119,6 +1144,8 @@
     if (!panel) {
       return;
     }
+
+    setWorldMapDetailPanelMode();
 
     var kind = selectedLayer && selectedLayer._worldMapKind ? selectedLayer._worldMapKind : "elemento";
     var typeLabel = kind === "label" ? "Etichetta" : labelType(item.type);
@@ -3082,8 +3109,14 @@
   }
 
   function syncMapPermissionState() {
-    document.documentElement.classList.toggle("can-manage-map", canManageMap());
-    document.documentElement.classList.toggle("cannot-manage-map", !canManageMap());
+    var allowed = canManageMap();
+    document.documentElement.classList.toggle("can-manage-map", allowed);
+    document.documentElement.classList.toggle("cannot-manage-map", !allowed);
+    syncWorldMapSideTabs(getActiveWorldMapSideTab());
+
+    if (!allowed && isRestrictedWorldMapSideTab(getActiveWorldMapSideTab())) {
+      restoreWorldMapDetailPanel();
+    }
   }
 
   function hideDraftPanelBySelector() {
@@ -3306,6 +3339,7 @@
       var closeButton = event.target.closest("[data-world-map-draft-close]");
       var travelEditorButton = event.target.closest("[data-world-map-open-travel-editor]");
       var travelCalculatorButton = event.target.closest("[data-world-map-open-travel-calculator]");
+      var travelTokensButton = event.target.closest("[data-world-map-open-travel-tokens]");
 
       if (closeButton) {
         cancelOverlayDraft(map, overlayDraft);
@@ -3313,7 +3347,11 @@
         return;
       }
 
-      if (travelEditorButton) {
+        if (travelEditorButton) {
+        if (!canManageMap()) {
+          return;
+        }
+
         openTravelEditorPanel();
         hideDraftPanel(panel);
         return;
@@ -3321,6 +3359,16 @@
 
       if (travelCalculatorButton) {
         openTravelCalculatorPanel();
+        hideDraftPanel(panel);
+        return;
+      }
+
+      if (travelTokensButton) {
+        if (!canManageMap()) {
+          return;
+        }
+
+        openTravelTokensPanel();
         hideDraftPanel(panel);
         return;
       }
@@ -3892,6 +3940,10 @@
           '<button type="button" class="world-map-context-action world-map-context-action--admin" data-world-map-open-travel-calculator>' +
           '<i class="fa-solid fa-route" aria-hidden="true"></i>' +
           '<span>Travel calculator</span>' +
+          '</button>' +
+          '<button type="button" class="world-map-context-action world-map-context-action--admin" data-world-map-open-travel-tokens>' +
+          '<i class="fa-solid fa-person-hiking" aria-hidden="true"></i>' +
+          '<span>Travel tokens</span>' +
           '</button>'
         : "") +
       "</div>" +
@@ -3900,16 +3952,120 @@
     positionFloatingPanel(panel, screenPoint);
   }
 
-  function openTravelEditorPanel() {
-    var detailPanel = document.querySelector("#world-map-detail");
 
-    if (!detailPanel || !window.EnclaveTravel) {
+  function bindWorldMapSideTabs() {
+    var tabs = document.querySelectorAll("[data-world-map-side-tab]");
+
+    if (!tabs.length) {
       return;
     }
 
-    clearSelection();
+    for (var i = 0; i < tabs.length; i += 1) {
+      tabs[i].addEventListener("click", function onWorldMapSideTabClick(event) {
+        var tab = event.currentTarget.getAttribute("data-world-map-side-tab") || "details";
+
+        if (isRestrictedWorldMapSideTab(tab) && !canManageMap()) {
+          event.preventDefault();
+          event.stopPropagation();
+          syncWorldMapSideTabs(getActiveWorldMapSideTab());
+          return;
+        }
+
+        activateWorldMapSideTab(tab);
+      });
+    }
+
+    syncWorldMapSideTabs("details");
+    exitTravelEditingMode();
+  }
+
+  function activateWorldMapSideTab(tab) {
+    if (isRestrictedWorldMapSideTab(tab) && !canManageMap()) {
+      return;
+    }
+
+    if (tab === "editor") {
+      openTravelEditorPanel();
+      return;
+    }
+
+    if (tab === "calculator") {
+      openTravelCalculatorPanel();
+      return;
+    }
+
+    if (tab === "tokens") {
+      openTravelTokensPanel();
+      return;
+    }
+
+    restoreWorldMapDetailPanel();
+  }
+
+  function syncWorldMapSideTabs(activeTab) {
+    var tabs = document.querySelectorAll("[data-world-map-side-tab]");
+
+    for (var i = 0; i < tabs.length; i += 1) {
+      var tab = tabs[i].getAttribute("data-world-map-side-tab") || "details";
+      var isActive = tab === activeTab;
+      var isLocked = isRestrictedWorldMapSideTab(tab) && !canManageMap();
+
+      tabs[i].classList.toggle("is-active", isActive);
+      tabs[i].classList.toggle("is-locked", isLocked);
+      tabs[i].setAttribute("aria-selected", String(isActive));
+      tabs[i].setAttribute("aria-disabled", String(isLocked));
+      tabs[i].disabled = !!isLocked;
+      tabs[i].setAttribute("tabindex", isLocked ? "-1" : isActive ? "0" : "-1");
+
+      if (isLocked) {
+        tabs[i].title = "Permesso richiesto: can_manage_map";
+      }
+    }
+  }
+
+  function isRestrictedWorldMapSideTab(tab) {
+    return tab === "editor" || tab === "tokens";
+  }
+
+  function setWorldMapDetailPanelMode() {
+    var detailPanel = document.querySelector("#world-map-detail");
+
+    if (!detailPanel) {
+      return;
+    }
+
+    detailPanel.classList.remove("world-map-editor");
+    detailPanel.classList.add("world-map-detail");
+    syncWorldMapSideTabs("details");
+    exitTravelEditingMode();
+  }
+
+  function exitTravelEditingMode() {
+    if (!window.EnclaveTravel || typeof window.EnclaveTravel.setDisplayMode !== "function") {
+      return;
+    }
+
+    window.EnclaveTravel.setDisplayMode("off");
+  }
+  function openTravelEditorPanel() {
+    if (!canManageMap()) {
+      return;
+    }
+
+    var detailPanel = document.querySelector("#world-map-detail");
+
+    if (!detailPanel) {
+      return;
+    }
+
     detailPanel.classList.remove("world-map-detail");
     detailPanel.classList.add("world-map-editor");
+    syncWorldMapSideTabs("editor");
+
+    if (!window.EnclaveTravel) {
+      detailPanel.innerHTML = '<p class="world-map-detail__empty">Map Editor non disponibile.</p>';
+      return;
+    }
 
     if (typeof window.EnclaveTravel.openEditorInPanel === "function") {
       window.EnclaveTravel.openEditorInPanel(detailPanel);
@@ -3918,23 +4074,59 @@
 
     if (typeof window.EnclaveTravel.toggleEditor === "function") {
       window.EnclaveTravel.toggleEditor();
+      return;
     }
+
+    detailPanel.innerHTML = '<p class="world-map-detail__empty">Map Editor non disponibile.</p>';
   }
 
   function openTravelCalculatorPanel() {
     var detailPanel = document.querySelector("#world-map-detail");
 
-    if (!detailPanel || !window.EnclaveTravel) {
+    if (!detailPanel) {
       return;
     }
 
-    clearSelection();
     detailPanel.classList.remove("world-map-detail");
     detailPanel.classList.add("world-map-editor");
+    syncWorldMapSideTabs("calculator");
+    exitTravelEditingMode();
+
+    if (!window.EnclaveTravel) {
+      detailPanel.innerHTML = '<p class="world-map-detail__empty">Travel Calculator non disponibile.</p>';
+      return;
+    }
 
     if (typeof window.EnclaveTravel.openCalculatorInPanel === "function") {
       window.EnclaveTravel.openCalculatorInPanel(detailPanel);
+      return;
     }
+
+    detailPanel.innerHTML = '<p class="world-map-detail__empty">Travel Calculator non disponibile.</p>';
+  }
+
+  function openTravelTokensPanel() {
+    if (!canManageMap()) {
+      return;
+    }
+
+    var detailPanel = document.querySelector("#world-map-detail");
+
+    if (!detailPanel) {
+      return;
+    }
+
+    detailPanel.classList.remove("world-map-detail");
+    detailPanel.classList.add("world-map-editor");
+    syncWorldMapSideTabs("tokens");
+    exitTravelEditingMode();
+
+    if (!window.EnclaveTravelTokens || typeof window.EnclaveTravelTokens.openPanel !== "function") {
+      detailPanel.innerHTML = '<p class="world-map-detail__empty">Travel Tokens non disponibile.</p>';
+      return;
+    }
+
+    window.EnclaveTravelTokens.openPanel(detailPanel);
   }
 
   function restoreWorldMapDetailPanel() {
@@ -3946,9 +4138,16 @@
 
     detailPanel.classList.remove("world-map-editor");
     detailPanel.classList.add("world-map-detail");
+    syncWorldMapSideTabs("details");
+    exitTravelEditingMode();
+
+    if (selectedLayer && selectedLayer._worldMapData) {
+      showDetail(selectedLayer._worldMapData);
+      return;
+    }
+
     showEmptyDetail();
   }
-
   function showMarkerDraftPanel(panel, coords, screenPoint) {
     var map = window.__worldMapInstance;
 

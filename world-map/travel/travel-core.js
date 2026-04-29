@@ -1,4 +1,4 @@
-// v0.31 2026-04-29T13:45:00.000Z
+// v0.43 2026-04-29T18:45:00.000Z
 (function () {
   "use strict";
 
@@ -53,6 +53,8 @@
         mountain: 1.25,
         swamp: 1.25,
         forest: 1.1,
+        desert: 1.25,
+        arctic: 1.25,
       },
     },
     wagon: {
@@ -71,6 +73,8 @@
         swamp: 1.8,
         forest: 1.35,
         hill: 1.25,
+        desert: 1.5,
+        arctic: 1.7,
       },
     },
     ship: {
@@ -139,6 +143,18 @@
       risk: 2,
       color: "rgba(86, 112, 78, 0.75)",
     },
+    desert: {
+      label: "Deserto",
+      cost: 3,
+      risk: 2,
+      color: "rgba(214, 177, 96, 0.75)",
+    },
+    arctic: {
+      label: "Artico",
+      cost: 3,
+      risk: 2,
+      color: "rgba(210, 235, 240, 0.75)",
+    },
     water: {
       label: "Acqua",
       cost: 2,
@@ -179,7 +195,10 @@
     editorBridge: false,
     editorTunnel: false,
     editorErase: false,
+    selectiveEraseTerrains: {},
     brushSize: 1,
+    overwriteHexes: true,
+    brushPreviewHexes: [],
     isPainting: false,
     isMiddlePanning: false,
     middlePan: null,
@@ -191,6 +210,7 @@
     redrawFrame: null,
     autosaveTimer: null,
     interactionHideTimer: null,
+    isMapInteracting: false,
     calculatorPanel: null,
     calculatorHost: null,
     calculatorStart: null,
@@ -211,6 +231,7 @@
     hoveredRegionId: null,
     hoveredRegionSource: "",
     regionContextMenu: null,
+    selectiveEraseMenu: null,
     regionNames: {},
     regionHexLookup: {},
     highlightedRegionCellLookup: {},
@@ -219,6 +240,7 @@
     regionsWindowDrag: null,
     hasLocalOverride: false,
     staticGridLoaded: false,
+    staticGridMissing: false,
   };
 
   window.EnclaveTravel = {
@@ -244,6 +266,7 @@
     getHexNeighbors: getHexNeighbors,
     hexDistance: hexDistance,
     findPath: findPath,
+    calculateRoute: calculateRoute,
     calculateTravelEstimate: calculateTravelEstimate,
     getCellData: getCellData,
     getTerrainTypes: function () {
@@ -259,6 +282,10 @@
     getState: function () {
       return state;
     },
+    getConfig: function () {
+      return Object.assign({}, state.config);
+    },
+    applyAutoRevealCells: applyAutoRevealCells,
   };
 
   function init(world) {
@@ -289,6 +316,7 @@
     state.regionNames = {};
     state.hasLocalOverride = false;
     state.staticGridLoaded = false;
+    state.staticGridMissing = false;
     loadStaticGrid().then(function () {
       loadGridFromLocalStorage();
       syncEditorPanel();
@@ -355,12 +383,51 @@
 
     host._enclaveTravelEditorBound = true;
 
+    host.addEventListener("wheel", function (event) {
+      var input = event.target.closest("input[type='range'], input[type='number']");
+
+      if (!input || !host.contains(input)) {
+        return;
+      }
+
+      if (!input.matches("[data-travel-editor-brush], [data-travel-grid-opacity], [data-travel-terrain-opacity]")) {
+        return;
+      }
+
+      stepInputWithWheel(input, event);
+    }, { passive: false });
+
+    host.addEventListener("input", function (event) {
+      var brush = event.target.closest("[data-travel-editor-brush]");
+      var gridOpacity = event.target.closest("[data-travel-grid-opacity]");
+      var terrainOpacity = event.target.closest("[data-travel-terrain-opacity]");
+
+      if (brush) {
+        updateBrushSizeFromInput(brush);
+        return;
+      }
+
+      if (gridOpacity) {
+        state.gridOpacity = clampNumber(Number(gridOpacity.value) || 0, 0, 1);
+        syncOpacityInputs();
+        redraw();
+        return;
+      }
+
+      if (terrainOpacity) {
+        state.terrainOpacity = clampNumber(Number(terrainOpacity.value) || 0, 0, 1);
+        syncOpacityInputs();
+        redraw();
+      }
+    });
+
     host.addEventListener("change", function (event) {
       var road = event.target.closest("[data-travel-editor-road]");
       var bridge = event.target.closest("[data-travel-editor-bridge]");
       var tunnel = event.target.closest("[data-travel-editor-tunnel]");
       var erase = event.target.closest("[data-travel-editor-erase]");
       var brush = event.target.closest("[data-travel-editor-brush]");
+      var overwrite = event.target.closest("[data-travel-editor-overwrite]");
       var gridOpacity = event.target.closest("[data-travel-grid-opacity]");
       var terrainOpacity = event.target.closest("[data-travel-terrain-opacity]");
       var gridColor = event.target.closest("[data-travel-grid-color]");
@@ -385,9 +452,14 @@
         return;
       }
 
+
       if (brush) {
-        state.brushSize = clampNumber(Number(brush.value) || 1, 1, 12);
-        syncBrushInputs();
+        updateBrushSizeFromInput(brush);
+      }
+
+      if (overwrite) {
+        state.overwriteHexes = !!overwrite.checked;
+        syncEditorPanel();
       }
 
       if (gridOpacity) {
@@ -412,6 +484,7 @@
       var close = event.target.closest("[data-travel-editor-close]");
       var exportButton = event.target.closest("[data-travel-editor-export]");
       var flushLocalButton = event.target.closest("[data-travel-editor-flush-local]");
+      var autoRevealButton = event.target.closest("[data-travel-auto-reveal]");
       var saveCloseButton = event.target.closest("[data-travel-editor-save-close]");
       var importButton = event.target.closest("[data-travel-editor-import]");
       var gridToggle = event.target.closest("[data-travel-grid-toggle]");
@@ -423,6 +496,12 @@
       var renameRegionInput = event.target.closest("[data-travel-region-name]");
       var renameRegionButton = event.target.closest("[data-travel-rename-region]");
       var waterTypeButton = event.target.closest("[data-travel-water-type]");
+      var selectiveEraseButton = event.target.closest("[data-travel-selective-erase-terrain]");
+
+      if (selectiveEraseButton) {
+        toggleSelectiveEraseTerrain(selectiveEraseButton.getAttribute("data-travel-selective-erase-terrain"));
+        return;
+      }
 
       if (waterTypeButton) {
         applyWaterTypeToRegion(
@@ -497,6 +576,11 @@
         return;
       }
 
+      if (autoRevealButton) {
+        runAutoReveal(autoRevealButton);
+        return;
+      }
+
       if (importButton) {
         importGridJson(importButton);
       }
@@ -519,7 +603,15 @@
     });
 
     host.addEventListener("contextmenu", function (event) {
+      var eraseTool = event.target.closest("[data-travel-erase-tool]");
       var row = event.target.closest("[data-travel-focus-region]");
+
+      if (eraseTool) {
+        event.preventDefault();
+        event.stopPropagation();
+        openSelectiveEraseMenu(event.clientX, event.clientY);
+        return;
+      }
 
       if (!row) {
         return;
@@ -722,16 +814,29 @@
 
     var modeSelect = state.calculatorPanel ? state.calculatorPanel.querySelector("[data-travel-mode]") : null;
     var speedSelect = state.calculatorPanel ? state.calculatorPanel.querySelector("[data-travel-speed]") : null;
-    var result = findRouteThroughPoints(
-      [state.calculatorStart].concat(state.calculatorWaypoints, [state.calculatorEnd]),
-      {
-        travelMode: modeSelect ? modeSelect.value : "foot",
-        speedMode: speedSelect ? speedSelect.value : "normal",
-      }
-    );
+    var result = calculateRoute({
+      start: state.calculatorStart,
+      end: state.calculatorEnd,
+      waypoints: state.calculatorWaypoints,
+      travelMode: modeSelect ? modeSelect.value : "foot",
+      speedMode: speedSelect ? speedSelect.value : "normal",
+    });
 
     drawRoute(result);
     renderCalculatorResult(result);
+  }
+
+  function calculateRoute(payload) {
+    payload = payload || {};
+
+    return findRouteThroughPoints(
+      [payload.start].concat(payload.waypoints || [], [payload.end]),
+      {
+        travelMode: payload.travelMode || "foot",
+        speedMode: payload.speedMode || "normal",
+        maxIterations: payload.maxIterations,
+      }
+    );
   }
 
   function findRouteThroughPoints(points, options) {
@@ -1035,6 +1140,7 @@
 
     closeDetachedRegionsWindow();
     closeRegionContextMenu();
+    closeSelectiveEraseMenu();
     state.hoveredRegionId = null;
     state.hoveredRegionSource = "";
     state.pulseRegionId = null;
@@ -1077,7 +1183,7 @@
       '<input type="checkbox" data-travel-editor-tunnel />' +
       '<span><i class="fa-solid fa-archway" aria-hidden="true"></i></span>' +
       '</label>' +
-      '<label class="world-map-travel-tool" title="Gomma">' +
+      '<label class="world-map-travel-tool" title="Gomma" data-travel-erase-tool>' +
       '<input type="checkbox" data-travel-editor-erase />' +
       '<span><i class="fa-solid fa-eraser" aria-hidden="true"></i></span>' +
       '</label>' +
@@ -1085,6 +1191,10 @@
       '<label class="world-map-travel-editor__field world-map-travel-editor__field--brush">' +
       '<span>Brush</span>' +
       '<div class="world-map-travel-editor__brush-row">' +
+      '<label class="world-map-travel-tool world-map-travel-tool--overwrite" title="Overwrite hexes">' +
+      '<input type="checkbox" data-travel-editor-overwrite checked />' +
+      '<span><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span>' +
+      '</label>' +
       '<input type="range" min="1" max="12" value="1" data-travel-editor-brush />' +
       '<input type="number" min="1" max="12" value="1" data-travel-editor-brush />' +
       '</div>' +
@@ -1092,6 +1202,7 @@
       buildGridControlsMarkup() +
       buildRegionsPanelMarkup() +
       '<div class="world-map-travel-editor__actions">' +
+      '<button type="button" data-travel-auto-reveal aria-label="Auto Reveal Terrain" title="Auto Reveal Terrain"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>' +
       '<button type="button" data-travel-editor-export aria-label="Export JSON" title="Export JSON"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>' +
       '<button type="button" data-travel-editor-flush-local aria-label="Flush local override" title="Flush local override"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>' +
       '<button type="button" data-travel-editor-import aria-label="Import JSON" title="Import JSON"><i class="fa-solid fa-file-import" aria-hidden="true"></i></button>' +
@@ -1099,6 +1210,33 @@
       '</div>' +
       '</aside>'
     );
+  }
+
+  function buildSelectiveEraseMenuMarkup() {
+    return (
+      '<div class="world-map-selective-erase-menu" data-travel-selective-erase-menu>' +
+      '<header class="world-map-selective-erase-menu__header">' +
+      '<strong>Gomma selettiva</strong>' +
+      '<small>nessun filtro = cancella tutto</small>' +
+      '</header>' +
+      '<div class="world-map-selective-erase-menu__grid">' +
+      buildSelectiveEraseOptions() +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  function buildSelectiveEraseOptions() {
+    return Object.keys(TERRAIN_TYPES).map(function (key) {
+      var terrain = TERRAIN_TYPES[key];
+      return (
+        '<button type="button" class="world-map-selective-erase-option' +
+        (state.selectiveEraseTerrains[key] ? ' is-active' : '') +
+        '" data-travel-selective-erase-terrain="' + escapeHtml(key) + '" title="Cancella solo ' + escapeHtml(terrain.label) + '" aria-pressed="' + String(!!state.selectiveEraseTerrains[key]) + '">' +
+        '<span class="world-map-selective-erase-option__swatch" style="--terrain-color: ' + escapeHtml(terrain.color) + '"><i class="fa-solid ' + escapeHtml(getTerrainIcon(key)) + '" aria-hidden="true"></i></span>' +
+        '</button>'
+      );
+    }).join("");
   }
 
   function buildGridControlsMarkup() {
@@ -1203,6 +1341,8 @@
       mountain: "fa-mountain",
       hill: "fa-mound",
       swamp: "fa-water",
+      desert: "fa-sun",
+      arctic: "fa-snowflake",
       water: "fa-droplet",
       city: "fa-city",
       blocked: "fa-ban",
@@ -1227,6 +1367,45 @@
       .join("");
   }
 
+  function stepInputWithWheel(input, event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    var step = Number(input.step) || 1;
+    var min = input.min === "" ? -Infinity : Number(input.min);
+    var max = input.max === "" ? Infinity : Number(input.max);
+    var current = Number(input.value) || 0;
+    var direction = event.deltaY < 0 ? 1 : -1;
+    var next = current + direction * step;
+
+    if (Number.isFinite(min)) {
+      next = Math.max(min, next);
+    }
+
+    if (Number.isFinite(max)) {
+      next = Math.min(max, next);
+    }
+
+    input.value = formatInputStepValue(next, step);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function formatInputStepValue(value, step) {
+    if (step >= 1) {
+      return String(Math.round(value));
+    }
+
+    var decimals = String(step).split(".")[1];
+    return Number(value).toFixed(decimals ? decimals.length : 2);
+  }
+
+  function updateBrushSizeFromInput(input) {
+    state.brushSize = clampNumber(Number(input.value) || 1, 1, 12);
+    syncBrushInputs();
+    updateBrushPreviewFromPointer(state.lastPointerEvent);
+    scheduleRedraw();
+  }
+
   function syncEditorPanel() {
     if (!state.editorPanel) {
       return;
@@ -1240,6 +1419,7 @@
     var tunnel = state.editorPanel.querySelector("[data-travel-editor-tunnel]");
     var erase = state.editorPanel.querySelector("[data-travel-editor-erase]");
     var brushInputs = state.editorPanel.querySelectorAll("[data-travel-editor-brush]");
+    var overwriteInput = state.editorPanel.querySelector("[data-travel-editor-overwrite]");
     var gridOpacityInputs = state.editorPanel.querySelectorAll("[data-travel-grid-opacity]");
     var terrainOpacityInputs = state.editorPanel.querySelectorAll("[data-travel-terrain-opacity]");
     var gridToggle = state.editorPanel.querySelector("[data-travel-grid-toggle]");
@@ -1256,6 +1436,8 @@
     if (bridge) bridge.checked = !!state.editorBridge;
     if (tunnel) tunnel.checked = !!state.editorTunnel;
     if (erase) erase.checked = !!state.editorErase;
+    if (overwriteInput) overwriteInput.checked = !!state.overwriteHexes;
+    syncSelectiveEraseMenu();
 
     var inlineRegions = state.editorPanel.querySelector("[data-travel-regions-inline]");
     if (inlineRegions) inlineRegions.hidden = !!state.regionsDetached;
@@ -1284,8 +1466,38 @@
     }
 
     if (localStatus) {
-      localStatus.textContent = state.hasLocalOverride ? "Local override" : "Static JSON";
+      localStatus.textContent = getGridSourceLabel();
       localStatus.classList.toggle("is-local", !!state.hasLocalOverride);
+      localStatus.classList.toggle("is-missing", !state.hasLocalOverride && !!state.staticGridMissing);
+    }
+  }
+
+  function toggleSelectiveEraseTerrain(terrain) {
+    if (!TERRAIN_TYPES[terrain]) {
+      return;
+    }
+
+    if (state.selectiveEraseTerrains[terrain]) {
+      delete state.selectiveEraseTerrains[terrain];
+    } else {
+      state.selectiveEraseTerrains[terrain] = true;
+    }
+
+    syncSelectiveEraseMenu();
+  }
+
+  function syncSelectiveEraseMenu() {
+    if (!state.selectiveEraseMenu) {
+      return;
+    }
+
+    var options = state.selectiveEraseMenu.querySelectorAll("[data-travel-selective-erase-terrain]");
+
+    for (var i = 0; i < options.length; i += 1) {
+      var terrain = options[i].getAttribute("data-travel-selective-erase-terrain");
+      var active = !!state.selectiveEraseTerrains[terrain];
+      options[i].classList.toggle("is-active", active);
+      options[i].setAttribute("aria-pressed", String(active));
     }
   }
 
@@ -1351,7 +1563,7 @@
     }
 
     state.map._enclaveTravelBound = true;
-    state.map.on("movestart zoomstart", hideGridDuringInteraction);
+    state.map.on("movestart zoomstart zoom zoomanim", hideGridDuringInteraction);
     state.map.on("moveend zoomend resize", showGridAfterInteraction);
     state.map.on("contextmenu", suppressLeafletContextMenuAfterRightDrag);
     state.map.on("mousemove", updatePickPreviewMarker);
@@ -1859,6 +2071,69 @@
     redraw();
   }
 
+  function openSelectiveEraseMenu(x, y) {
+    closeSelectiveEraseMenu();
+    closeRegionContextMenu();
+
+    var wrapper = document.createElement("div");
+    wrapper.innerHTML = buildSelectiveEraseMenuMarkup();
+    var menu = wrapper.firstElementChild;
+
+    menu.style.position = "fixed";
+    menu.style.left = "0px";
+    menu.style.top = "0px";
+    menu.style.zIndex = "13000";
+
+    menu.addEventListener("click", function (event) {
+      var button = event.target.closest("[data-travel-selective-erase-terrain]");
+
+      if (!button) {
+        return;
+      }
+
+      toggleSelectiveEraseTerrain(button.getAttribute("data-travel-selective-erase-terrain"));
+    });
+
+    document.body.appendChild(menu);
+    state.selectiveEraseMenu = menu;
+    clampFloatingMenuToViewport(menu, x, y);
+    syncSelectiveEraseMenu();
+
+    window.setTimeout(function () {
+      document.addEventListener("pointerdown", closeSelectiveEraseMenuOnOutside, { once: true, capture: true });
+    }, 0);
+  }
+
+  function clampFloatingMenuToViewport(menu, x, y) {
+    if (!menu) {
+      return;
+    }
+
+    var margin = 8;
+    var rect = menu.getBoundingClientRect();
+    var nextLeft = clampNumber(x, margin, Math.max(margin, window.innerWidth - rect.width - margin));
+    var nextTop = clampNumber(y, margin, Math.max(margin, window.innerHeight - rect.height - margin));
+
+    menu.style.left = nextLeft + "px";
+    menu.style.top = nextTop + "px";
+  }
+
+  function closeSelectiveEraseMenuOnOutside(event) {
+    if (state.selectiveEraseMenu && state.selectiveEraseMenu.contains(event.target)) {
+      document.addEventListener("pointerdown", closeSelectiveEraseMenuOnOutside, { once: true, capture: true });
+      return;
+    }
+
+    closeSelectiveEraseMenu();
+  }
+
+  function closeSelectiveEraseMenu() {
+    if (state.selectiveEraseMenu) {
+      state.selectiveEraseMenu.remove();
+      state.selectiveEraseMenu = null;
+    }
+  }
+
   function openRegionContextMenu(regionId, x, y) {
     closeRegionContextMenu();
 
@@ -1982,6 +2257,8 @@
       state.interactionHideTimer = null;
     }
 
+    state.isMapInteracting = true;
+    state.brushPreviewHexes = [];
     state.canvas.hidden = true;
   }
 
@@ -1992,6 +2269,7 @@
 
     state.interactionHideTimer = window.setTimeout(function () {
       state.interactionHideTimer = null;
+      state.isMapInteracting = false;
       redraw();
     }, 60);
   }
@@ -2044,6 +2322,11 @@
       return;
     }
 
+    if (state.isMapInteracting) {
+      state.canvas.hidden = true;
+      return;
+    }
+
     resizeCanvasToMap();
     clearCanvas();
 
@@ -2054,6 +2337,7 @@
 
     state.canvas.hidden = false;
     drawVisibleHexes();
+    drawBrushPreview();
   }
 
   function resizeCanvasToMap() {
@@ -2244,6 +2528,8 @@
     });
 
     state.canvas.addEventListener("pointermove", function (event) {
+      state.lastPointerEvent = event;
+      updateBrushPreviewFromPointer(event);
       updateHoveredRegionFromPointer(event);
 
       if (state.isMiddlePanning) {
@@ -2289,6 +2575,8 @@
     }, true);
 
     state.canvas.addEventListener("pointerleave", function () {
+      state.brushPreviewHexes = [];
+      scheduleRedraw();
       setHoveredRegion(null, "");
     });
 
@@ -2370,6 +2658,8 @@
   function stopPainting(event) {
     state.isPainting = false;
     state.lastPaintedKey = "";
+    updateBrushPreviewFromPointer(event);
+    scheduleRedraw();
 
     if (event && state.canvas && state.canvas.hasPointerCapture && state.canvas.hasPointerCapture(event.pointerId)) {
       state.canvas.releasePointerCapture(event.pointerId);
@@ -2467,17 +2757,73 @@
     });
   }
 
-  function paintFromPointerEvent(event) {
+  function updateBrushPreviewFromPointer(event) {
+    if (!event || state.displayMode !== "editor" || state.isMiddlePanning) {
+      return;
+    }
+
+    var hex = getHexFromPointerEvent(event);
+
+    if (!hex) {
+      state.brushPreviewHexes = [];
+      scheduleRedraw();
+      return;
+    }
+
+    var next = getBrushHexes(hex.q, hex.r);
+    var previousKey = state.brushPreviewHexes.map(function (item) { return hexKey(item.q, item.r); }).join("|");
+    var nextKey = next.map(function (item) { return hexKey(item.q, item.r); }).join("|");
+
+    if (previousKey === nextKey) {
+      return;
+    }
+
+    state.brushPreviewHexes = next;
+    scheduleRedraw();
+  }
+
+  function getHexFromPointerEvent(event) {
+    if (!event || !state.canvas || !state.map || !state.world) {
+      return null;
+    }
+
     var rect = state.canvas.getBoundingClientRect();
     var containerPoint = L.point(event.clientX - rect.left, event.clientY - rect.top);
     var latlng = state.map.containerPointToLatLng(containerPoint);
     var pixel = state.world.toImagePoint(latlng);
 
     if (!isPixelInsideMap(pixel.x, pixel.y)) {
-      return;
+      return null;
     }
 
-    var hex = pixelToHex(pixel.x, pixel.y, state.config.hexSize);
+    return pixelToHex(pixel.x, pixel.y, state.config.hexSize);
+  }
+
+  function getBrushHexes(q, r) {
+    var radius = Math.max(0, Number(state.brushSize) - 1);
+    var hexes = [];
+
+    for (var dq = -radius; dq <= radius; dq += 1) {
+      for (var dr = Math.max(-radius, -dq - radius); dr <= Math.min(radius, -dq + radius); dr += 1) {
+        var targetQ = q + dq;
+        var targetR = r + dr;
+        var center = hexToPixel(targetQ, targetR, state.config.hexSize);
+
+        if (isPixelInsideMap(center.x, center.y)) {
+          hexes.push({ q: targetQ, r: targetR });
+        }
+      }
+    }
+
+    return hexes;
+  }
+
+  function paintFromPointerEvent(event) {
+    var hex = getHexFromPointerEvent(event);
+
+    if (!hex) {
+      return;
+    }
     var key = hexKey(hex.q, hex.r);
 
     if (key === state.lastPaintedKey && state.brushSize === 1) {
@@ -2490,13 +2836,9 @@
   }
 
   function paintBrush(q, r) {
-    var radius = Math.max(0, Number(state.brushSize) - 1);
-
-    for (var dq = -radius; dq <= radius; dq += 1) {
-      for (var dr = Math.max(-radius, -dq - radius); dr <= Math.min(radius, -dq + radius); dr += 1) {
-        paintCell(q + dq, r + dr);
-      }
-    }
+    getBrushHexes(q, r).forEach(function (hex) {
+      paintCell(hex.q, hex.r);
+    });
   }
 
   function paintCell(q, r) {
@@ -2513,8 +2855,18 @@
     var tunnel = !!state.editorTunnel;
 
     if (state.editorErase) {
-      delete state.cells[key];
-      scheduleGridAutosave();
+      var existingCell = state.cells[key] || null;
+      var selectedEraseTerrains = Object.keys(state.selectiveEraseTerrains || {});
+
+      if (!selectedEraseTerrains.length || (existingCell && selectedEraseTerrains.indexOf(existingCell.terrain) !== -1)) {
+        delete state.cells[key];
+        scheduleGridAutosave();
+      }
+
+      return;
+    }
+
+    if (!state.overwriteHexes && state.cells[key] && !road && !bridge && !tunnel) {
       return;
     }
 
@@ -2538,8 +2890,59 @@
     scheduleGridAutosave();
   }
 
+  function runAutoReveal(button) {
+    var autoReveal = window.EnclaveTerrainAutoReveal;
+    var original = button ? button.innerHTML : "";
+
+    if (!autoReveal || typeof autoReveal.openModal !== "function") {
+      window.alert("Auto Reveal module not loaded.");
+      return;
+    }
+
+    try {
+      autoReveal.openModal({
+        world: state.world,
+        travel: window.EnclaveTravel,
+      });
+
+      flashButton(button, original, '<i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>');
+    } catch (error) {
+      console.error("Auto Reveal failed:", error);
+      window.alert(error && error.message ? error.message : "Auto Reveal failed.");
+    }
+  }
+
+  function applyAutoRevealCells(cells) {
+    var next = Object.assign({}, state.cells);
+
+    Object.keys(cells || {}).forEach(function (key) {
+      var cell = cells[key];
+
+      if (!cell || !TERRAIN_TYPES[cell.terrain]) {
+        return;
+      }
+
+      next[key] = {
+        terrain: cell.terrain,
+        road: !!cell.road,
+        bridge: !!cell.bridge,
+        tunnel: !!cell.tunnel,
+        waterType: WATER_REGION_TYPES[cell.waterType] ? cell.waterType : "",
+        risk: Number.isFinite(Number(cell.risk)) ? Number(cell.risk) : TERRAIN_TYPES[cell.terrain].risk,
+        blocked: cell.terrain === "blocked" || !!cell.blocked,
+        tags: Array.isArray(cell.tags) ? cell.tags.map(String) : [],
+      };
+    });
+
+    state.cells = sanitizeCells(next);
+    state.regions = [];
+    state.regionHexLookup = {};
+    state.highlightedRegionCellLookup = {};
+    renderRegionsList();
+  }
+
   function exportGridJson(button) {
-    var text = JSON.stringify(buildGridPayload(), null, 2);
+    var text = serializeGridPayload(buildGridPayload());
     var original = button ? button.innerHTML : "";
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2550,6 +2953,26 @@
     }
 
     console.log(text);
+  }
+
+  function serializeGridPayload(payload) {
+    var runPattern = new RegExp("\\[\\n\\s+(-?\\d+),\\n\\s+(-?\\d+),\\n\\s+(-?\\d+)\\n\\s+\\]", "g");
+
+    return JSON.stringify(payload, null, 2).replace(runPattern, function (_match, q, r, length) {
+      return "[" + q + ", " + r + ", " + length + "]";
+    });
+  }
+
+  function getGridSourceLabel() {
+    if (state.hasLocalOverride) {
+      return "Local override";
+    }
+
+    if (state.staticGridLoaded) {
+      return "Static JSON";
+    }
+
+    return "No static JSON";
   }
 
   function importGridJson(button) {
@@ -2917,8 +3340,12 @@
     return fetch(url)
       .then(function (res) {
         if (!res.ok) {
+          state.staticGridLoaded = false;
+          state.staticGridMissing = true;
           return null;
         }
+
+        state.staticGridMissing = false;
         return res.json();
       })
       .then(function (json) {
@@ -2928,8 +3355,11 @@
 
         applyGridPayload(json);
         state.staticGridLoaded = true;
+        state.staticGridMissing = false;
       })
       .catch(function () {
+        state.staticGridLoaded = false;
+        state.staticGridMissing = true;
         // fail silently (no static file yet)
       });
   }
@@ -2965,6 +3395,8 @@
     }
 
     state.hasLocalOverride = false;
+    state.staticGridLoaded = false;
+    state.staticGridMissing = false;
     state.cells = {};
     state.regionNames = {};
     state.regions = [];
@@ -3359,6 +3791,50 @@
     return Math.round(value * factor) / factor;
   }
 
+  function drawBrushPreview() {
+    if (state.displayMode !== "editor" || !state.brushPreviewHexes.length || state.isMiddlePanning) {
+      return;
+    }
+
+    state.ctx.save();
+
+    state.brushPreviewHexes.forEach(function (hex) {
+      var center = hexToPixel(hex.q, hex.r, state.config.hexSize);
+      var points = getHexCorners(center.x, center.y, state.config.hexSize);
+      var first = mapPixelToContainer(points[0]);
+      var key = hexKey(hex.q, hex.r);
+      var existing = !!state.cells[key];
+      var wouldSkip = !state.editorErase && !state.overwriteHexes && existing && !state.editorRoad && !state.editorBridge && !state.editorTunnel;
+
+      state.ctx.beginPath();
+      state.ctx.moveTo(first.x, first.y);
+
+      for (var i = 1; i < points.length; i += 1) {
+        var projected = mapPixelToContainer(points[i]);
+        state.ctx.lineTo(projected.x, projected.y);
+      }
+
+      state.ctx.closePath();
+      state.ctx.fillStyle = wouldSkip ? "rgba(160, 160, 160, 0.12)" : getBrushPreviewFill();
+      state.ctx.strokeStyle = wouldSkip ? "rgba(180, 180, 180, 0.52)" : "rgba(241, 213, 165, 0.92)";
+      state.ctx.lineWidth = 1.8;
+      state.ctx.setLineDash(wouldSkip ? [3, 3] : []);
+      state.ctx.fill();
+      state.ctx.stroke();
+    });
+
+    state.ctx.restore();
+  }
+
+  function getBrushPreviewFill() {
+    if (state.editorErase) {
+      return "rgba(220, 70, 70, 0.22)";
+    }
+
+    var terrain = TERRAIN_TYPES[state.editorTerrain] || TERRAIN_TYPES.plain;
+    return withOpacity(terrain.color || "rgba(241, 213, 165, 0.24)", 0.28);
+  }
+
   function drawHex(q, r, center) {
     var key = hexKey(q, r);
     var cell = state.cells[key] || null;
@@ -3542,6 +4018,18 @@
 
   function isPixelInsideMap(x, y) {
     return x >= 0 && y >= 0 && x <= state.width && y <= state.height;
+  }
+
+  function syncBrushInputs() {
+    if (!state.editorPanel) {
+      return;
+    }
+
+    var brushInputs = state.editorPanel.querySelectorAll("[data-travel-editor-brush]");
+
+    for (var i = 0; i < brushInputs.length; i += 1) {
+      brushInputs[i].value = String(state.brushSize);
+    }
   }
 
   function syncOpacityInputs() {
