@@ -9,6 +9,21 @@
   var RESOLVE_PLAYER_URL = SUPABASE_URL + "/functions/v1/resolve-player";
 
   var reportModalElements = null;
+  var QUEST_SUMMARY_MAX_LENGTH = 180;
+  var QUEST_INTELLIGENCE_ICONS = [
+    { icon: "fa-circle-info", label: "Informazione" },
+    { icon: "fa-eye", label: "Avvistamento" },
+    { icon: "fa-triangle-exclamation", label: "Pericolo" },
+    { icon: "fa-skull", label: "Minaccia" },
+    { icon: "fa-location-dot", label: "Luogo" },
+    { icon: "fa-user-secret", label: "Agente" },
+    { icon: "fa-mask", label: "Identità nascosta" },
+    { icon: "fa-scroll", label: "Documento" },
+    { icon: "fa-key", label: "Chiave" },
+    { icon: "fa-route", label: "Percorso" },
+    { icon: "fa-handshake", label: "Contatto" },
+    { icon: "fa-gem", label: "Oggetto rilevante" }
+  ];
 
   var FALLBACK_QUEST_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 480'><rect width='800' height='480' fill='%23162229'/><rect x='24' y='24' width='752' height='432' fill='none' stroke='%233b5865' stroke-width='2'/><text x='50%25' y='50%25' fill='%2371ddca' font-family='Arial' font-size='28' text-anchor='middle' dominant-baseline='middle'>Immagine missione non disponibile</text></svg>";
@@ -16,7 +31,17 @@
   var FALLBACK_TOKEN_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23162229'/><circle cx='32' cy='24' r='12' fill='%234db8a6'/><rect x='14' y='40' width='36' height='16' fill='%233b5865'/></svg>";
 
-  document.addEventListener("DOMContentLoaded", initQuestPage);
+  document.addEventListener("DOMContentLoaded", function onQuestDomReady() {
+    initQuestSection();
+    initQuestPage();
+    initQuestEditorPatches();
+    protectQuestModalsFromBackdropClose();
+    removeQuestEditorLegacyFields();
+
+    document.addEventListener("enclave:quest-updated", function onQuestSectionUpdated() {
+      initQuestSection();
+    });
+  });
 
   function initQuestPage() {
     var elements = {
@@ -72,6 +97,290 @@
 
       loadQuestPage(elements);
     });
+  }
+
+  async function initQuestSection() {
+    var questList = document.querySelector("[data-quest-list]");
+
+    if (!questList) {
+      return;
+    }
+
+    try {
+      var data = await loadQuestDataFromSupabase();
+      var characterMap = buildCharacterMap(data.characters);
+      var questCharacterMap = buildQuestCharacterMap(data.questCharacters);
+      renderQuests(questList, data.quests, characterMap, questCharacterMap);
+    } catch (error) {
+      console.error("Errore nel caricamento delle missioni:", error);
+      renderQuestListMessage(questList, "Impossibile caricare le missioni in questo momento.");
+    }
+  }
+
+  async function loadQuestDataFromSupabase() {
+    var responses = await Promise.all([
+      fetchFromSupabase(
+        "quests",
+        [
+          "id",
+          "slug",
+          "title",
+          "type",
+          "status",
+          "image_url",
+          "location",
+          "summary",
+          "briefing",
+          "report",
+          "last_session_at",
+          "next_session_at"
+        ],
+        "order=title.asc"
+      ),
+      fetchFromSupabase("quest_characters", ["quest_id", "character_id"]),
+      fetchFromSupabase(
+        "characters",
+        ["id", "slug", "name", "portrait_url", "token_url", "class_name", "subclass_name", "level"],
+        "order=name.asc"
+      )
+    ]);
+
+    return {
+      quests: responses[0],
+      questCharacters: responses[1],
+      characters: responses[2]
+    };
+  }
+
+  async function fetchFromSupabase(tableName, fields, extraQuery) {
+    var query = "?select=" + encodeURIComponent(fields.join(","));
+
+    if (extraQuery) {
+      query += "&" + extraQuery;
+    }
+
+    var response = await fetch(SUPABASE_URL + "/rest/v1/" + tableName + query, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: "Bearer " + SUPABASE_ANON_KEY
+      }
+    });
+
+    var payload = await parseResponseBody(response);
+
+    if (!response.ok) {
+      throw new Error(readSupabaseError(payload, response.status));
+    }
+
+    if (!Array.isArray(payload)) {
+      throw new Error("Risposta Supabase non valida per " + tableName + ".");
+    }
+
+    return payload;
+  }
+
+  function buildCharacterMap(characters) {
+    var map = new Map();
+    var rows = Array.isArray(characters) ? characters : [];
+
+    for (var i = 0; i < rows.length; i += 1) {
+      var character = rows[i];
+      var key = toIdString(character && character.id);
+
+      if (!key) {
+        console.warn("Personaggio ignorato: id mancante.", character);
+        continue;
+      }
+
+      map.set(key, character);
+    }
+
+    return map;
+  }
+
+  function buildQuestCharacterMap(rows) {
+    var grouped = new Map();
+    var relations = Array.isArray(rows) ? rows : [];
+
+    for (var i = 0; i < relations.length; i += 1) {
+      var row = relations[i];
+      var questKey = toIdString(row && row.quest_id);
+      var characterKey = toIdString(row && row.character_id);
+
+      if (!questKey || !characterKey) {
+        continue;
+      }
+
+      if (!grouped.has(questKey)) {
+        grouped.set(questKey, []);
+      }
+
+      grouped.get(questKey).push(characterKey);
+    }
+
+    return grouped;
+  }
+
+  function renderQuests(container, quests, characterMap, questCharacterMap) {
+    container.innerHTML = "";
+
+    if (!Array.isArray(quests) || quests.length === 0) {
+      renderQuestListMessage(container, "Nessuna missione attiva disponibile.");
+      return;
+    }
+
+    var fragment = document.createDocumentFragment();
+
+    for (var i = 0; i < quests.length; i += 1) {
+      var questCard = renderQuestCard(quests[i], characterMap, questCharacterMap);
+      if (questCard) {
+        fragment.appendChild(questCard);
+      }
+    }
+
+    if (!fragment.childNodes.length) {
+      renderQuestListMessage(container, "Nessuna missione valida da mostrare.");
+      return;
+    }
+
+    container.appendChild(fragment);
+  }
+
+  function renderQuestCard(quest, characterMap, questCharacterMap) {
+    if (!quest || typeof quest !== "object") {
+      console.warn("Missione ignorata: formato non valido.", quest);
+      return null;
+    }
+
+    var title = readString(quest.title, "Missione senza titolo");
+    var questId = toIdString(quest.id);
+    var questSlug = readString(quest.slug, slugify(title || questId || "quest"));
+    var imagePath = readString(quest.image_url, FALLBACK_QUEST_IMAGE);
+    var sessionInfo = buildQuestCardSessionInfo(quest);
+    var statusInfo = mapQuestStatus(quest.status);
+
+    var article = createElement("article", "quest-item");
+    article.setAttribute("aria-label", "Missione " + title);
+    article.style.setProperty("--quest-bg-image", toCssBackgroundImage(imagePath));
+
+    var questTop = createElement("div", "quest-top");
+    questTop.appendChild(createElement("h3", "", title));
+
+    var badges = createElement("div", "quest-badges");
+    badges.appendChild(createElement("span", "quest-type", mapQuestType(quest.type)));
+    badges.appendChild(createElement("span", "status " + statusInfo.className, statusInfo.label));
+    questTop.appendChild(badges);
+    article.appendChild(questTop);
+
+    var layout = createElement("div", "quest-layout");
+    var media = createElement("figure", "quest-media");
+    var image = document.createElement("img");
+    image.src = imagePath;
+    image.alt = "Veduta missione " + title;
+    attachImageFallback(image, FALLBACK_QUEST_IMAGE);
+    media.appendChild(image);
+
+    var body = createElement("div", "quest-body");
+    body.appendChild(renderQuestTokenRow(questId, characterMap, questCharacterMap));
+
+    var metaGrid = createElement("div", "quest-meta-grid");
+    metaGrid.appendChild(renderQuestField("Luogo", readString(quest.location, "Luogo non disponibile")));
+    metaGrid.appendChild(renderQuestField(sessionInfo.label, sessionInfo.value));
+
+    body.appendChild(metaGrid);
+    layout.appendChild(media);
+    layout.appendChild(body);
+    article.appendChild(layout);
+
+    var cta = createElement("a", "quest-cta", "Apri missione");
+    cta.href = "quest.html?quest=" + encodeURIComponent(questSlug);
+    article.appendChild(cta);
+
+    return article;
+  }
+
+  function renderQuestTokenRow(questId, characterMap, questCharacterMap) {
+    var wrapper = createElement("div", "quest-team");
+    wrapper.setAttribute("aria-label", "Gruppo assegnato");
+    wrapper.appendChild(createElement("span", "field-label", "Gruppo"));
+
+    var list = createElement("ul", "token-list");
+    var characterIds = questCharacterMap.get(questId) || [];
+
+    for (var i = 0; i < characterIds.length; i += 1) {
+      var character = characterMap.get(characterIds[i]);
+
+      if (!character) {
+        console.warn("Missione con personaggio non trovato:", characterIds[i]);
+        continue;
+      }
+
+      var characterSlug = readString(character.slug, "");
+      if (!characterSlug) {
+        continue;
+      }
+
+      var tokenPath =
+        readString(character.portrait_url, "") ||
+        readString(character.token_url, "") ||
+        FALLBACK_TOKEN_IMAGE;
+
+      var listItem = document.createElement("li");
+      var link = document.createElement("a");
+      link.className = "token-link";
+      link.href = "characters.html?character=" + encodeURIComponent(characterSlug);
+      link.setAttribute("aria-label", "Apri scheda di " + readString(character.name, "personaggio"));
+      link.dataset.tooltip = buildCharacterTooltip(character);
+
+      var img = document.createElement("img");
+      img.src = tokenPath;
+      img.alt = readString(character.name, "Personaggio");
+      attachImageFallback(img, FALLBACK_TOKEN_IMAGE);
+
+      link.appendChild(img);
+      listItem.appendChild(link);
+      list.appendChild(listItem);
+    }
+
+    if (!list.childNodes.length) {
+      wrapper.appendChild(createElement("p", "quest-empty", "Nessun personaggio assegnato."));
+      return wrapper;
+    }
+
+    wrapper.appendChild(list);
+    return wrapper;
+  }
+
+  function renderQuestField(label, value) {
+    var field = createElement("div", "quest-field");
+    field.appendChild(createElement("span", "field-label", label));
+    field.appendChild(createElement("p", "", value));
+    return field;
+  }
+
+  function buildQuestCardSessionInfo(quest) {
+    var nextSession = readString(quest.next_session_at, "");
+    var lastSession = readString(quest.last_session_at, "");
+
+    if (nextSession) {
+      return {
+        label: "Prossima sessione",
+        value: formatDate(nextSession)
+      };
+    }
+
+    if (lastSession) {
+      return {
+        label: "Ultima sessione",
+        value: formatDate(lastSession)
+      };
+    }
+
+    return {
+      label: "Sessione",
+      value: "Da pianificare"
+    };
   }
 
   async function loadQuestPage(elements) {
@@ -333,8 +642,10 @@
 
     var editButton = document.createElement("button");
     editButton.type = "button";
-    editButton.className = "quest-edit-action";
-    editButton.textContent = "Modifica missione";
+    editButton.className = "quest-edit-action quest-edit-action--icon";
+    editButton.innerHTML = '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>';
+    editButton.title = "Modifica missione";
+    editButton.setAttribute("aria-label", "Modifica missione");
     syncQuestEditButtonAccess(editButton);
 
     editButton.addEventListener("click", function onEditClick() {
@@ -390,41 +701,18 @@
     var main = document.createElement("div");
     main.className = "quest-detail-main";
 
-    var summaryText = readString(quest.summary, "");
-    if (summaryText) {
-      main.appendChild(buildTextSection("Sintesi", summaryText));
-    }
-
     var briefingText =
       readString(quest.briefing, "") ||
       readString(quest.summary, "") ||
       readString(quest.report, "");
 
     main.appendChild(
-      buildTextSection("Briefing", briefingText || "Briefing non disponibile.")
+      buildMarkdownTextSection("Briefing", briefingText || "Briefing non disponibile.")
     );
-
-    var reportText = readString(quest.report, "");
-    if (reportText) {
-      main.appendChild(buildTextSection("Ultimo rapporto legacy", reportText));
-    }
 
     main.appendChild(
       buildQuestReportsSection(reports, reportsLoadFailed, quest, characters, currentAuthorCharacterId)
     );
-
-    var objectivesSection = buildObjectivesSection(
-      readString(quest.objective_primary, ""),
-      readString(quest.objective_secondary, "")
-    );
-    if (objectivesSection) {
-      main.appendChild(objectivesSection);
-    }
-
-    var notesText = readString(quest.notes, "");
-    if (notesText) {
-      main.appendChild(buildTextSection("Note operative", notesText));
-    }
 
     layout.appendChild(main);
 
@@ -432,7 +720,21 @@
     side.className = "quest-detail-side";
 
     side.appendChild(buildMissionDataCard(quest));
+
     side.appendChild(buildTeamCard(characters, characterIds));
+
+    var objectivesSection = buildObjectivesSection(
+      readString(quest.objective_primary, ""),
+      readString(quest.objective_secondary, "")
+    );
+    if (objectivesSection) {
+      side.appendChild(objectivesSection);
+    }
+
+    var intelligenceSection = buildIntelligenceSection(readString(quest.notes, ""));
+    if (intelligenceSection) {
+      side.appendChild(intelligenceSection);
+    }
 
     layout.appendChild(side);
 
@@ -453,6 +755,19 @@
     return section;
   }
 
+  function buildMarkdownTextSection(titleText, bodyText) {
+    var section = document.createElement("section");
+    section.className = "quest-detail-section";
+
+    var title = document.createElement("h3");
+    title.textContent = titleText;
+    section.appendChild(title);
+
+    appendReportMarkdown(section, bodyText);
+
+    return section;
+  }
+
   function buildQuestReportsSection(reports, hasLoadError, quest, characters, currentAuthorCharacterId) {
     var section = document.createElement("section");
     section.className = "quest-detail-section quest-reports-section";
@@ -464,15 +779,33 @@
     title.textContent = "Rapporti della missione";
     head.appendChild(title);
 
+    var actions = document.createElement("div");
+    actions.className = "quest-report-section-actions";
+
+    var readerButton = document.createElement("button");
+    readerButton.type = "button";
+    readerButton.className = "quest-edit-action quest-report-action quest-report-action--icon";
+    readerButton.innerHTML = '<i class="fa-solid fa-book-open" aria-hidden="true"></i>';
+    readerButton.title = "Apri archivio rapporti";
+    readerButton.setAttribute("aria-label", "Apri archivio rapporti");
+    readerButton.disabled = hasLoadError || !Array.isArray(reports) || !reports.length;
+    readerButton.addEventListener("click", function onOpenReportsReader() {
+      openQuestReportsReader(reports, quest, characters, currentAuthorCharacterId);
+    });
+    actions.appendChild(readerButton);
+
     var actionButton = document.createElement("button");
     actionButton.type = "button";
-    actionButton.className = "quest-edit-action quest-report-action";
-    actionButton.textContent = "Aggiungi rapporto";
+    actionButton.className = "quest-edit-action quest-report-action quest-report-action--icon";
+    actionButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
+    actionButton.title = "Aggiungi rapporto";
+    actionButton.setAttribute("aria-label", "Aggiungi rapporto");
     actionButton.addEventListener("click", function onOpenReportModal() {
       openQuestReportModal(quest, characters);
     });
-    head.appendChild(actionButton);
+    actions.appendChild(actionButton);
 
+    head.appendChild(actions);
     section.appendChild(head);
 
     if (hasLoadError) {
@@ -484,26 +817,231 @@
       empty.textContent = "Nessun rapporto registrato.";
       section.appendChild(empty);
     } else {
-      for (var i = 0; i < reports.length; i += 1) {
-        section.appendChild(buildQuestReportCard(reports[i], quest, characters, currentAuthorCharacterId));
+      var previewReports = reports.slice().sort(compareReportsNewestFirst).slice(0, 3);
+      var list = document.createElement("div");
+      list.className = "quest-reports-list quest-reports-list--preview";
+      list.dataset.questReportsList = "true";
+
+      for (var i = 0; i < previewReports.length; i += 1) {
+        list.appendChild(
+          buildQuestReportCard(previewReports[i], quest, characters, currentAuthorCharacterId, {
+            preview: true,
+            reports: reports,
+          })
+        );
       }
+
+      section.appendChild(list);
     }
 
     return section;
   }
 
-  function buildQuestReportCard(report, quest, characters, currentAuthorCharacterId) {
+  function compareReportsNewestFirst(a, b) {
+    return readReportTimestamp(b) - readReportTimestamp(a);
+  }
+
+  function compareReportsOldestFirst(a, b) {
+    return readReportTimestamp(a) - readReportTimestamp(b);
+  }
+
+  function readReportTimestamp(report) {
+    var parsed = new Date(readString(report && report.created_at, ""));
+    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  }
+
+  function buildQuestReportsFilters(reports) {
+    var filters = document.createElement("div");
+    filters.className = "quest-report-filters";
+
+    var typeFilter = buildQuestReportFilterSelect("Tipo", "type", "Tutte le tipologie");
+    var authorFilter = buildQuestReportFilterSelect("Autore", "author", "Tutti gli autori");
+    var dateFilter = buildQuestReportFilterSelect("Data", "date", "Tutte le date");
+
+    var types = new Set();
+    var authors = new Set();
+    var dates = new Map();
+
+    for (var i = 0; i < reports.length; i += 1) {
+      var report = reports[i] || {};
+      var type = readString(report.report_type, "");
+      var author = readString(report.author_name, "") || "Autore sconosciuto";
+      var dateValue = normalizeReportDateValue(readString(report.created_at, ""));
+
+      if (type) {
+        types.add(type);
+      }
+
+      if (author) {
+        authors.add(author);
+      }
+
+      if (dateValue) {
+        dates.set(dateValue, formatDate(readString(report.created_at, "")));
+      }
+    }
+
+    Array.from(types).sort().forEach(function appendType(type) {
+      appendSelectOption(typeFilter.select, type, mapQuestReportType(type));
+    });
+
+    Array.from(authors).sort().forEach(function appendAuthor(author) {
+      appendSelectOption(authorFilter.select, author, author);
+    });
+
+    Array.from(dates.keys()).sort().reverse().forEach(function appendDate(dateValue) {
+      appendSelectOption(dateFilter.select, dateValue, dates.get(dateValue));
+    });
+
+    filters.appendChild(typeFilter.wrap);
+    filters.appendChild(authorFilter.wrap);
+    filters.appendChild(dateFilter.wrap);
+
+    return filters;
+  }
+
+  function buildQuestReportFilterSelect(labelText, filterName, emptyText) {
+    var wrap = document.createElement("label");
+    wrap.className = "quest-report-filter";
+
+    var label = document.createElement("span");
+    label.className = "field-label";
+    label.textContent = labelText;
+    wrap.appendChild(label);
+
+    var select = document.createElement("select");
+    select.className = "quest-report-filter__select";
+    select.dataset.reportFilter = filterName;
+    appendSelectOption(select, "", emptyText);
+    wrap.appendChild(select);
+
+    return { wrap: wrap, select: select };
+  }
+
+  function appendSelectOption(select, value, label) {
+    var option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    select.appendChild(option);
+  }
+
+  function bindQuestReportsFilters(section) {
+    var filters = section.querySelectorAll("[data-report-filter]");
+
+    for (var i = 0; i < filters.length; i += 1) {
+      filters[i].addEventListener("change", function onFilterChange() {
+        applyQuestReportFilters(section);
+      });
+    }
+  }
+
+  function applyQuestReportFilters(section) {
+    var typeValue = readFilterValue(section, "type");
+    var authorValue = readFilterValue(section, "author");
+    var dateValue = readFilterValue(section, "date");
+    var cards = section.querySelectorAll(".quest-report-card");
+    var visibleCount = 0;
+
+    for (var i = 0; i < cards.length; i += 1) {
+      var card = cards[i];
+      var matchesType = !typeValue || card.dataset.reportType === typeValue;
+      var matchesAuthor = !authorValue || card.dataset.reportAuthor === authorValue;
+      var matchesDate = !dateValue || card.dataset.reportDate === dateValue;
+      var isVisible = matchesType && matchesAuthor && matchesDate;
+
+      card.hidden = !isVisible;
+      if (isVisible) {
+        visibleCount += 1;
+      }
+    }
+
+    syncQuestReportsFilterEmptyState(section, visibleCount);
+  }
+
+  function readFilterValue(section, filterName) {
+    var filter = section.querySelector('[data-report-filter="' + filterName + '"]');
+    return readString(filter && filter.value, "");
+  }
+
+  function syncQuestReportsFilterEmptyState(section, visibleCount) {
+    var empty = section.querySelector("[data-report-filter-empty]");
+
+    if (!empty) {
+      empty = document.createElement("p");
+      empty.className = "quest-report-filter-empty";
+      empty.dataset.reportFilterEmpty = "true";
+      empty.textContent = "Nessun rapporto corrisponde ai filtri selezionati.";
+      section.appendChild(empty);
+    }
+
+    empty.hidden = visibleCount > 0;
+  }
+
+  function normalizeReportDateValue(dateString) {
+    var parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) {
+      return "";
+    }
+
+    return parsed.toISOString().slice(0, 10);
+  }
+
+  function buildQuestReportCard(report, quest, characters, currentAuthorCharacterId, options) {
     var card = document.createElement("article");
-    card.className = "quest-objective-block";
+    card.className = "quest-objective-block quest-report-card";
+
+    if (options && options.preview) {
+      card.classList.add("quest-report-card--preview");
+      card.tabIndex = 0;
+      card.setAttribute("role", "button");
+      card.setAttribute("aria-label", "Apri rapporto nel reader");
+      card.addEventListener("click", function onPreviewReportClick(event) {
+        if (event.target.closest("button, a, input, select, textarea")) {
+          return;
+        }
+
+        openQuestReportsReader(
+          options.reports || [report],
+          quest,
+          characters,
+          currentAuthorCharacterId,
+          toIdString(report && report.id)
+        );
+      });
+      card.addEventListener("keydown", function onPreviewReportKeydown(event) {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        if (event.target.closest("button, a, input, select, textarea")) {
+          return;
+        }
+
+        event.preventDefault();
+        openQuestReportsReader(
+          options.reports || [report],
+          quest,
+          characters,
+          currentAuthorCharacterId,
+          toIdString(report && report.id)
+        );
+      });
+    }
 
     var meta = document.createElement("span");
     meta.className = "field-label";
 
     var reportType = mapQuestReportType(readString(report && report.report_type, ""));
     var authorName = readString(report && report.author_name, "") || "Autore sconosciuto";
-    var createdAt = formatDate(readString(report && report.created_at, ""));
+    var createdAtRaw = readString(report && report.created_at, "");
+    var createdAt = formatDate(createdAtRaw);
 
-    meta.textContent = reportType + " - " + authorName + " - " + createdAt;
+    card.dataset.reportType = readString(report && report.report_type, "");
+    card.dataset.reportAuthor = authorName;
+    card.dataset.reportDate = normalizeReportDateValue(createdAtRaw);
+
+    appendQuestReportTypeIcon(meta, readString(report && report.report_type, ""));
+    meta.appendChild(document.createTextNode(" " + authorName + " - " + createdAt));
     card.appendChild(meta);
 
     var titleText = readString(report && report.title, "");
@@ -527,8 +1065,10 @@
 
       var editButton = document.createElement("button");
       editButton.type = "button";
-      editButton.className = "quest-edit-action quest-report-action quest-report-action--small";
-      editButton.textContent = "Modifica";
+      editButton.className = "quest-edit-action quest-report-action quest-report-action--small quest-report-card__action";
+      editButton.innerHTML = '<i class="fa-solid fa-pen" aria-hidden="true"></i>';
+      editButton.title = "Modifica rapporto";
+      editButton.setAttribute("aria-label", "Modifica rapporto");
       editButton.addEventListener("click", function onEditReportClick() {
         openQuestReportModal(quest, characters, report);
       });
@@ -537,8 +1077,10 @@
       var deleteButton = document.createElement("button");
       deleteButton.type = "button";
       deleteButton.className =
-        "quest-edit-action quest-report-action quest-report-action--small is-danger";
-      deleteButton.textContent = "Elimina";
+        "quest-edit-action quest-report-action quest-report-action--small quest-report-card__action is-danger";
+      deleteButton.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
+      deleteButton.title = "Elimina rapporto";
+      deleteButton.setAttribute("aria-label", "Elimina rapporto");
       deleteButton.addEventListener("click", function onDeleteReportClick() {
         deleteQuestReport(report, currentAuthorCharacterId);
       });
@@ -548,6 +1090,340 @@
     }
 
     return card;
+  }
+
+  function openQuestReportsReader(reports, quest, characters, currentAuthorCharacterId, selectedReportId) {
+    var allReports = Array.isArray(reports) ? reports.slice().sort(compareReportsOldestFirst) : [];
+
+    if (!allReports.length) {
+      return;
+    }
+
+    var root = document.createElement("div");
+    root.className = "import-modal quest-reports-reader";
+
+    var backdrop = document.createElement("div");
+    backdrop.className = "import-modal__backdrop";
+    root.appendChild(backdrop);
+
+    var panel = document.createElement("div");
+    panel.className = "import-modal__panel quest-reports-reader__panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", "true");
+    panel.setAttribute("aria-label", "Archivio rapporti missione");
+
+    var toolbar = document.createElement("div");
+    toolbar.className = "quest-reports-reader__toolbar";
+
+    var heading = document.createElement("h3");
+    heading.textContent = "Archivio rapporti";
+    toolbar.appendChild(heading);
+
+    var toolbarActions = document.createElement("div");
+    toolbarActions.className = "quest-reports-reader__actions";
+
+    var addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "quest-edit-action quest-report-action quest-report-action--icon";
+    addButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
+    addButton.title = "Aggiungi rapporto";
+    addButton.setAttribute("aria-label", "Aggiungi rapporto");
+    addButton.addEventListener("click", function onReaderAddReport() {
+      openQuestReportModal(quest, characters);
+    });
+    toolbarActions.appendChild(addButton);
+
+    var filtersToggle = document.createElement("button");
+    filtersToggle.type = "button";
+    filtersToggle.className = "quest-edit-action quest-report-action quest-report-action--icon";
+    filtersToggle.innerHTML = '<i class="fa-solid fa-filter" aria-hidden="true"></i>';
+    filtersToggle.title = "Filtra rapporti";
+    filtersToggle.setAttribute("aria-label", "Filtra rapporti");
+    toolbarActions.appendChild(filtersToggle);
+
+    var closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "quest-edit-action quest-report-action quest-report-action--icon";
+    closeButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i>';
+    closeButton.title = "Chiudi archivio rapporti";
+    closeButton.setAttribute("aria-label", "Chiudi archivio rapporti");
+    toolbarActions.appendChild(closeButton);
+
+    toolbar.appendChild(toolbarActions);
+    panel.appendChild(toolbar);
+
+    var filtersBubble = buildQuestReportsFilters(allReports);
+    filtersBubble.classList.add("quest-report-filters--bubble");
+    filtersBubble.hidden = true;
+    panel.appendChild(filtersBubble);
+
+    var layout = document.createElement("div");
+    layout.className = "quest-reports-reader__layout";
+
+    var toc = document.createElement("aside");
+    toc.className = "quest-reports-reader__toc";
+
+    var content = document.createElement("article");
+    content.className = "quest-reports-reader__content";
+
+    layout.appendChild(toc);
+    layout.appendChild(content);
+    panel.appendChild(layout);
+    root.appendChild(panel);
+    document.body.appendChild(root);
+    document.body.classList.add("modal-open");
+
+    var state = {
+      reports: allReports,
+      visibleReports: allReports.slice(),
+      selectedReportId: resolveInitialReportId(allReports, selectedReportId),
+      root: root,
+      toc: toc,
+      content: content,
+      filters: filtersBubble,
+      quest: quest,
+      characters: characters,
+      currentAuthorCharacterId: currentAuthorCharacterId,
+    };
+
+    function closeReader() {
+      document.body.classList.remove("modal-open");
+      root.remove();
+    }
+
+    function renderReader() {
+      renderQuestReportsReaderToc(state);
+      renderQuestReportsReaderContent(state);
+    }
+
+    filtersToggle.addEventListener("click", function onToggleFilters() {
+      filtersBubble.hidden = !filtersBubble.hidden;
+    });
+
+    closeButton.addEventListener("click", closeReader);
+    backdrop.addEventListener("click", function onReportsReaderBackdropClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+
+    root.addEventListener("click", function onReaderClick(event) {
+      var tocButton = event.target.closest("[data-report-reader-id]");
+      if (!tocButton) {
+        return;
+      }
+
+      state.selectedReportId = tocButton.dataset.reportReaderId;
+      renderReader();
+    });
+
+    root.addEventListener(
+      "wheel",
+      function onReaderWheel(event) {
+        trapQuestReaderWheel(event, panel, content);
+      },
+      { passive: false }
+    );
+
+    var filters = filtersBubble.querySelectorAll("[data-report-filter]");
+    for (var i = 0; i < filters.length; i += 1) {
+      filters[i].addEventListener("change", function onReaderFilterChange() {
+        state.visibleReports = filterQuestReportsForReader(allReports, filtersBubble);
+
+        if (!state.visibleReports.some(function hasSelected(report) {
+          return toIdString(report && report.id) === state.selectedReportId;
+        })) {
+          state.selectedReportId = toIdString(state.visibleReports[0] && state.visibleReports[0].id);
+        }
+
+        renderReader();
+      });
+    }
+
+    document.addEventListener("keydown", function onReaderKeydown(event) {
+      if (!document.body.contains(root)) {
+        document.removeEventListener("keydown", onReaderKeydown);
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeReader();
+      }
+    });
+
+    renderReader();
+    closeButton.focus();
+  }
+
+  function resolveInitialReportId(reports, selectedReportId) {
+    var preferredId = toIdString(selectedReportId);
+
+    if (preferredId) {
+      for (var i = 0; i < reports.length; i += 1) {
+        if (toIdString(reports[i] && reports[i].id) === preferredId) {
+          return preferredId;
+        }
+      }
+    }
+
+    return toIdString(reports[0] && reports[0].id);
+  }
+
+  function trapQuestReaderWheel(event, panel, fallbackScroller) {
+    if (!panel || !panel.contains(event.target)) {
+      return;
+    }
+
+    var scroller = event.target.closest(".quest-reports-reader__content, .quest-reports-reader__toc");
+    if (!scroller) {
+      scroller = fallbackScroller;
+    }
+
+    if (!scroller) {
+      event.preventDefault();
+      return;
+    }
+
+    event.preventDefault();
+    scroller.scrollTop += event.deltaY;
+    scroller.scrollLeft += event.deltaX;
+  }
+
+  function filterQuestReportsForReader(reports, filtersRoot) {
+    var typeValue = readFilterValue(filtersRoot, "type");
+    var authorValue = readFilterValue(filtersRoot, "author");
+    var dateValue = readFilterValue(filtersRoot, "date");
+
+    return reports.filter(function filterReport(report) {
+      var authorName = readString(report && report.author_name, "") || "Autore sconosciuto";
+      var reportType = readString(report && report.report_type, "");
+      var reportDate = normalizeReportDateValue(readString(report && report.created_at, ""));
+
+      return (
+        (!typeValue || reportType === typeValue) &&
+        (!authorValue || authorName === authorValue) &&
+        (!dateValue || reportDate === dateValue)
+      );
+    });
+  }
+
+  function renderQuestReportsReaderToc(state) {
+    state.toc.innerHTML = "";
+
+    if (!state.visibleReports.length) {
+      var empty = document.createElement("p");
+      empty.className = "quest-report-filter-empty";
+      empty.textContent = "Nessun rapporto corrisponde ai filtri selezionati.";
+      state.toc.appendChild(empty);
+      return;
+    }
+
+    for (var i = 0; i < state.visibleReports.length; i += 1) {
+      var report = state.visibleReports[i];
+      var reportId = toIdString(report && report.id);
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "quest-reports-reader__toc-item";
+      button.dataset.reportReaderId = reportId;
+
+      if (reportId === state.selectedReportId) {
+        button.classList.add("is-active");
+      }
+
+      var title = document.createElement("strong");
+      appendQuestReportTypeIcon(title, readString(report && report.report_type, ""));
+      title.appendChild(document.createTextNode(" " + readString(report && report.title, "Rapporto senza titolo")));
+      button.appendChild(title);
+
+      var meta = document.createElement("span");
+      meta.textContent = formatDate(readString(report && report.created_at, "")) + " · " +
+        (readString(report && report.author_name, "") || "Autore sconosciuto");
+      button.appendChild(meta);
+
+      state.toc.appendChild(button);
+    }
+  }
+
+  function renderQuestReportsReaderContent(state) {
+    state.content.innerHTML = "";
+
+    var selected = null;
+    for (var i = 0; i < state.visibleReports.length; i += 1) {
+      if (toIdString(state.visibleReports[i] && state.visibleReports[i].id) === state.selectedReportId) {
+        selected = state.visibleReports[i];
+        break;
+      }
+    }
+
+    if (!selected) {
+      var empty = document.createElement("p");
+      empty.className = "quest-report-filter-empty";
+      empty.textContent = "Seleziona un rapporto dall'elenco.";
+      state.content.appendChild(empty);
+      return;
+    }
+
+    var contentHeader = document.createElement("div");
+    contentHeader.className = "quest-reports-reader__content-head";
+
+    var contentTitleWrap = document.createElement("div");
+    contentTitleWrap.className = "quest-reports-reader__content-title";
+
+    var meta = document.createElement("span");
+    meta.className = "field-label quest-report-meta-line";
+    appendQuestReportTypeIcon(meta, readString(selected.report_type, ""));
+    meta.appendChild(
+      document.createTextNode(
+        " " +
+          (readString(selected.author_name, "") || "Autore sconosciuto") +
+          " - " +
+          formatDate(readString(selected.created_at, ""))
+      )
+    );
+    contentTitleWrap.appendChild(meta);
+
+    var contentActions = document.createElement("div");
+    contentActions.className = "quest-reports-reader__content-actions";
+
+    var selectedAuthorId = toIdString(selected && selected.author_character_id);
+    var canManageSelected =
+      !!selectedAuthorId &&
+      !!toIdString(state.currentAuthorCharacterId) &&
+      selectedAuthorId === toIdString(state.currentAuthorCharacterId);
+
+    if (canManageSelected) {
+      var editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "quest-edit-action quest-report-action quest-report-action--icon";
+      editButton.innerHTML = '<i class="fa-solid fa-pen" aria-hidden="true"></i>';
+      editButton.title = "Modifica rapporto";
+      editButton.setAttribute("aria-label", "Modifica rapporto");
+      editButton.addEventListener("click", function onReaderEditReport() {
+        openQuestReportModal(state.quest, state.characters, selected);
+      });
+      contentActions.appendChild(editButton);
+
+      var deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "quest-edit-action quest-report-action quest-report-action--icon is-danger";
+      deleteButton.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
+      deleteButton.title = "Elimina rapporto";
+      deleteButton.setAttribute("aria-label", "Elimina rapporto");
+      deleteButton.addEventListener("click", function onReaderDeleteReport() {
+        deleteQuestReport(selected, state.currentAuthorCharacterId);
+      });
+      contentActions.appendChild(deleteButton);
+    }
+
+    contentHeader.appendChild(contentTitleWrap);
+    contentHeader.appendChild(contentActions);
+    state.content.appendChild(contentHeader);
+
+    var title = document.createElement("h2");
+    title.textContent = readString(selected.title, "Rapporto senza titolo");
+    contentTitleWrap.appendChild(title);
+
+    appendReportMarkdown(state.content, readString(selected.body, ""));
   }
 
   async function openQuestReportModal(quest, characters, reportToEdit) {
@@ -806,7 +1682,10 @@
       reportId: "",
     };
 
-    backdrop.addEventListener("click", closeQuestReportModal);
+    backdrop.addEventListener("click", function onQuestReportBackdropClick(event) {
+      event.preventDefault();
+      event.stopPropagation();
+    });
     cancelButton.addEventListener("click", closeQuestReportModal);
 
     document.addEventListener("keydown", function onQuestReportModalKeydown(event) {
@@ -1471,11 +2350,11 @@
     var value = textarea.value || "";
     var start = textarea.selectionStart || 0;
     var end = textarea.selectionEnd || 0;
-    var blockStart = value.lastIndexOf("", start - 1) + 1;
-    var blockEndIndex = value.indexOf("", end);
+    var blockStart = value.lastIndexOf("\n", start - 1) + 1;
+    var blockEndIndex = value.indexOf("\n", end);
     var blockEnd = blockEndIndex === -1 ? value.length : blockEndIndex;
     var selectedBlock = value.slice(blockStart, blockEnd);
-    var lines = selectedBlock.split("");
+    var lines = selectedBlock.split("\n");
     var nextNumber = 1;
 
     var prefixedLines = lines.map(function prefixLine(line) {
@@ -1496,7 +2375,7 @@
       return prefix + line;
     });
 
-    var inserted = prefixedLines.join("");
+    var inserted = prefixedLines.join("\n");
     textarea.value = value.slice(0, blockStart) + inserted + value.slice(blockEnd);
     textarea.focus();
     textarea.setSelectionRange(blockStart, blockStart + inserted.length);
@@ -1520,7 +2399,12 @@
 
     for (var i = 0; i < blocks.length; i += 1) {
       var block = blocks[i];
-      var lines = block.split("");
+      var lines = block.split("\n");
+
+      if (/^(-{3,}|_{3,}|\*{3,})$/.test(block.trim())) {
+        container.appendChild(document.createElement("hr"));
+        continue;
+      }
 
       if (block.indexOf("### ") === 0) {
         var heading = document.createElement("h3");
@@ -1569,6 +2453,51 @@
       .replace(/'/g, "&#39;");
   }
 
+  function appendQuestReportTypeIcon(container, type) {
+    var info = mapQuestReportTypeIcon(type);
+    var icon = document.createElement("span");
+    icon.className = "quest-report-type-icon " + info.className;
+    icon.title = info.label;
+    icon.setAttribute("aria-label", info.label);
+    icon.innerHTML = '<i class="fa-solid ' + info.icon + '" aria-hidden="true"></i>';
+    container.appendChild(icon);
+  }
+
+  function mapQuestReportTypeIcon(type) {
+    switch (type) {
+      case "field_report":
+        return {
+          label: "Rapporto operativo",
+          icon: "fa-scroll",
+          className: "quest-report-type-icon--field",
+        };
+      case "archivist_report":
+        return {
+          label: "Rapporto dell'Archivista",
+          icon: "fa-book-atlas",
+          className: "quest-report-type-icon--archivist",
+        };
+      case "player_note":
+        return {
+          label: "Nota personale",
+          icon: "fa-feather-pointed",
+          className: "quest-report-type-icon--note",
+        };
+      case "final_report":
+        return {
+          label: "Rapporto finale",
+          icon: "fa-flag-checkered",
+          className: "quest-report-type-icon--final",
+        };
+      default:
+        return {
+          label: "Rapporto",
+          icon: "fa-file-lines",
+          className: "quest-report-type-icon--generic",
+        };
+    }
+  }
+
   function mapQuestReportType(type) {
     switch (type) {
       case "field_report":
@@ -1589,7 +2518,7 @@
     }
 
     var section = document.createElement("section");
-    section.className = "quest-detail-section";
+    section.className = "quest-detail-section quest-detail-card quest-objectives-card";
 
     var title = document.createElement("h3");
     title.textContent = "Obiettivi";
@@ -1610,6 +2539,109 @@
     return section;
   }
 
+  function buildIntelligenceSection(notesText) {
+    var items = parseQuestIntelligenceItems(notesText);
+    if (!items.length) {
+      return null;
+    }
+
+    var section = document.createElement("section");
+    section.className = "quest-detail-section quest-detail-card quest-intelligence-card";
+
+    var title = document.createElement("h3");
+    title.textContent = "Intelligence";
+    section.appendChild(title);
+
+    var list = document.createElement("div");
+    list.className = "quest-intelligence-list";
+
+    for (var i = 0; i < items.length; i += 1) {
+      list.appendChild(buildIntelligenceItem(items[i]));
+    }
+
+    section.appendChild(list);
+    return section;
+  }
+
+  function parseQuestIntelligenceItems(notesText) {
+    var raw = readString(notesText, "");
+    if (!raw) {
+      return [];
+    }
+
+    try {
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map(function normalizeParsedIntel(item) {
+            if (typeof item === "string") {
+              return {
+                icon: "fa-circle-info",
+                text: item,
+              };
+            }
+
+            return {
+              icon: normalizeFontAwesomeIcon(readString(item && item.icon, "fa-circle-info")),
+              text: readString(item && item.text, ""),
+            };
+          })
+          .filter(function hasIntelText(item) {
+            return !!item.text;
+          });
+      }
+    } catch (_error) {
+      // Legacy plaintext notes fall through to line parsing.
+    }
+
+    return raw
+      .split("\n")
+      .map(function normalizeIntelLine(line) {
+        var cleaned = String(line || "").trim().replace(/^[-*][ \t]+/, "");
+        if (!cleaned) {
+          return null;
+        }
+
+        var iconMatch = cleaned.match(/^\[([a-z0-9 -]+)\][ 	]*(.+)$/i);
+        if (iconMatch) {
+          return {
+            icon: normalizeFontAwesomeIcon(iconMatch[1]),
+            text: iconMatch[2].trim(),
+          };
+        }
+
+        return {
+          icon: "fa-circle-info",
+          text: cleaned,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function buildIntelligenceItem(item) {
+    var row = document.createElement("div");
+    row.className = "quest-intelligence-item";
+
+    var icon = document.createElement("span");
+    icon.className = "quest-intelligence-item__icon";
+    icon.innerHTML = '<i class="fa-solid ' + normalizeFontAwesomeIcon(item.icon) + '" aria-hidden="true"></i>';
+    row.appendChild(icon);
+
+    var text = document.createElement("span");
+    text.className = "quest-intelligence-item__text";
+    text.innerHTML = renderInlineMiniMarkdown(readString(item.text, ""));
+    row.appendChild(text);
+
+    return row;
+  }
+
+  function normalizeFontAwesomeIcon(iconName) {
+    var normalized = readString(iconName, "fa-circle-info").toLowerCase().trim();
+    normalized = normalized.replace(/^fa-solid[ \t]+/, "").replace(/^fa-/, "");
+    normalized = normalized.replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    return normalized ? "fa-" + normalized : "fa-circle-info";
+  }
+
   function buildObjectiveBlock(labelText, bodyText) {
     var block = document.createElement("div");
     block.className = "quest-objective-block";
@@ -1619,9 +2651,65 @@
     label.textContent = labelText;
     block.appendChild(label);
 
-    appendRichText(block, bodyText);
+    if (labelText === "Obiettivi secondari") {
+      appendSecondaryObjectiveItems(block, bodyText);
+    } else {
+      appendRichText(block, bodyText);
+    }
 
     return block;
+  }
+
+  function appendSecondaryObjectiveItems(container, bodyText) {
+    var items = parseQuestTextItems(bodyText);
+
+    if (!items.length) {
+      appendRichText(container, bodyText);
+      return;
+    }
+
+    var list = document.createElement("div");
+    list.className = "quest-secondary-objectives-list";
+
+    for (var i = 0; i < items.length; i += 1) {
+      var item = document.createElement("div");
+      item.className = "quest-secondary-objective-item";
+      item.innerHTML = renderInlineMiniMarkdown(items[i]);
+      list.appendChild(item);
+    }
+
+    container.appendChild(list);
+  }
+
+  function parseQuestTextItems(value) {
+    var raw = readString(value, "");
+    if (!raw) {
+      return [];
+    }
+
+    try {
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map(function normalizeTextItem(item) {
+            if (typeof item === "string") {
+              return readString(item, "");
+            }
+
+            return readString(item && item.text, "");
+          })
+          .filter(Boolean);
+      }
+    } catch (_error) {
+      // Legacy plaintext objectives fall through to line parsing.
+    }
+
+    return raw
+      .split(String.fromCharCode(10))
+      .map(function normalizeObjectiveLine(line) {
+        return String(line || "").trim().replace(/^[-*][ 	]+/, "");
+      })
+      .filter(Boolean);
   }
 
   function buildMissionDataCard(quest) {
@@ -1878,6 +2966,669 @@
       month: "long",
       year: "numeric",
     }).format(parsed);
+  }
+
+  function buildQuestCardSummary(quest) {
+    var summary = readString(quest.summary, "");
+    var briefing = readString(quest.briefing, "");
+    var fallbackReport = readString(quest.report, "");
+    var source = summary || briefing || fallbackReport || "Nessuna sintesi disponibile.";
+    return truncateText(source, QUEST_SUMMARY_MAX_LENGTH);
+  }
+
+  function truncateText(value, maxLength) {
+    var text = readString(value, "");
+    if (!text) {
+      return "";
+    }
+
+    var normalized = text.split("\n").join(" ").replace(/  +/g, " ").trim();
+    if (normalized.length <= maxLength) {
+      return normalized;
+    }
+
+    return normalized.slice(0, maxLength - 1).trimEnd() + "…";
+  }
+
+  function toCssBackgroundImage(path) {
+    var src = readString(path, FALLBACK_QUEST_IMAGE);
+    var sanitized = src.split('"').join("%22").split(")").join("%29");
+    return 'url("' + sanitized + '")';
+  }
+
+  function renderQuestListMessage(container, text) {
+    container.innerHTML = "";
+    container.appendChild(createElement("p", "quest-empty", text));
+  }
+
+  function createElement(tag, className, text) {
+    var element = document.createElement(tag);
+
+    if (className) {
+      element.className = className;
+    }
+
+    if (typeof text === "string") {
+      element.textContent = text;
+    }
+
+    return element;
+  }
+
+  function slugify(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function protectQuestModalsFromBackdropClose() {
+    document.addEventListener(
+      "click",
+      function onQuestModalBackdropClick(event) {
+        var questPanel = event.target.closest(".quest-modal__panel");
+        var questModal = event.target.closest(".quest-modal, [data-quest-modal]");
+
+        if (questModal && !questPanel) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+        }
+      },
+      true
+    );
+  }
+
+  function initQuestEditorPatches() {
+    injectQuestEditorPatchStyles();
+    patchOpenQuestEditorModal();
+
+    document.addEventListener("click", function onQuestEditorClick(event) {
+      if (!event.target.closest(".quest-edit-action, [data-quest-edit], [data-open-quest-editor]")) {
+        return;
+      }
+
+      scheduleQuestEditorPatch();
+    });
+
+    document.addEventListener("enclave:open-quest-editor", scheduleQuestEditorPatch);
+  }
+
+  function injectQuestEditorPatchStyles() {
+    if (document.getElementById("quest-editor-patch-styles")) {
+      return;
+    }
+
+    var style = document.createElement("style");
+    style.id = "quest-editor-patch-styles";
+    style.textContent = [
+      '.quest-modal__field:has([data-quest-summary]) { display: none !important; }',
+      '.quest-modal__field:has([data-quest-report]) { display: none !important; }'
+    ].join("\n");
+    document.head.appendChild(style);
+  }
+
+  function scheduleQuestEditorPatch() {
+    var attempts = 0;
+    var timer = window.setInterval(function runQuestEditorPatchAttempt() {
+      attempts += 1;
+      patchOpenQuestEditorModal();
+      removeQuestEditorLegacyFields();
+
+      if (attempts >= 30 || document.querySelector("[data-quest-form]")) {
+        window.clearInterval(timer);
+      }
+    }, 50);
+  }
+
+  function patchOpenQuestEditorModal() {
+    var form = document.querySelector("[data-quest-form]");
+    if (!form) {
+      return;
+    }
+
+    removeQuestEditorLegacyFields();
+    enhanceQuestBriefingField(form);
+    enhanceQuestSecondaryObjectivesField(form);
+    enhanceQuestIntelligenceField(form);
+  }
+
+  function removeQuestEditorLegacyFields() {
+    var summaryInput = document.querySelector("[data-quest-summary]");
+    var reportInput = document.querySelector("[data-quest-report]");
+
+    removeQuestEditorField(summaryInput);
+    removeQuestEditorField(reportInput);
+  }
+
+  function removeQuestEditorField(input) {
+    if (!input) {
+      return;
+    }
+
+    var field = input.closest(".quest-modal__field");
+    if (field) {
+      field.remove();
+    }
+  }
+
+  function enhanceQuestBriefingField(form) {
+    var textarea = form.querySelector("[data-quest-briefing]");
+    if (!textarea || textarea.dataset.markdownToolbarReady === "true") {
+      return;
+    }
+
+    textarea.dataset.markdownToolbarReady = "true";
+
+    var toolbar = document.createElement("div");
+    toolbar.className = "quest-report-markdown-tools quest-briefing-markdown-tools";
+
+    toolbar.appendChild(buildQuestEditorMarkdownButton("fa-bold", "Grassetto", function onBoldClick() {
+      wrapTextareaSelection(textarea, "**", "**", "testo in grassetto");
+    }));
+
+    toolbar.appendChild(buildQuestEditorMarkdownButton("fa-italic", "Corsivo", function onItalicClick() {
+      wrapTextareaSelection(textarea, "*", "*", "testo in corsivo");
+    }));
+
+    toolbar.appendChild(buildQuestEditorMarkdownButton("fa-list-ul", "Lista puntata", function onBulletClick() {
+      prefixTextareaSelectedLines(textarea, "- ");
+    }));
+
+    toolbar.appendChild(buildQuestEditorMarkdownButton("fa-list-ol", "Lista numerata", function onNumberedClick() {
+      prefixTextareaSelectedLines(textarea, "1. ", true);
+    }));
+
+    toolbar.appendChild(buildQuestEditorMarkdownButton("fa-minus", "Divisore", function onDividerClick() {
+      insertTextareaSnippet(textarea, String.fromCharCode(10) + String.fromCharCode(10) + "---" + String.fromCharCode(10) + String.fromCharCode(10));
+    }));
+
+    textarea.parentNode.insertBefore(toolbar, textarea);
+    textarea.addEventListener("keydown", onQuestReportMarkdownKeydown);
+  }
+
+  function buildQuestEditorMarkdownButton(iconName, label, onClick) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "import-modal__btn quest-report-markdown-tool";
+    button.innerHTML = '<i class="fa-solid ' + iconName + '" aria-hidden="true"></i>';
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.addEventListener("click", onClick);
+    return button;
+  }
+
+  function insertTextareaSnippet(textarea, snippet) {
+    var start = textarea.selectionStart || 0;
+    var end = textarea.selectionEnd || 0;
+    var value = textarea.value || "";
+    textarea.value = value.slice(0, start) + snippet + value.slice(end);
+    textarea.focus();
+    textarea.setSelectionRange(start + snippet.length, start + snippet.length);
+  }
+
+  function enhanceQuestSecondaryObjectivesField(form) {
+    var textarea = form.querySelector("[data-quest-objective-secondary]");
+    if (!textarea) {
+      return;
+    }
+
+    var label = textarea.closest(".quest-modal__field");
+    if (!label) {
+      return;
+    }
+
+    if (textarea.dataset.secondaryObjectivesEditorReady === "true") {
+      syncQuestTextEditorFromTextarea(textarea);
+      return;
+    }
+
+    textarea.dataset.secondaryObjectivesEditorReady = "true";
+    textarea.hidden = true;
+
+    var editor = document.createElement("div");
+    editor.className = "quest-text-items-editor quest-secondary-objectives-editor";
+    editor.dataset.questTextItemsEditor = "secondaryObjectives";
+
+    var list = document.createElement("div");
+    list.className = "quest-text-items-editor__list";
+    list.dataset.questTextItemsList = "true";
+    editor.appendChild(list);
+
+    var controls = document.createElement("div");
+    controls.className = "quest-text-items-editor__controls";
+
+    var textInput = document.createElement("input");
+    textInput.type = "text";
+    textInput.className = "quest-modal__input quest-text-items-editor__text-input";
+    textInput.placeholder = "Nuovo obiettivo secondario";
+    controls.appendChild(textInput);
+
+    var addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "quest-modal__btn quest-text-items-editor__add";
+    addButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
+    addButton.title = "Aggiungi obiettivo secondario";
+    addButton.setAttribute("aria-label", "Aggiungi obiettivo secondario");
+    controls.appendChild(addButton);
+
+    editor.appendChild(controls);
+    label.appendChild(editor);
+
+    addButton.addEventListener("click", function onAddSecondaryObjectiveClick() {
+      addQuestTextEditorItem(textarea, readString(textInput.value, ""));
+      textInput.value = "";
+      textInput.focus();
+    });
+
+    textInput.addEventListener("keydown", function onSecondaryObjectiveKeydown(event) {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      event.preventDefault();
+      addButton.click();
+    });
+
+    syncQuestTextEditorFromTextarea(textarea);
+  }
+
+  function syncQuestTextEditorFromTextarea(textarea) {
+    var label = textarea.closest(".quest-modal__field");
+    var editor = label && label.querySelector("[data-quest-text-items-editor]");
+    var list = editor && editor.querySelector("[data-quest-text-items-list]");
+
+    if (!list) {
+      return;
+    }
+
+    var currentValue = textarea.value || "";
+    if (textarea.dataset.lastParsedTextItemsValue === currentValue) {
+      return;
+    }
+
+    textarea.dataset.lastParsedTextItemsValue = currentValue;
+
+    var items = parseQuestTextItems(currentValue);
+    list.innerHTML = "";
+
+    for (var i = 0; i < items.length; i += 1) {
+      appendQuestTextEditorRow(textarea, items[i]);
+    }
+
+    syncQuestTextEditorTextarea(textarea);
+  }
+
+  function addQuestTextEditorItem(textarea, text) {
+    var normalized = readString(text, "");
+    if (!normalized) {
+      return;
+    }
+
+    appendQuestTextEditorRow(textarea, normalized);
+    syncQuestTextEditorTextarea(textarea);
+  }
+
+  function appendQuestTextEditorRow(textarea, value) {
+    var label = textarea.closest(".quest-modal__field");
+    var list = label && label.querySelector("[data-quest-text-items-list]");
+    if (!list) {
+      return;
+    }
+
+    var row = document.createElement("div");
+    row.className = "quest-text-items-editor__item";
+
+    var text = document.createElement("input");
+    text.type = "text";
+    text.className = "quest-modal__input quest-text-items-editor__item-text";
+    text.value = readString(value, "");
+    text.setAttribute("aria-label", "Testo obiettivo secondario");
+    row.appendChild(text);
+
+    var remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "quest-modal__btn quest-text-items-editor__remove";
+    remove.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
+    remove.title = "Rimuovi obiettivo secondario";
+    remove.setAttribute("aria-label", "Rimuovi obiettivo secondario");
+    row.appendChild(remove);
+
+    text.addEventListener("input", function onTextItemInput() {
+      syncQuestTextEditorTextarea(textarea);
+    });
+
+    remove.addEventListener("click", function onRemoveTextItemClick() {
+      row.remove();
+      syncQuestTextEditorTextarea(textarea);
+    });
+
+    list.appendChild(row);
+  }
+
+  function syncQuestTextEditorTextarea(textarea) {
+    var label = textarea.closest(".quest-modal__field");
+    var rows = label ? label.querySelectorAll(".quest-text-items-editor__item") : [];
+    var items = [];
+
+    for (var i = 0; i < rows.length; i += 1) {
+      var textInput = rows[i].querySelector(".quest-text-items-editor__item-text");
+      var text = readString(textInput && textInput.value, "");
+
+      if (text) {
+        items.push(text);
+      }
+    }
+
+    textarea.value = items.length ? JSON.stringify(items) : "";
+    textarea.dataset.lastParsedTextItemsValue = textarea.value;
+  }
+
+  function enhanceQuestIntelligenceField(form) {
+    var textarea = form.querySelector("[data-quest-notes]");
+    if (!textarea) {
+      return;
+    }
+
+    var label = textarea.closest(".quest-modal__field");
+    if (!label) {
+      return;
+    }
+
+    var title = label.querySelector("span");
+    if (title) {
+      title.textContent = "Intelligence";
+    }
+
+    if (textarea.dataset.intelligenceEditorReady === "true") {
+      syncQuestIntelligenceEditorFromTextarea(textarea);
+      return;
+    }
+
+    textarea.dataset.intelligenceEditorReady = "true";
+    textarea.hidden = true;
+
+    var editor = document.createElement("div");
+    editor.className = "quest-intelligence-editor";
+    editor.dataset.questIntelligenceEditor = "true";
+
+    var list = document.createElement("div");
+    list.className = "quest-intelligence-editor__list";
+    list.dataset.questIntelligenceList = "true";
+    editor.appendChild(list);
+
+    var controls = document.createElement("div");
+    controls.className = "quest-intelligence-editor__controls";
+
+    var iconPicker = buildQuestIntelligenceIconPicker("fa-circle-info", function onNewIntelIconChange() {});
+    iconPicker.root.classList.add("quest-intelligence-editor__icon-picker--new");
+    controls.appendChild(iconPicker.root);
+
+    var textInput = document.createElement("input");
+    textInput.type = "text";
+    textInput.className = "quest-modal__input quest-intelligence-editor__text-input";
+    textInput.placeholder = "Nuova intelligence";
+    textInput.dataset.questIntelTextInput = "true";
+    controls.appendChild(textInput);
+
+    var addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "quest-modal__btn quest-intelligence-editor__add";
+    addButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i>';
+    addButton.title = "Aggiungi intelligence";
+    addButton.setAttribute("aria-label", "Aggiungi intelligence");
+    controls.appendChild(addButton);
+
+    editor.appendChild(controls);
+    label.appendChild(editor);
+
+    addButton.addEventListener("click", function onAddIntelClick() {
+      addQuestIntelligenceEditorItem(textarea, {
+        icon: readString(iconPicker.root.dataset.selectedIcon, "fa-circle-info"),
+        text: readString(textInput.value, "")
+      });
+      setQuestIntelligenceIconPickerValue(iconPicker.root, "fa-circle-info");
+      textInput.value = "";
+      textInput.focus();
+    });
+
+    textInput.addEventListener("keydown", function onIntelTextKeydown(event) {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      event.preventDefault();
+      addButton.click();
+    });
+
+    syncQuestIntelligenceEditorFromTextarea(textarea);
+  }
+
+  function buildQuestIntelligenceIconPicker(selectedIcon, onChange) {
+    var normalizedIcon = normalizeFontAwesomeIcon(selectedIcon);
+
+    var root = document.createElement("div");
+    root.className = "quest-intelligence-icon-picker";
+    root.dataset.questIntelIconPicker = "true";
+    root.dataset.selectedIcon = normalizedIcon;
+
+    var trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "quest-intelligence-icon-picker__trigger";
+    trigger.title = "Scegli icona intelligence";
+    trigger.setAttribute("aria-label", "Scegli icona intelligence");
+    trigger.setAttribute("aria-expanded", "false");
+    root.appendChild(trigger);
+
+    var bubble = document.createElement("div");
+    bubble.className = "quest-intelligence-icon-picker__bubble";
+    bubble.hidden = true;
+    root.appendChild(bubble);
+
+    for (var i = 0; i < QUEST_INTELLIGENCE_ICONS.length; i += 1) {
+      bubble.appendChild(
+        buildQuestIntelligenceIconOption(root, QUEST_INTELLIGENCE_ICONS[i], function onIconSelect() {
+          if (typeof onChange === "function") {
+            onChange(root.dataset.selectedIcon);
+          }
+        })
+      );
+    }
+
+    trigger.addEventListener("click", function onIconPickerTriggerClick(event) {
+      event.stopPropagation();
+      closeOtherQuestIntelligenceIconPickers(root);
+      var willOpen = bubble.hidden;
+      bubble.hidden = !willOpen;
+      trigger.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    setQuestIntelligenceIconPickerValue(root, normalizedIcon);
+    return {
+      root: root,
+      trigger: trigger,
+      bubble: bubble
+    };
+  }
+
+  function buildQuestIntelligenceIconOption(root, option, onSelect) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "quest-intelligence-icon-picker__option";
+    button.dataset.icon = normalizeFontAwesomeIcon(option && option.icon);
+    button.title = readString(option && option.label, "Icona");
+    button.setAttribute("aria-label", readString(option && option.label, "Icona"));
+    button.innerHTML = '<i class="fa-solid ' + button.dataset.icon + '" aria-hidden="true"></i>';
+
+    button.addEventListener("click", function onIconOptionClick(event) {
+      event.stopPropagation();
+      setQuestIntelligenceIconPickerValue(root, button.dataset.icon);
+      closeQuestIntelligenceIconPicker(root);
+      if (typeof onSelect === "function") {
+        onSelect(button.dataset.icon);
+      }
+    });
+
+    return button;
+  }
+
+  function setQuestIntelligenceIconPickerValue(root, iconName) {
+    if (!root) {
+      return;
+    }
+
+    var normalizedIcon = normalizeFontAwesomeIcon(iconName);
+    root.dataset.selectedIcon = normalizedIcon;
+
+    var trigger = root.querySelector(".quest-intelligence-icon-picker__trigger");
+    if (trigger) {
+      trigger.innerHTML = '<i class="fa-solid ' + normalizedIcon + '" aria-hidden="true"></i>';
+    }
+
+    var options = root.querySelectorAll(".quest-intelligence-icon-picker__option");
+    for (var i = 0; i < options.length; i += 1) {
+      options[i].classList.toggle("is-active", options[i].dataset.icon === normalizedIcon);
+    }
+  }
+
+  function closeQuestIntelligenceIconPicker(root) {
+    if (!root) {
+      return;
+    }
+
+    var bubble = root.querySelector(".quest-intelligence-icon-picker__bubble");
+    var trigger = root.querySelector(".quest-intelligence-icon-picker__trigger");
+
+    if (bubble) {
+      bubble.hidden = true;
+    }
+
+    if (trigger) {
+      trigger.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function closeOtherQuestIntelligenceIconPickers(activeRoot) {
+    var pickers = document.querySelectorAll("[data-quest-intel-icon-picker]");
+    for (var i = 0; i < pickers.length; i += 1) {
+      if (pickers[i] !== activeRoot) {
+        closeQuestIntelligenceIconPicker(pickers[i]);
+      }
+    }
+  }
+
+  document.addEventListener("click", function onCloseQuestIntelligenceIconPickers(event) {
+    if (event.target.closest("[data-quest-intel-icon-picker]")) {
+      return;
+    }
+
+    closeOtherQuestIntelligenceIconPickers(null);
+  });
+
+  function syncQuestIntelligenceEditorFromTextarea(textarea) {
+    var label = textarea.closest(".quest-modal__field");
+    var editor = label && label.querySelector("[data-quest-intelligence-editor]");
+    var list = editor && editor.querySelector("[data-quest-intelligence-list]");
+
+    if (!list) {
+      return;
+    }
+
+    var currentValue = textarea.value || "";
+    if (textarea.dataset.lastParsedIntelligenceValue === currentValue) {
+      return;
+    }
+
+    textarea.dataset.lastParsedIntelligenceValue = currentValue;
+
+    var items = parseQuestIntelligenceItems(currentValue);
+    list.innerHTML = "";
+
+    for (var i = 0; i < items.length; i += 1) {
+      appendQuestIntelligenceEditorRow(textarea, items[i]);
+    }
+
+    syncQuestIntelligenceTextarea(textarea);
+  }
+
+  function addQuestIntelligenceEditorItem(textarea, item) {
+    if (!readString(item && item.text, "")) {
+      return;
+    }
+
+    appendQuestIntelligenceEditorRow(textarea, item);
+    syncQuestIntelligenceTextarea(textarea);
+  }
+
+  function appendQuestIntelligenceEditorRow(textarea, item) {
+    var label = textarea.closest(".quest-modal__field");
+    var list = label && label.querySelector("[data-quest-intelligence-list]");
+    if (!list) {
+      return;
+    }
+
+    var row = document.createElement("div");
+    row.className = "quest-intelligence-editor__item";
+
+    var iconPicker = buildQuestIntelligenceIconPicker(
+      normalizeFontAwesomeIcon(readString(item && item.icon, "fa-circle-info")),
+      function onRowIntelIconChange() {
+        syncQuestIntelligenceTextarea(textarea);
+      }
+    );
+    row.appendChild(iconPicker.root);
+
+    var text = document.createElement("input");
+    text.type = "text";
+    text.className = "quest-modal__input quest-intelligence-editor__item-text";
+    text.value = readString(item && item.text, "");
+    text.setAttribute("aria-label", "Testo intelligence");
+    row.appendChild(text);
+
+    var remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "quest-modal__btn quest-intelligence-editor__remove";
+    remove.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
+    remove.title = "Rimuovi intelligence";
+    remove.setAttribute("aria-label", "Rimuovi intelligence");
+    row.appendChild(remove);
+
+    text.addEventListener("input", function onIntelTextInput() {
+      syncQuestIntelligenceTextarea(textarea);
+    });
+
+    remove.addEventListener("click", function onRemoveIntelClick() {
+      row.remove();
+      syncQuestIntelligenceTextarea(textarea);
+    });
+
+    list.appendChild(row);
+  }
+
+  function syncQuestIntelligenceTextarea(textarea) {
+    var label = textarea.closest(".quest-modal__field");
+    var rows = label ? label.querySelectorAll(".quest-intelligence-editor__item") : [];
+    var items = [];
+
+    for (var i = 0; i < rows.length; i += 1) {
+      var iconPicker = rows[i].querySelector("[data-quest-intel-icon-picker]");
+      var textInput = rows[i].querySelector(".quest-intelligence-editor__item-text");
+      var text = readString(textInput && textInput.value, "");
+
+      if (!text) {
+        continue;
+      }
+
+      items.push({
+        icon: normalizeFontAwesomeIcon(readString(iconPicker && iconPicker.dataset.selectedIcon, "fa-circle-info")),
+        text: text
+      });
+    }
+
+    textarea.value = items.length ? JSON.stringify(items) : "";
+    textarea.dataset.lastParsedIntelligenceValue = textarea.value;
   }
 
   function readQuestSlugFromUrl() {
