@@ -257,6 +257,7 @@ body > * {
   width: 100%;
   display: grid;
   gap: 1rem;
+  min-width: 1000px;
 }
 
 .main-content {

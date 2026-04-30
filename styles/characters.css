@@ -939,6 +939,7 @@ body[data-theme="light"] {
     "characters-roster"
     "characters-detail";
   gap: 1rem;
+  padding-bottom: 1rem;
 }
 
 .characters-page > .quest-page-header {

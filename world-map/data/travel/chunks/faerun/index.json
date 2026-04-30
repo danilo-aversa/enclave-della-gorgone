@@ -1,0 +1,1605 @@
+{
+  "format": "chunk-index",
+  "version": 1,
+  "mapId": "faerun",
+  "chunkSize": 128,
+  "generatedAt": "2026-04-30T20:41:29.033Z",
+  "source": "terrain-auto-reveal",
+  "exportMode": "detected-cells-only",
+  "cellsAreGlobalHexKeys": true,
+  "warnings": [
+    "This export contains only cells detected by Terrain Auto Reveal.",
+    "Default terrain cells are omitted to keep chunks small.",
+    "Replacing existing chunk files with this export may remove manually authored data not present in the preview.",
+    "Use this as an initial terrain grid export, or merge it carefully with existing travel-grid chunks."
+  ],
+  "stats": {
+    "total": 1037818,
+    "assigned": 868712,
+    "ambiguous": 169106,
+    "painted": 783706,
+    "byTerrain": {
+      "hill": 150234,
+      "desert": 44650,
+      "mountain": 133494,
+      "water": 344505,
+      "swamp": 14487,
+      "forest": 65309,
+      "arctic": 31027
+    },
+    "byChunk": {
+      "-4_6": 2495,
+      "-3_6": 13009,
+      "-3_5": 11056,
+      "-3_4": 3551,
+      "-2_4": 15928,
+      "-2_5": 16103,
+      "-2_6": 13179,
+      "-2_3": 11531,
+      "-2_2": 3634,
+      "-1_2": 15813,
+      "-1_3": 15888,
+      "-1_4": 16189,
+      "-1_5": 16300,
+      "-1_6": 13171,
+      "-1_1": 11466,
+      "-1_0": 3633,
+      "0_0": 14574,
+      "0_1": 15768,
+      "0_2": 15868,
+      "0_3": 15221,
+      "0_4": 12036,
+      "0_5": 15403,
+      "0_6": 12564,
+      "1_0": 15413,
+      "1_1": 16253,
+      "1_2": 15671,
+      "1_3": 12922,
+      "1_4": 15072,
+      "1_5": 15972,
+      "1_6": 10201,
+      "2_0": 13702,
+      "2_1": 15538,
+      "2_2": 14867,
+      "2_3": 12878,
+      "2_4": 8685,
+      "2_5": 6436,
+      "2_6": 9284,
+      "3_0": 11160,
+      "3_1": 9642,
+      "3_2": 7306,
+      "3_3": 6557,
+      "3_4": 3051,
+      "3_5": 9752,
+      "3_6": 8225,
+      "4_0": 11753,
+      "4_1": 12132,
+      "4_2": 10728,
+      "4_3": 7259,
+      "4_4": 8847,
+      "4_5": 11801,
+      "4_6": 12133,
+      "5_0": 11524,
+      "5_1": 12704,
+      "5_2": 12322,
+      "5_3": 12761,
+      "5_4": 6827,
+      "5_5": 10987,
+      "5_6": 9726,
+      "6_0": 13432,
+      "6_1": 11875,
+      "6_2": 11386,
+      "6_3": 10207,
+      "6_4": 7682,
+      "6_5": 5368,
+      "6_6": 509,
+      "7_0": 12118,
+      "7_1": 10510,
+      "7_2": 5950,
+      "7_3": 5059,
+      "7_4": 528,
+      "8_0": 7599,
+      "8_1": 5900,
+      "8_2": 527,
+      "9_0": 585
+    },
+    "chunkCount": 74
+  },
+  "chunks": [
+    {
+      "key": "-4_6",
+      "chunkQ": -4,
+      "chunkR": 6,
+      "file": "-4_6.json",
+      "cellCount": 2495,
+      "bounds": {
+        "minQ": -438,
+        "maxQ": -385,
+        "minR": 770,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "hill": 2317,
+        "desert": 115,
+        "mountain": 63
+      }
+    },
+    {
+      "key": "-3_4",
+      "chunkQ": -3,
+      "chunkR": 4,
+      "file": "-3_4.json",
+      "cellCount": 3551,
+      "bounds": {
+        "minQ": -319,
+        "maxQ": -257,
+        "minR": 514,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "hill": 2164,
+        "mountain": 1386,
+        "desert": 1
+      }
+    },
+    {
+      "key": "-3_5",
+      "chunkQ": -3,
+      "chunkR": 5,
+      "file": "-3_5.json",
+      "cellCount": 11056,
+      "bounds": {
+        "minQ": -383,
+        "maxQ": -257,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "hill": 2581,
+        "mountain": 4013,
+        "water": 4415,
+        "desert": 47
+      }
+    },
+    {
+      "key": "-3_6",
+      "chunkQ": -3,
+      "chunkR": 6,
+      "file": "-3_6.json",
+      "cellCount": 13009,
+      "bounds": {
+        "minQ": -384,
+        "maxQ": -257,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "hill": 3062,
+        "mountain": 627,
+        "desert": 336,
+        "water": 8937,
+        "swamp": 47
+      }
+    },
+    {
+      "key": "-2_2",
+      "chunkQ": -2,
+      "chunkR": 2,
+      "file": "-2_2.json",
+      "cellCount": 3634,
+      "bounds": {
+        "minQ": -191,
+        "maxQ": -129,
+        "minR": 258,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "hill": 1959,
+        "desert": 215,
+        "mountain": 1460
+      }
+    },
+    {
+      "key": "-2_3",
+      "chunkQ": -2,
+      "chunkR": 3,
+      "file": "-2_3.json",
+      "cellCount": 11531,
+      "bounds": {
+        "minQ": -255,
+        "maxQ": -129,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "hill": 2461,
+        "desert": 102,
+        "mountain": 8956,
+        "water": 12
+      }
+    },
+    {
+      "key": "-2_4",
+      "chunkQ": -2,
+      "chunkR": 4,
+      "file": "-2_4.json",
+      "cellCount": 15928,
+      "bounds": {
+        "minQ": -256,
+        "maxQ": -129,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "hill": 455,
+        "mountain": 12184,
+        "water": 3289
+      }
+    },
+    {
+      "key": "-2_5",
+      "chunkQ": -2,
+      "chunkR": 5,
+      "file": "-2_5.json",
+      "cellCount": 16103,
+      "bounds": {
+        "minQ": -256,
+        "maxQ": -129,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "mountain": 1298,
+        "water": 14805
+      }
+    },
+    {
+      "key": "-2_6",
+      "chunkQ": -2,
+      "chunkR": 6,
+      "file": "-2_6.json",
+      "cellCount": 13179,
+      "bounds": {
+        "minQ": -256,
+        "maxQ": -129,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "water": 10005,
+        "swamp": 76,
+        "desert": 1604,
+        "hill": 1360,
+        "mountain": 134
+      }
+    },
+    {
+      "key": "-1_0",
+      "chunkQ": -1,
+      "chunkR": 0,
+      "file": "-1_0.json",
+      "cellCount": 3633,
+      "bounds": {
+        "minQ": -63,
+        "maxQ": -1,
+        "minR": 2,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "hill": 2127,
+        "desert": 38,
+        "mountain": 1411,
+        "water": 57
+      }
+    },
+    {
+      "key": "-1_1",
+      "chunkQ": -1,
+      "chunkR": 1,
+      "file": "-1_1.json",
+      "cellCount": 11466,
+      "bounds": {
+        "minQ": -127,
+        "maxQ": -1,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "desert": 278,
+        "hill": 2324,
+        "mountain": 8398,
+        "water": 466
+      }
+    },
+    {
+      "key": "-1_2",
+      "chunkQ": -1,
+      "chunkR": 2,
+      "file": "-1_2.json",
+      "cellCount": 15813,
+      "bounds": {
+        "minQ": -128,
+        "maxQ": -1,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "desert": 60,
+        "hill": 388,
+        "mountain": 13024,
+        "water": 2341
+      }
+    },
+    {
+      "key": "-1_3",
+      "chunkQ": -1,
+      "chunkR": 3,
+      "file": "-1_3.json",
+      "cellCount": 15888,
+      "bounds": {
+        "minQ": -128,
+        "maxQ": -1,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "mountain": 4287,
+        "water": 11601
+      }
+    },
+    {
+      "key": "-1_4",
+      "chunkQ": -1,
+      "chunkR": 4,
+      "file": "-1_4.json",
+      "cellCount": 16189,
+      "bounds": {
+        "minQ": -128,
+        "maxQ": -1,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "mountain": 1300,
+        "water": 14889
+      }
+    },
+    {
+      "key": "-1_5",
+      "chunkQ": -1,
+      "chunkR": 5,
+      "file": "-1_5.json",
+      "cellCount": 16300,
+      "bounds": {
+        "minQ": -128,
+        "maxQ": -1,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "water": 16242,
+        "mountain": 58
+      }
+    },
+    {
+      "key": "-1_6",
+      "chunkQ": -1,
+      "chunkR": 6,
+      "file": "-1_6.json",
+      "cellCount": 13171,
+      "bounds": {
+        "minQ": -128,
+        "maxQ": -1,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "water": 10170,
+        "mountain": 72,
+        "swamp": 79,
+        "hill": 1100,
+        "desert": 1750
+      }
+    },
+    {
+      "key": "0_0",
+      "chunkQ": 0,
+      "chunkR": 0,
+      "file": "0_0.json",
+      "cellCount": 14574,
+      "bounds": {
+        "minQ": 0,
+        "maxQ": 127,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "hill": 2417,
+        "desert": 199,
+        "mountain": 2491,
+        "water": 9374,
+        "arctic": 19,
+        "swamp": 74
+      }
+    },
+    {
+      "key": "0_1",
+      "chunkQ": 0,
+      "chunkR": 1,
+      "file": "0_1.json",
+      "cellCount": 15768,
+      "bounds": {
+        "minQ": 0,
+        "maxQ": 127,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "mountain": 2338,
+        "water": 13430
+      }
+    },
+    {
+      "key": "0_2",
+      "chunkQ": 0,
+      "chunkR": 2,
+      "file": "0_2.json",
+      "cellCount": 15868,
+      "bounds": {
+        "minQ": 0,
+        "maxQ": 127,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "mountain": 1488,
+        "water": 14378,
+        "arctic": 2
+      }
+    },
+    {
+      "key": "0_3",
+      "chunkQ": 0,
+      "chunkR": 3,
+      "file": "0_3.json",
+      "cellCount": 15221,
+      "bounds": {
+        "minQ": 0,
+        "maxQ": 127,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "water": 14359,
+        "swamp": 356,
+        "mountain": 486,
+        "arctic": 15,
+        "forest": 5
+      }
+    },
+    {
+      "key": "0_4",
+      "chunkQ": 0,
+      "chunkR": 4,
+      "file": "0_4.json",
+      "cellCount": 12036,
+      "bounds": {
+        "minQ": 0,
+        "maxQ": 127,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "water": 8138,
+        "swamp": 774,
+        "mountain": 1861,
+        "forest": 1144,
+        "hill": 60,
+        "desert": 2,
+        "arctic": 57
+      }
+    },
+    {
+      "key": "0_5",
+      "chunkQ": 0,
+      "chunkR": 5,
+      "file": "0_5.json",
+      "cellCount": 15403,
+      "bounds": {
+        "minQ": 0,
+        "maxQ": 127,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "water": 15328,
+        "mountain": 40,
+        "arctic": 17,
+        "forest": 11,
+        "swamp": 7
+      }
+    },
+    {
+      "key": "0_6",
+      "chunkQ": 0,
+      "chunkR": 6,
+      "file": "0_6.json",
+      "cellCount": 12564,
+      "bounds": {
+        "minQ": 0,
+        "maxQ": 127,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "water": 9068,
+        "swamp": 158,
+        "desert": 2613,
+        "mountain": 44,
+        "hill": 462,
+        "forest": 191,
+        "arctic": 28
+      }
+    },
+    {
+      "key": "1_0",
+      "chunkQ": 1,
+      "chunkR": 0,
+      "file": "1_0.json",
+      "cellCount": 15413,
+      "bounds": {
+        "minQ": 128,
+        "maxQ": 255,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "hill": 2326,
+        "desert": 165,
+        "mountain": 379,
+        "water": 12497,
+        "swamp": 44,
+        "arctic": 2
+      }
+    },
+    {
+      "key": "1_1",
+      "chunkQ": 1,
+      "chunkR": 1,
+      "file": "1_1.json",
+      "cellCount": 16253,
+      "bounds": {
+        "minQ": 128,
+        "maxQ": 255,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "water": 15972,
+        "mountain": 279,
+        "arctic": 2
+      }
+    },
+    {
+      "key": "1_2",
+      "chunkQ": 1,
+      "chunkR": 2,
+      "file": "1_2.json",
+      "cellCount": 15671,
+      "bounds": {
+        "minQ": 128,
+        "maxQ": 255,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "water": 14883,
+        "mountain": 651,
+        "arctic": 137
+      }
+    },
+    {
+      "key": "1_3",
+      "chunkQ": 1,
+      "chunkR": 3,
+      "file": "1_3.json",
+      "cellCount": 12922,
+      "bounds": {
+        "minQ": 128,
+        "maxQ": 255,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "water": 10795,
+        "swamp": 317,
+        "mountain": 1319,
+        "forest": 155,
+        "desert": 8,
+        "arctic": 282,
+        "hill": 46
+      }
+    },
+    {
+      "key": "1_4",
+      "chunkQ": 1,
+      "chunkR": 4,
+      "file": "1_4.json",
+      "cellCount": 15072,
+      "bounds": {
+        "minQ": 128,
+        "maxQ": 255,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "water": 14288,
+        "swamp": 479,
+        "forest": 140,
+        "mountain": 133,
+        "arctic": 29,
+        "desert": 3
+      }
+    },
+    {
+      "key": "1_5",
+      "chunkQ": 1,
+      "chunkR": 5,
+      "file": "1_5.json",
+      "cellCount": 15972,
+      "bounds": {
+        "minQ": 128,
+        "maxQ": 255,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "water": 15757,
+        "mountain": 215
+      }
+    },
+    {
+      "key": "1_6",
+      "chunkQ": 1,
+      "chunkR": 6,
+      "file": "1_6.json",
+      "cellCount": 10201,
+      "bounds": {
+        "minQ": 128,
+        "maxQ": 255,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "water": 4279,
+        "swamp": 150,
+        "desert": 3004,
+        "hill": 164,
+        "mountain": 42,
+        "forest": 2560,
+        "arctic": 2
+      }
+    },
+    {
+      "key": "2_0",
+      "chunkQ": 2,
+      "chunkR": 0,
+      "file": "2_0.json",
+      "cellCount": 13702,
+      "bounds": {
+        "minQ": 256,
+        "maxQ": 383,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "hill": 2358,
+        "desert": 238,
+        "arctic": 193,
+        "water": 8945,
+        "swamp": 473,
+        "mountain": 1495
+      }
+    },
+    {
+      "key": "2_1",
+      "chunkQ": 2,
+      "chunkR": 1,
+      "file": "2_1.json",
+      "cellCount": 15538,
+      "bounds": {
+        "minQ": 256,
+        "maxQ": 383,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "water": 15078,
+        "mountain": 70,
+        "arctic": 61,
+        "swamp": 139,
+        "desert": 115,
+        "hill": 75
+      }
+    },
+    {
+      "key": "2_2",
+      "chunkQ": 2,
+      "chunkR": 2,
+      "file": "2_2.json",
+      "cellCount": 14867,
+      "bounds": {
+        "minQ": 256,
+        "maxQ": 383,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "water": 13864,
+        "arctic": 156,
+        "mountain": 471,
+        "desert": 151,
+        "swamp": 31,
+        "hill": 143,
+        "forest": 51
+      }
+    },
+    {
+      "key": "2_3",
+      "chunkQ": 2,
+      "chunkR": 3,
+      "file": "2_3.json",
+      "cellCount": 12878,
+      "bounds": {
+        "minQ": 256,
+        "maxQ": 383,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "water": 11664,
+        "arctic": 55,
+        "mountain": 309,
+        "hill": 60,
+        "forest": 790
+      }
+    },
+    {
+      "key": "2_4",
+      "chunkQ": 2,
+      "chunkR": 4,
+      "file": "2_4.json",
+      "cellCount": 8685,
+      "bounds": {
+        "minQ": 256,
+        "maxQ": 383,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "water": 6425,
+        "swamp": 30,
+        "mountain": 31,
+        "desert": 121,
+        "forest": 2047,
+        "arctic": 15,
+        "hill": 16
+      }
+    },
+    {
+      "key": "2_5",
+      "chunkQ": 2,
+      "chunkR": 5,
+      "file": "2_5.json",
+      "cellCount": 6436,
+      "bounds": {
+        "minQ": 256,
+        "maxQ": 383,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "water": 1450,
+        "mountain": 2536,
+        "hill": 2235,
+        "arctic": 3,
+        "desert": 189,
+        "swamp": 5,
+        "forest": 18
+      }
+    },
+    {
+      "key": "2_6",
+      "chunkQ": 2,
+      "chunkR": 6,
+      "file": "2_6.json",
+      "cellCount": 9284,
+      "bounds": {
+        "minQ": 256,
+        "maxQ": 383,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "hill": 1750,
+        "forest": 4547,
+        "desert": 2811,
+        "swamp": 34,
+        "mountain": 142
+      }
+    },
+    {
+      "key": "3_0",
+      "chunkQ": 3,
+      "chunkR": 0,
+      "file": "3_0.json",
+      "cellCount": 11160,
+      "bounds": {
+        "minQ": 384,
+        "maxQ": 511,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "hill": 1829,
+        "desert": 2147,
+        "mountain": 3983,
+        "swamp": 658,
+        "water": 78,
+        "arctic": 1278,
+        "forest": 1187
+      }
+    },
+    {
+      "key": "3_1",
+      "chunkQ": 3,
+      "chunkR": 1,
+      "file": "3_1.json",
+      "cellCount": 9642,
+      "bounds": {
+        "minQ": 384,
+        "maxQ": 511,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "water": 50,
+        "desert": 283,
+        "hill": 4745,
+        "mountain": 630,
+        "arctic": 2,
+        "forest": 3807,
+        "swamp": 125
+      }
+    },
+    {
+      "key": "3_2",
+      "chunkQ": 3,
+      "chunkR": 2,
+      "file": "3_2.json",
+      "cellCount": 7306,
+      "bounds": {
+        "minQ": 384,
+        "maxQ": 511,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "mountain": 438,
+        "forest": 3422,
+        "hill": 1519,
+        "desert": 182,
+        "swamp": 1704,
+        "arctic": 11,
+        "water": 30
+      }
+    },
+    {
+      "key": "3_3",
+      "chunkQ": 3,
+      "chunkR": 3,
+      "file": "3_3.json",
+      "cellCount": 6557,
+      "bounds": {
+        "minQ": 384,
+        "maxQ": 511,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "forest": 1722,
+        "mountain": 135,
+        "hill": 2010,
+        "desert": 196,
+        "swamp": 2494
+      }
+    },
+    {
+      "key": "3_4",
+      "chunkQ": 3,
+      "chunkR": 4,
+      "file": "3_4.json",
+      "cellCount": 3051,
+      "bounds": {
+        "minQ": 384,
+        "maxQ": 511,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "forest": 2337,
+        "hill": 572,
+        "desert": 132,
+        "swamp": 5,
+        "mountain": 5
+      }
+    },
+    {
+      "key": "3_5",
+      "chunkQ": 3,
+      "chunkR": 5,
+      "file": "3_5.json",
+      "cellCount": 9752,
+      "bounds": {
+        "minQ": 384,
+        "maxQ": 511,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "hill": 7442,
+        "forest": 1268,
+        "mountain": 1033,
+        "swamp": 9
+      }
+    },
+    {
+      "key": "3_6",
+      "chunkQ": 3,
+      "chunkR": 6,
+      "file": "3_6.json",
+      "cellCount": 8225,
+      "bounds": {
+        "minQ": 384,
+        "maxQ": 511,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "hill": 3089,
+        "desert": 2924,
+        "mountain": 1477,
+        "forest": 606,
+        "water": 121,
+        "swamp": 8
+      }
+    },
+    {
+      "key": "4_0",
+      "chunkQ": 4,
+      "chunkR": 0,
+      "file": "4_0.json",
+      "cellCount": 11753,
+      "bounds": {
+        "minQ": 512,
+        "maxQ": 639,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "desert": 1359,
+        "hill": 2149,
+        "arctic": 192,
+        "mountain": 5044,
+        "swamp": 124,
+        "forest": 2879,
+        "water": 6
+      }
+    },
+    {
+      "key": "4_1",
+      "chunkQ": 4,
+      "chunkR": 1,
+      "file": "4_1.json",
+      "cellCount": 12132,
+      "bounds": {
+        "minQ": 512,
+        "maxQ": 639,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "swamp": 1238,
+        "hill": 784,
+        "forest": 8610,
+        "mountain": 1396,
+        "water": 79,
+        "desert": 25
+      }
+    },
+    {
+      "key": "4_2",
+      "chunkQ": 4,
+      "chunkR": 2,
+      "file": "4_2.json",
+      "cellCount": 10728,
+      "bounds": {
+        "minQ": 512,
+        "maxQ": 639,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "forest": 2691,
+        "swamp": 1044,
+        "water": 43,
+        "arctic": 150,
+        "hill": 4190,
+        "mountain": 2543,
+        "desert": 67
+      }
+    },
+    {
+      "key": "4_3",
+      "chunkQ": 4,
+      "chunkR": 3,
+      "file": "4_3.json",
+      "cellCount": 7259,
+      "bounds": {
+        "minQ": 512,
+        "maxQ": 639,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "hill": 5971,
+        "forest": 264,
+        "desert": 64,
+        "mountain": 567,
+        "swamp": 157,
+        "arctic": 232,
+        "water": 4
+      }
+    },
+    {
+      "key": "4_4",
+      "chunkQ": 4,
+      "chunkR": 4,
+      "file": "4_4.json",
+      "cellCount": 8847,
+      "bounds": {
+        "minQ": 512,
+        "maxQ": 639,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "forest": 633,
+        "hill": 2596,
+        "mountain": 3652,
+        "desert": 341,
+        "swamp": 107,
+        "arctic": 99,
+        "water": 1419
+      }
+    },
+    {
+      "key": "4_5",
+      "chunkQ": 4,
+      "chunkR": 5,
+      "file": "4_5.json",
+      "cellCount": 11801,
+      "bounds": {
+        "minQ": 512,
+        "maxQ": 639,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "hill": 8903,
+        "mountain": 2086,
+        "desert": 47,
+        "arctic": 31,
+        "water": 273,
+        "swamp": 89,
+        "forest": 372
+      }
+    },
+    {
+      "key": "4_6",
+      "chunkQ": 4,
+      "chunkR": 6,
+      "file": "4_6.json",
+      "cellCount": 12133,
+      "bounds": {
+        "minQ": 512,
+        "maxQ": 639,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "mountain": 1369,
+        "hill": 8480,
+        "desert": 1854,
+        "arctic": 243,
+        "swamp": 108,
+        "water": 79
+      }
+    },
+    {
+      "key": "5_0",
+      "chunkQ": 5,
+      "chunkR": 0,
+      "file": "5_0.json",
+      "cellCount": 11524,
+      "bounds": {
+        "minQ": 640,
+        "maxQ": 767,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "hill": 4314,
+        "desert": 285,
+        "swamp": 64,
+        "arctic": 435,
+        "mountain": 4380,
+        "forest": 2043,
+        "water": 3
+      }
+    },
+    {
+      "key": "5_1",
+      "chunkQ": 5,
+      "chunkR": 1,
+      "file": "5_1.json",
+      "cellCount": 12704,
+      "bounds": {
+        "minQ": 640,
+        "maxQ": 767,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "hill": 6748,
+        "mountain": 1843,
+        "forest": 939,
+        "swamp": 232,
+        "desert": 1709,
+        "arctic": 1223,
+        "water": 10
+      }
+    },
+    {
+      "key": "5_2",
+      "chunkQ": 5,
+      "chunkR": 2,
+      "file": "5_2.json",
+      "cellCount": 12322,
+      "bounds": {
+        "minQ": 640,
+        "maxQ": 767,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "mountain": 1230,
+        "hill": 8958,
+        "desert": 2131,
+        "swamp": 3
+      }
+    },
+    {
+      "key": "5_3",
+      "chunkQ": 5,
+      "chunkR": 3,
+      "file": "5_3.json",
+      "cellCount": 12761,
+      "bounds": {
+        "minQ": 640,
+        "maxQ": 767,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "hill": 9544,
+        "swamp": 61,
+        "mountain": 2874,
+        "arctic": 4,
+        "desert": 134,
+        "forest": 144
+      }
+    },
+    {
+      "key": "5_4",
+      "chunkQ": 5,
+      "chunkR": 4,
+      "file": "5_4.json",
+      "cellCount": 6827,
+      "bounds": {
+        "minQ": 640,
+        "maxQ": 767,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "mountain": 1791,
+        "hill": 1126,
+        "forest": 1142,
+        "desert": 415,
+        "water": 2187,
+        "arctic": 114,
+        "swamp": 52
+      }
+    },
+    {
+      "key": "5_5",
+      "chunkQ": 5,
+      "chunkR": 5,
+      "file": "5_5.json",
+      "cellCount": 10987,
+      "bounds": {
+        "minQ": 640,
+        "maxQ": 767,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "water": 3250,
+        "forest": 2849,
+        "mountain": 3986,
+        "hill": 830,
+        "arctic": 22,
+        "swamp": 9,
+        "desert": 41
+      }
+    },
+    {
+      "key": "5_6",
+      "chunkQ": 5,
+      "chunkR": 6,
+      "file": "5_6.json",
+      "cellCount": 9726,
+      "bounds": {
+        "minQ": 640,
+        "maxQ": 767,
+        "minR": 768,
+        "maxR": 878
+      },
+      "terrainCounts": {
+        "mountain": 2971,
+        "hill": 3143,
+        "water": 1609,
+        "desert": 1871,
+        "swamp": 114,
+        "arctic": 13,
+        "forest": 5
+      }
+    },
+    {
+      "key": "6_0",
+      "chunkQ": 6,
+      "chunkR": 0,
+      "file": "6_0.json",
+      "cellCount": 13432,
+      "bounds": {
+        "minQ": 768,
+        "maxQ": 895,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "hill": 2095,
+        "desert": 787,
+        "arctic": 8729,
+        "mountain": 1770,
+        "water": 29,
+        "swamp": 22
+      }
+    },
+    {
+      "key": "6_1",
+      "chunkQ": 6,
+      "chunkR": 1,
+      "file": "6_1.json",
+      "cellCount": 11875,
+      "bounds": {
+        "minQ": 768,
+        "maxQ": 895,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "arctic": 5668,
+        "mountain": 3270,
+        "hill": 2231,
+        "desert": 575,
+        "water": 25,
+        "swamp": 106
+      }
+    },
+    {
+      "key": "6_2",
+      "chunkQ": 6,
+      "chunkR": 2,
+      "file": "6_2.json",
+      "cellCount": 11386,
+      "bounds": {
+        "minQ": 768,
+        "maxQ": 895,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "hill": 6361,
+        "desert": 1135,
+        "mountain": 1558,
+        "forest": 2332
+      }
+    },
+    {
+      "key": "6_3",
+      "chunkQ": 6,
+      "chunkR": 3,
+      "file": "6_3.json",
+      "cellCount": 10207,
+      "bounds": {
+        "minQ": 768,
+        "maxQ": 895,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "hill": 963,
+        "mountain": 912,
+        "forest": 8038,
+        "water": 91,
+        "desert": 177,
+        "swamp": 21,
+        "arctic": 5
+      }
+    },
+    {
+      "key": "6_4",
+      "chunkQ": 6,
+      "chunkR": 4,
+      "file": "6_4.json",
+      "cellCount": 7682,
+      "bounds": {
+        "minQ": 768,
+        "maxQ": 895,
+        "minR": 512,
+        "maxR": 639
+      },
+      "terrainCounts": {
+        "forest": 596,
+        "desert": 940,
+        "hill": 1282,
+        "water": 4582,
+        "mountain": 38,
+        "arctic": 34,
+        "swamp": 210
+      }
+    },
+    {
+      "key": "6_5",
+      "chunkQ": 6,
+      "chunkR": 5,
+      "file": "6_5.json",
+      "cellCount": 5368,
+      "bounds": {
+        "minQ": 768,
+        "maxQ": 855,
+        "minR": 640,
+        "maxR": 767
+      },
+      "terrainCounts": {
+        "water": 2038,
+        "forest": 493,
+        "mountain": 271,
+        "hill": 1513,
+        "desert": 1012,
+        "arctic": 14,
+        "swamp": 27
+      }
+    },
+    {
+      "key": "6_6",
+      "chunkQ": 6,
+      "chunkR": 6,
+      "file": "6_6.json",
+      "cellCount": 509,
+      "bounds": {
+        "minQ": 768,
+        "maxQ": 791,
+        "minR": 768,
+        "maxR": 815
+      },
+      "terrainCounts": {
+        "desert": 296,
+        "hill": 213
+      }
+    },
+    {
+      "key": "7_0",
+      "chunkQ": 7,
+      "chunkR": 0,
+      "file": "7_0.json",
+      "cellCount": 12118,
+      "bounds": {
+        "minQ": 896,
+        "maxQ": 1023,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "desert": 3059,
+        "hill": 1571,
+        "swamp": 420,
+        "arctic": 5113,
+        "mountain": 1886,
+        "water": 24,
+        "forest": 45
+      }
+    },
+    {
+      "key": "7_1",
+      "chunkQ": 7,
+      "chunkR": 1,
+      "file": "7_1.json",
+      "cellCount": 10510,
+      "bounds": {
+        "minQ": 896,
+        "maxQ": 1023,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "arctic": 2591,
+        "mountain": 2664,
+        "desert": 238,
+        "hill": 2247,
+        "water": 168,
+        "forest": 2583,
+        "swamp": 19
+      }
+    },
+    {
+      "key": "7_2",
+      "chunkQ": 7,
+      "chunkR": 2,
+      "file": "7_2.json",
+      "cellCount": 5950,
+      "bounds": {
+        "minQ": 896,
+        "maxQ": 1023,
+        "minR": 256,
+        "maxR": 383
+      },
+      "terrainCounts": {
+        "hill": 2289,
+        "mountain": 969,
+        "forest": 591,
+        "swamp": 898,
+        "water": 29,
+        "desert": 1174
+      }
+    },
+    {
+      "key": "7_3",
+      "chunkQ": 7,
+      "chunkR": 3,
+      "file": "7_3.json",
+      "cellCount": 5059,
+      "bounds": {
+        "minQ": 896,
+        "maxQ": 983,
+        "minR": 384,
+        "maxR": 511
+      },
+      "terrainCounts": {
+        "water": 1072,
+        "desert": 1981,
+        "forest": 1584,
+        "hill": 297,
+        "swamp": 95,
+        "arctic": 8,
+        "mountain": 22
+      }
+    },
+    {
+      "key": "7_4",
+      "chunkQ": 7,
+      "chunkR": 4,
+      "file": "7_4.json",
+      "cellCount": 528,
+      "bounds": {
+        "minQ": 896,
+        "maxQ": 919,
+        "minR": 512,
+        "maxR": 558
+      },
+      "terrainCounts": {
+        "swamp": 4,
+        "desert": 372,
+        "hill": 152
+      }
+    },
+    {
+      "key": "8_0",
+      "chunkQ": 8,
+      "chunkR": 0,
+      "file": "8_0.json",
+      "cellCount": 7599,
+      "bounds": {
+        "minQ": 1024,
+        "maxQ": 1151,
+        "minR": 0,
+        "maxR": 127
+      },
+      "terrainCounts": {
+        "desert": 1390,
+        "hill": 3368,
+        "swamp": 941,
+        "mountain": 990,
+        "forest": 274,
+        "arctic": 636
+      }
+    },
+    {
+      "key": "8_1",
+      "chunkQ": 8,
+      "chunkR": 1,
+      "file": "8_1.json",
+      "cellCount": 5900,
+      "bounds": {
+        "minQ": 1024,
+        "maxQ": 1111,
+        "minR": 128,
+        "maxR": 255
+      },
+      "terrainCounts": {
+        "forest": 194,
+        "swamp": 46,
+        "mountain": 220,
+        "arctic": 3105,
+        "desert": 774,
+        "hill": 1556,
+        "water": 5
+      }
+    },
+    {
+      "key": "8_2",
+      "chunkQ": 8,
+      "chunkR": 2,
+      "file": "8_2.json",
+      "cellCount": 527,
+      "bounds": {
+        "minQ": 1024,
+        "maxQ": 1047,
+        "minR": 256,
+        "maxR": 302
+      },
+      "terrainCounts": {
+        "desert": 368,
+        "hill": 159
+      }
+    },
+    {
+      "key": "9_0",
+      "chunkQ": 9,
+      "chunkR": 0,
+      "file": "9_0.json",
+      "cellCount": 585,
+      "bounds": {
+        "minQ": 1152,
+        "maxQ": 1174,
+        "minR": 0,
+        "maxR": 46
+      },
+      "terrainCounts": {
+        "hill": 585
+      }
+    }
+  ]
+}

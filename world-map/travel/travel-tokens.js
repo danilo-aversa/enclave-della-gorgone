@@ -1,4 +1,4 @@
-// v0.9 2026-04-29T21:10:00.000Z
+// v0.13 2026-04-30T15:35:00.000Z
 (function () {
   "use strict";
 
@@ -56,6 +56,9 @@
     host: null,
     autosaveTimer: null,
     hasLocalOverride: false,
+    routeCalculationTokenId: "",
+    routeRequestSeq: 0,
+    routeCalculationRequests: {},
   };
 
   window.EnclaveTravelTokens = {
@@ -375,12 +378,13 @@
     mount.innerHTML = state.tokens.map(function (token) {
       var type = TOKEN_TYPES[token.type] || TOKEN_TYPES[DEFAULT_TOKEN_TYPE];
       var active = token.id === state.selectedTokenId ? " is-active" : "";
+      var calculating = isTokenRouteCalculating(token.id) ? " is-calculating" : "";
 
       return (
-        '<article class="world-map-travel-token-row' + active + '" data-travel-token-row="' + escapeHtml(token.id) + '">' +
+        '<article class="world-map-travel-token-row' + active + calculating + '" data-travel-token-row="' + escapeHtml(token.id) + '">' +
         '<button type="button" class="world-map-travel-token-row__main" data-travel-token-select="' + escapeHtml(token.id) + '">' +
         '<span class="world-map-travel-token-dot" style="--token-color:' + escapeHtml(token.color || type.color) + '"><i class="fa-solid ' + escapeHtml(token.icon || type.icon) + '" aria-hidden="true"></i></span>' +
-        '<span><strong>' + escapeHtml(token.name) + '</strong><small>' + escapeHtml(type.label) + ' · ' + escapeHtml(token.q + ',' + token.r) + '</small></span>' +
+        '<span><strong>' + escapeHtml(token.name) + '</strong><small>' + escapeHtml(type.label) + ' · ' + escapeHtml(token.q + ',' + token.r) + (isTokenRouteCalculating(token.id) ? ' · calculating…' : '') + '</small></span>' +
         '</button>' +
         '<button type="button" class="world-map-travel-mini-button" data-travel-token-move="' + escapeHtml(token.id) + '" aria-label="Muovi" title="Muovi"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i></button>' +
         '<button type="button" class="world-map-travel-mini-button" data-travel-token-delete="' + escapeHtml(token.id) + '" aria-label="Elimina" title="Elimina"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
@@ -424,6 +428,7 @@
       '<div><dt>Waypoints</dt><dd>' + ((token.routeWaypoints || []).length || 0) + '</dd></div>' +
       '<div><dt>Destination</dt><dd>' + getTokenDestinationLabel(token) + '</dd></div>' +
       '<div><dt>ETA</dt><dd>' + getTokenRouteEtaLabel(token) + '</dd></div>' +
+      (isTokenRouteCalculating(token.id) ? '<div><dt>Status</dt><dd><i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> Calculating…</dd></div>' : '') +
       '</dl>' +
       '<div class="world-map-travel-token-detail-actions">' +
       '<button type="button" class="world-map-context-action" data-travel-token-waypoint="' + escapeHtml(token.id) + '"><i class="fa-solid fa-map-pin" aria-hidden="true"></i><span>Add waypoint</span></button>' +
@@ -543,6 +548,7 @@
       return false;
     }
 
+    cancelRouteRequest(tokenId);
     removeTokenMarker(tokenId);
     removeTokenRoute(tokenId);
     removeTokenWaypoints(tokenId);
@@ -564,12 +570,14 @@
       return false;
     }
 
+    cancelRouteRequest(token.id);
     token.q = Number(q) || 0;
     token.r = Number(r) || 0;
     token.route = [];
     token.routeWaypoints = [];
     token.routeIndex = 0;
     token.routeMeta = null;
+    renderToken(token);
     renderToken(token);
     renderTokenRoute(token);
     renderTokenWaypoints(token);
@@ -612,27 +620,95 @@
   function assignRouteToToken(token, q, r, options) {
     options = options || {};
 
-    if (!token || !state.travel || typeof state.travel.calculateRoute !== "function") {
+    if (!token || !state.travel) {
       return false;
     }
 
     var travelMode = inferTravelModeForToken(token);
     var waypoints = Array.isArray(token.routeWaypoints) ? token.routeWaypoints : [];
     var destination = { q: Number(q) || 0, r: Number(r) || 0 };
-    var result = state.travel.calculateRoute({
+    var payload = {
       start: { q: token.q, r: token.r },
       end: destination,
       waypoints: waypoints,
       travelMode: travelMode,
       speedMode: "normal",
-    });
+    };
+
+    var requestId = createRouteRequestId(token.id);
+    renderToken(token);
+    renderTokenRoute(token);
+    renderTokenWaypoints(token);
+    renderPanel();
+
+    if (typeof state.travel.calculateRouteAsync === "function") {
+      state.travel.calculateRouteAsync(payload).then(function (result) {
+        applyRouteResultToToken(token.id, requestId, destination, waypoints, travelMode, result, options);
+      }).catch(function (error) {
+        console.warn("Travel token route calculation failed:", error);
+        if (!isCurrentRouteRequest(token.id, requestId)) {
+          return;
+        }
+
+        finishRouteRequest(token.id, requestId);
+        renderToken(token);
+        renderTokenRoute(token);
+        renderTokenWaypoints(token);
+        renderPanel();
+
+        if (!options.silent) {
+          window.alert(error && error.message ? error.message : "Route calculation failed.");
+        }
+      });
+      return true;
+    }
+
+    if (typeof state.travel.calculateRoute !== "function") {
+      finishRouteRequest(token.id, requestId);
+      renderToken(token);
+      renderTokenRoute(token);
+      renderTokenRoute(token);
+      renderTokenWaypoints(token);
+      renderPanel();
+      return false;
+    }
+
+    return applyRouteResultToToken(
+      token.id,
+      requestId,
+      destination,
+      waypoints,
+      travelMode,
+      state.travel.calculateRoute(payload),
+      options
+    );
+  }
+
+  function applyRouteResultToToken(tokenId, requestId, destination, waypoints, travelMode, result, options) {
+    options = options || {};
+
+    if (!isCurrentRouteRequest(tokenId, requestId)) {
+      return false;
+    }
+
+    var token = getTokenById(tokenId);
     var path = extractRoutePath(result);
+
+    finishRouteRequest(tokenId, requestId);
+
+    if (!token) {
+      renderPanel();
+      return false;
+    }
+
+    renderToken(token);
 
     if (!path.length) {
       if (!options.silent) {
         window.alert("Nessuna route trovata. Controlla che start, waypoint e destinazione siano attraversabili con il tipo di viaggio del token.");
       }
       renderTokenWaypoints(token);
+      renderPanel();
       return false;
     }
 
@@ -656,6 +732,45 @@
     scheduleAutosave();
     renderPanel();
     return true;
+  }
+
+  function createRouteRequestId(tokenId) {
+    state.routeRequestSeq += 1;
+    var requestId = tokenId + ":" + state.routeRequestSeq;
+
+    state.routeCalculationRequests[tokenId] = requestId;
+    state.routeCalculationTokenId = tokenId;
+    return requestId;
+  }
+
+  function isCurrentRouteRequest(tokenId, requestId) {
+    return !!tokenId && !!requestId && state.routeCalculationRequests[tokenId] === requestId;
+  }
+
+  function isTokenRouteCalculating(tokenId) {
+    return !!(tokenId && state.routeCalculationRequests[tokenId]);
+  }
+
+  function finishRouteRequest(tokenId, requestId) {
+    if (isCurrentRouteRequest(tokenId, requestId)) {
+      delete state.routeCalculationRequests[tokenId];
+    }
+
+    state.routeCalculationTokenId = findActiveRouteCalculationTokenId();
+  }
+
+  function cancelRouteRequest(tokenId) {
+    if (!tokenId) {
+      return;
+    }
+
+    delete state.routeCalculationRequests[tokenId];
+    state.routeCalculationTokenId = findActiveRouteCalculationTokenId();
+  }
+
+  function findActiveRouteCalculationTokenId() {
+    var ids = Object.keys(state.routeCalculationRequests || {});
+    return ids.length ? ids[ids.length - 1] : "";
   }
 
   function extractRoutePath(result) {
@@ -705,9 +820,11 @@
       return false;
     }
 
+    cancelRouteRequest(token.id);
     token.route = [];
     token.routeIndex = 0;
     token.routeMeta = null;
+    renderToken(token);
     renderTokenRoute(token);
     renderTokenWaypoints(token);
     scheduleAutosave();
@@ -722,11 +839,14 @@
       return false;
     }
 
+    cancelRouteRequest(token.id);
     token.routeWaypoints = [];
     token.route = [];
     token.routeIndex = 0;
     token.routeMeta = null;
+    renderToken(token);
     renderTokenRoute(token);
+    renderTokenWaypoints(token);
     scheduleAutosave();
     renderPanel();
     return true;
@@ -755,6 +875,10 @@
   function getTokenRouteEtaLabel(token) {
     if (!token || !token.routeMeta) {
       return "—";
+    }
+
+    if (isTokenRouteCalculating(token.id)) {
+      return "Calculating…";
     }
 
     if (Number.isFinite(Number(token.routeMeta.days))) {
@@ -863,15 +987,16 @@
 
     var latlngs = getSmoothedRouteLatLngs(token.route);
     var color = token.color || getTokenType(token.type).color;
+    var isCalculating = isTokenRouteCalculating(token.id);
     var route = L.polyline(latlngs, {
       tokenId: token.id,
       color: color,
       weight: token.id === state.selectedTokenId ? 6 : 4,
-      opacity: token.id === state.selectedTokenId ? 0.98 : 0.72,
+      opacity: isCalculating ? 0.46 : token.id === state.selectedTokenId ? 0.98 : 0.72,
       lineCap: "round",
       lineJoin: "round",
       smoothFactor: 1.6,
-      className: "world-map-travel-token-route" + (token.id === state.selectedTokenId ? " is-selected" : ""),
+      className: "world-map-travel-token-route" + (token.id === state.selectedTokenId ? " is-selected" : "") + (isCalculating ? " is-calculating" : ""),
     }).addTo(state.routeLayer);
 
     route.on("click", function (event) {
@@ -1251,14 +1376,16 @@
   function createTokenIcon(token) {
     var type = getTokenType(token.type);
     var isSelected = token.id === state.selectedTokenId;
+    var isCalculating = isTokenRouteCalculating(token.id);
     var icon = token.icon || type.icon;
     var color = token.color || type.color;
 
     return L.divIcon({
       className: "",
       html:
-        '<span class="world-map-travel-token-marker' + (isSelected ? ' is-selected' : '') + '" style="--token-color:' + escapeHtml(color) + '">' +
+        '<span class="world-map-travel-token-marker' + (isSelected ? ' is-selected' : '') + (isCalculating ? ' is-calculating' : '') + '" style="--token-color:' + escapeHtml(color) + '">' +
         '<i class="fa-solid ' + escapeHtml(icon) + '" aria-hidden="true"></i>' +
+        (isCalculating ? '<span class="world-map-travel-token-marker__status" aria-hidden="true"><i class="fa-solid fa-circle-notch fa-spin"></i></span>' : '') +
         '</span>',
       iconSize: [34, 34],
       iconAnchor: [17, 17],
@@ -1267,6 +1394,7 @@
 
   function createWaypointIcon(token, index, kind) {
     var color = token.color || getTokenType(token.type).color;
+    var isCalculating = isTokenRouteCalculating(token.id);
     var content = kind === "destination"
       ? '<i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>'
       : '<span>' + escapeHtml(String(index + 1)) + '</span>';
@@ -1274,8 +1402,9 @@
     return L.divIcon({
       className: "",
       html:
-        '<span class="world-map-travel-waypoint-marker world-map-travel-waypoint-marker--' + escapeHtml(kind) + (token.id === state.selectedTokenId ? ' is-selected' : '') + '" style="--token-color:' + escapeHtml(color) + '">' +
+        '<span class="world-map-travel-waypoint-marker world-map-travel-waypoint-marker--' + escapeHtml(kind) + (token.id === state.selectedTokenId ? ' is-selected' : '') + (isCalculating ? ' is-calculating' : '') + '" style="--token-color:' + escapeHtml(color) + '">' +
         content +
+        (isCalculating && kind === "destination" ? '<span class="world-map-travel-waypoint-marker__status" aria-hidden="true"><i class="fa-solid fa-circle-notch fa-spin"></i></span>' : '') +
         '</span>',
       iconSize: [24, 24],
       iconAnchor: [12, 12],
@@ -1433,6 +1562,8 @@
       throw new Error("Travel token mapId mismatch: " + payload.mapId + " !== " + state.mapId);
     }
 
+    state.routeCalculationRequests = {};
+    state.routeCalculationTokenId = "";
     state.tokens = Array.isArray(payload.tokens) ? payload.tokens.map(sanitizeToken) : [];
 
     if (state.selectedTokenId && !getTokenById(state.selectedTokenId)) {
@@ -1487,6 +1618,8 @@
 
     state.tokens = [];
     state.selectedTokenId = "";
+    state.routeCalculationRequests = {};
+    state.routeCalculationTokenId = "";
     state.hasLocalOverride = false;
     renderTokens();
     renderPanel();

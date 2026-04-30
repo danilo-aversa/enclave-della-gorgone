@@ -1,4 +1,4 @@
-// v0.43 2026-04-29T18:45:00.000Z
+// v0.59 2026-04-30T23:05:00.000Z
 (function () {
   "use strict";
 
@@ -10,18 +10,35 @@
     gridColor: "white", // black | cyan | white
     gridOpacity: 0.24,
     terrainOpacity: 0.75,
+    autosaveDelayMs: 900,
+    paintAutosaveDelayMs: 1400,
   };
 
   var TRAVEL_MAP_CONFIG = {
     faerun: {
-      hexSize: 10,
-      milesPerHex: 1,
+      hexSize: 5,
+      milesPerHex: 0.5,
       defaultTerrain: "plain",
+      storageMode: "chunks", // unified | chunks | auto
+      chunkSize: 128,
+      maxLoadedChunks: 128,
+      maxVisibleHexes: 18000,
+      maxVisibleHexesDebug: 26000,
+      maxPathIterations: 320000,
+      autosaveDelayMs: 1200,
+      paintAutosaveDelayMs: 1800,
+      routeChunkBufferHexes: 128,
+      routeChunkSampleStepHexes: 128,
     },
     moonshae: {
       hexSize: 24,
       milesPerHex: 3,
       defaultTerrain: "plain",
+      storageMode: "chunks", // unified | chunks | auto
+      chunkSize: 128,
+      maxLoadedChunks: 64,
+      routeChunkBufferHexes: 32,
+      routeChunkSampleStepHexes: 48,
     },
   };
 
@@ -207,8 +224,10 @@
 
     lastPaintedKey: "",
     cells: {},
+    gridStore: null,
     redrawFrame: null,
     autosaveTimer: null,
+    pendingAutosave: false,
     interactionHideTimer: null,
     isMapInteracting: false,
     calculatorPanel: null,
@@ -217,6 +236,7 @@
     calculatorEnd: null,
     calculatorWaypoints: [],
     calculatorPickMode: null,
+    calculatorRouteRequestId: 0,
     routeLayer: null,
     routeShadowLayer: null,
     routeGlowLayer: null,
@@ -241,6 +261,10 @@
     hasLocalOverride: false,
     staticGridLoaded: false,
     staticGridMissing: false,
+    visibleChunkRequestKey: "",
+    lastVisibleHexBounds: null,
+    staticChunkIndex: null,
+    staticChunkKeys: [],
   };
 
   window.EnclaveTravel = {
@@ -267,6 +291,8 @@
     hexDistance: hexDistance,
     findPath: findPath,
     calculateRoute: calculateRoute,
+    calculateRouteAsync: calculateRouteAsync,
+    preloadRouteChunks: preloadRouteChunks,
     calculateTravelEstimate: calculateTravelEstimate,
     getCellData: getCellData,
     getTerrainTypes: function () {
@@ -285,6 +311,11 @@
     getConfig: function () {
       return Object.assign({}, state.config);
     },
+    getGridStore: function () {
+      return state.gridStore;
+    },
+    getVisibleHexBounds: getCurrentVisibleHexBounds,
+    getAutoRevealContext: getAutoRevealContext,
     applyAutoRevealCells: applyAutoRevealCells,
   };
 
@@ -314,12 +345,18 @@
     state.terrainOpacity = Number(state.config.terrainOpacity) || 0.75;
     state.cells = {};
     state.regionNames = {};
+    initializeTravelGridStore();
     state.hasLocalOverride = false;
     state.staticGridLoaded = false;
     state.staticGridMissing = false;
+    state.visibleChunkRequestKey = "";
+    state.lastVisibleHexBounds = null;
+    state.staticChunkIndex = null;
+    state.staticChunkKeys = [];
     loadStaticGrid().then(function () {
       loadGridFromLocalStorage();
       syncEditorPanel();
+      requestCurrentViewportChunks();
       redraw();
     });
 
@@ -329,6 +366,157 @@
     bindContextMenuSuppression();
     bindCalculatorPickCapture();
     redraw();
+  }
+
+  function initializeTravelGridStore() {
+    if (!window.EnclaveTravelGridStore || typeof window.EnclaveTravelGridStore.init !== "function") {
+      state.gridStore = null;
+      return;
+    }
+
+    state.gridStore = window.EnclaveTravelGridStore.init({
+      mapId: state.mapId,
+      mapWidth: state.width,
+      mapHeight: state.height,
+      hexSize: state.config.hexSize,
+      milesPerHex: state.config.milesPerHex,
+      defaultTerrain: state.config.defaultTerrain,
+      chunkSize: state.config.chunkSize || 128,
+      maxLoadedChunks: state.config.maxLoadedChunks || 96,
+      staticBasePath: "data/travel/chunks/" + state.mapId,
+      storagePrefix: "enclave.travelGridStore",
+      availableChunkKeys: state.staticChunkKeys || [],
+    });
+  }
+
+  function syncGridStoreFromCells() {
+    if (!state.gridStore || typeof state.gridStore.setCell !== "function") {
+      return;
+    }
+
+    Object.keys(state.cells || {}).forEach(function (key) {
+      var parsed = parseHexKey(key);
+      state.gridStore.setCell(parsed.q, parsed.r, normalizeCellForStore(state.cells[key], parsed.q, parsed.r), {
+        markDirty: false,
+      });
+    });
+  }
+
+  function normalizeCellForStore(cell, q, r) {
+    var terrain = TERRAIN_TYPES[cell && cell.terrain] ? cell.terrain : state.config.defaultTerrain;
+
+    return {
+      q: q,
+      r: r,
+      terrain: terrain,
+      road: !!(cell && cell.road),
+      bridge: !!(cell && cell.bridge),
+      tunnel: !!(cell && cell.tunnel),
+      waterType: WATER_REGION_TYPES[cell && cell.waterType] ? cell.waterType : "",
+      risk: Number.isFinite(Number(cell && cell.risk)) ? Number(cell.risk) : TERRAIN_TYPES[terrain].risk,
+      blocked: terrain === "blocked" || !!(cell && cell.blocked),
+      tags: Array.isArray(cell && cell.tags) ? cell.tags.map(String) : [],
+    };
+  }
+
+  function readStoredCell(q, r) {
+    var key = hexKey(q, r);
+
+    if (state.cells && state.cells[key]) {
+      return state.cells[key];
+    }
+
+    if (state.gridStore && typeof state.gridStore.getCell === "function") {
+      return state.gridStore.getCell(q, r);
+    }
+
+    return null;
+  }
+
+  function writeStoredCell(q, r, cell, options) {
+    options = options || {};
+    var key = hexKey(q, r);
+    var normalized = sanitizeSingleCell(cell, q, r);
+
+    if (!normalized) {
+      deleteStoredCell(q, r, options);
+      return;
+    }
+
+    state.cells[key] = normalized;
+
+    if (state.gridStore && typeof state.gridStore.setCell === "function") {
+      state.gridStore.setCell(q, r, normalizeCellForStore(normalized, q, r), {
+        markDirty: options.markDirty !== false,
+      });
+    }
+  }
+
+  function deleteStoredCell(q, r, options) {
+    options = options || {};
+    delete state.cells[hexKey(q, r)];
+
+    if (state.gridStore && typeof state.gridStore.deleteCell === "function") {
+      state.gridStore.deleteCell(q, r, {
+        markDirty: options.markDirty !== false,
+      });
+    }
+  }
+
+  function getStoredCellKeys() {
+    var keys = Object.keys(state.cells || {});
+
+    if (!state.gridStore || typeof state.gridStore.forEachLoadedCell !== "function") {
+      return keys;
+    }
+
+    var lookup = {};
+    keys.forEach(function (key) {
+      lookup[key] = true;
+    });
+
+    state.gridStore.forEachLoadedCell(function (cell) {
+      lookup[hexKey(cell.q, cell.r)] = true;
+    });
+
+    return Object.keys(lookup);
+  }
+
+  function sanitizeSingleCell(cell, q, r) {
+    cell = cell || {};
+    var terrain = TERRAIN_TYPES[cell.terrain] ? cell.terrain : state.config.defaultTerrain;
+    var road = !!cell.road;
+    var bridge = !!cell.bridge;
+    var tunnel = !!cell.tunnel;
+
+    var waterType = WATER_REGION_TYPES[cell.waterType] ? cell.waterType : "";
+    var risk = Number.isFinite(Number(cell.risk)) ? Number(cell.risk) : TERRAIN_TYPES[terrain].risk;
+    var blocked = terrain === "blocked" || !!cell.blocked;
+    var tags = Array.isArray(cell.tags) ? cell.tags.map(String) : [];
+
+    if (
+      terrain === state.config.defaultTerrain &&
+      !road &&
+      !bridge &&
+      !tunnel &&
+      !waterType &&
+      !blocked &&
+      risk === TERRAIN_TYPES[terrain].risk &&
+      !tags.length
+    ) {
+      return null;
+    }
+
+    return {
+      terrain: terrain,
+      road: road,
+      bridge: bridge,
+      tunnel: tunnel,
+      waterType: waterType,
+      risk: risk,
+      blocked: blocked,
+      tags: tags,
+    };
   }
 
   function ensureCanvas() {
@@ -368,6 +556,7 @@
     state.editorHost = host;
     host.classList.remove("world-map-detail");
     host.classList.add("world-map-editor");
+    ensureTravelDebugBubbleStyles();
     host.innerHTML = buildEditorPanelMarkup();
     state.editorPanel = host.querySelector("[data-world-map-travel-editor]");
 
@@ -483,6 +672,8 @@
       var terrain = event.target.closest("[data-travel-editor-terrain]");
       var close = event.target.closest("[data-travel-editor-close]");
       var exportButton = event.target.closest("[data-travel-editor-export]");
+      var exportVisibleChunksButton = event.target.closest("[data-travel-editor-export-visible-chunks]");
+      var exportDirtyChunksButton = event.target.closest("[data-travel-editor-export-dirty-chunks]");
       var flushLocalButton = event.target.closest("[data-travel-editor-flush-local]");
       var autoRevealButton = event.target.closest("[data-travel-auto-reveal]");
       var saveCloseButton = event.target.closest("[data-travel-editor-save-close]");
@@ -568,6 +759,16 @@
 
       if (exportButton) {
         exportGridJson(exportButton);
+        return;
+      }
+
+      if (exportVisibleChunksButton) {
+        exportVisibleChunksJson(exportVisibleChunksButton);
+        return;
+      }
+
+      if (exportDirtyChunksButton) {
+        exportDirtyChunksJson(exportDirtyChunksButton);
         return;
       }
 
@@ -814,16 +1015,44 @@
 
     var modeSelect = state.calculatorPanel ? state.calculatorPanel.querySelector("[data-travel-mode]") : null;
     var speedSelect = state.calculatorPanel ? state.calculatorPanel.querySelector("[data-travel-speed]") : null;
-    var result = calculateRoute({
+    var payload = {
       start: state.calculatorStart,
       end: state.calculatorEnd,
       waypoints: state.calculatorWaypoints,
       travelMode: modeSelect ? modeSelect.value : "foot",
       speedMode: speedSelect ? speedSelect.value : "normal",
-    });
+    };
 
-    drawRoute(result);
-    renderCalculatorResult(result);
+    var requestId = beginCalculatorRouteRequest();
+    renderCalculatorPending("Loading route chunks…");
+
+    calculateRouteAsync(payload).then(function (result) {
+      if (!isCurrentCalculatorRouteRequest(requestId)) {
+        return;
+      }
+
+      drawRoute(result);
+      renderCalculatorResult(result);
+    }).catch(function (error) {
+      if (!isCurrentCalculatorRouteRequest(requestId)) {
+        return;
+      }
+
+      console.warn("Travel route calculation failed:", error);
+      renderCalculatorResult({
+        success: false,
+        warnings: [error && error.message ? error.message : "Route calculation failed."],
+      });
+    });
+  }
+
+  function beginCalculatorRouteRequest() {
+    state.calculatorRouteRequestId += 1;
+    return state.calculatorRouteRequestId;
+  }
+
+  function isCurrentCalculatorRouteRequest(requestId) {
+    return requestId === state.calculatorRouteRequestId;
   }
 
   function calculateRoute(payload) {
@@ -837,6 +1066,179 @@
         maxIterations: payload.maxIterations,
       }
     );
+  }
+
+  function calculateRouteAsync(payload) {
+    payload = payload || {};
+
+    var points = [payload.start].concat(payload.waypoints || [], [payload.end]);
+    var options = {
+      travelMode: payload.travelMode || "foot",
+      speedMode: payload.speedMode || "normal",
+      maxIterations: payload.maxIterations,
+      chunkBufferHexes: payload.chunkBufferHexes,
+      routeChunkBufferHexes: payload.routeChunkBufferHexes,
+      routeChunkSampleStepHexes: payload.routeChunkSampleStepHexes,
+    };
+
+    var normalizedPoints = normalizeRoutePoints(points);
+    options.routeSearchBoundsBySegment = buildRouteSegmentBoundsLists(normalizedPoints, options);
+
+    return preloadRouteChunks(normalizedPoints, options).then(function (loadedChunkKeys) {
+      var result = findRouteThroughPoints(points, options);
+      result.loadedChunkKeys = loadedChunkKeys || [];
+      result.loadedChunkCount = result.loadedChunkKeys.length;
+      return result;
+    });
+  }
+
+  function preloadRouteChunks(points, options) {
+    if (!state.gridStore || typeof state.gridStore.loadChunksForBounds !== "function") {
+      return Promise.resolve([]);
+    }
+
+    var normalizedPoints = normalizeRoutePoints(points);
+
+    if (normalizedPoints.length < 2) {
+      return Promise.resolve([]);
+    }
+
+    var segmentBoundsLists = options && Array.isArray(options.routeSearchBoundsBySegment)
+      ? options.routeSearchBoundsBySegment
+      : buildRouteSegmentBoundsLists(normalizedPoints, options || {});
+    var boundsList = flattenBoundsLists(segmentBoundsLists);
+
+    return Promise.all(boundsList.map(function (bounds) {
+      return state.gridStore.loadChunksForBounds(bounds);
+    })).then(function (loadedGroups) {
+      syncLoadedGridStoreCellsIntoState();
+      return flattenUniqueChunkKeys(loadedGroups);
+    });
+  }
+
+  function normalizeRoutePoints(points) {
+    return (points || []).map(normalizePathEndpoint).filter(Boolean);
+  }
+
+  function buildRouteSegmentBoundsLists(points, options) {
+    var normalizedPoints = normalizeRoutePoints(points);
+    var lists = [];
+
+    for (var i = 0; i < normalizedPoints.length - 1; i += 1) {
+      lists.push(getRouteSegmentCorridorBoundsList(normalizedPoints[i], normalizedPoints[i + 1], options || {}));
+    }
+
+    return lists;
+  }
+
+  function getRouteSegmentCorridorBoundsList(start, goal, options) {
+    var distance = Math.max(1, hexDistance(start, goal));
+    var buffer = getRouteChunkBufferHexes(options);
+    var step = getRouteChunkSampleStepHexes(options);
+    var sampleCount = Math.max(1, Math.ceil(distance / step));
+    var bounds = [];
+    var seen = {};
+
+    for (var i = 0; i <= sampleCount; i += 1) {
+      var t = i / sampleCount;
+      var center = roundHex(
+        start.q + (goal.q - start.q) * t,
+        start.r + (goal.r - start.r) * t
+      );
+      var item = clampHexBoundsToMap({
+        minQ: center.q - buffer,
+        maxQ: center.q + buffer,
+        minR: center.r - buffer,
+        maxR: center.r + buffer,
+      });
+      var key = [item.minQ, item.maxQ, item.minR, item.maxR].join(":");
+
+      if (!seen[key]) {
+        seen[key] = true;
+        bounds.push(item);
+      }
+    }
+
+    return bounds;
+  }
+
+  function getRouteSegmentChunkBounds(start, goal, options) {
+    var list = getRouteSegmentCorridorBoundsList(start, goal, options || {});
+    return mergeBoundsList(list);
+  }
+
+  function getRouteChunkBufferHexes(options) {
+    var configured = Number(options && (options.routeChunkBufferHexes || options.chunkBufferHexes));
+
+    if (Number.isFinite(configured) && configured > 0) {
+      return clampNumber(Math.round(configured), 12, 192);
+    }
+
+    return clampNumber(Number(state.config.routeChunkBufferHexes) || 64, 12, 192);
+  }
+
+  function getRouteChunkSampleStepHexes(options) {
+    var configured = Number(options && options.routeChunkSampleStepHexes);
+
+    if (Number.isFinite(configured) && configured > 0) {
+      return clampNumber(Math.round(configured), 8, 256);
+    }
+
+    return clampNumber(Number(state.config.routeChunkSampleStepHexes) || Math.floor((state.config.chunkSize || 128) / 2), 8, 256);
+  }
+
+  function flattenBoundsLists(boundsLists) {
+    var flat = [];
+    var seen = {};
+
+    (boundsLists || []).forEach(function (list) {
+      (list || []).forEach(function (bounds) {
+        var key = [bounds.minQ, bounds.maxQ, bounds.minR, bounds.maxR].join(":");
+
+        if (!seen[key]) {
+          seen[key] = true;
+          flat.push(bounds);
+        }
+      });
+    });
+
+    return flat;
+  }
+
+  function mergeBoundsList(boundsList) {
+    if (!boundsList || !boundsList.length) {
+      return { minQ: 0, maxQ: 0, minR: 0, maxR: 0 };
+    }
+
+    return boundsList.reduce(function (merged, item) {
+      return {
+        minQ: Math.min(merged.minQ, item.minQ),
+        maxQ: Math.max(merged.maxQ, item.maxQ),
+        minR: Math.min(merged.minR, item.minR),
+        maxR: Math.max(merged.maxR, item.maxR),
+      };
+    }, boundsList[0]);
+  }
+
+  function clampHexBoundsToMap(bounds) {
+    return {
+      minQ: Math.max(-4096, Math.floor(bounds.minQ)),
+      maxQ: Math.min(4096, Math.ceil(bounds.maxQ)),
+      minR: Math.max(-4096, Math.floor(bounds.minR)),
+      maxR: Math.min(4096, Math.ceil(bounds.maxR)),
+    };
+  }
+
+  function flattenUniqueChunkKeys(groups) {
+    var lookup = {};
+
+    (groups || []).forEach(function (group) {
+      (group || []).forEach(function (chunkKey) {
+        lookup[chunkKey] = true;
+      });
+    });
+
+    return Object.keys(lookup).sort();
   }
 
   function findRouteThroughPoints(points, options) {
@@ -853,7 +1255,13 @@
     }
 
     for (var i = 0; i < points.length - 1; i += 1) {
-      var segment = findPath(points[i], points[i + 1], options);
+      var segmentOptions = Object.assign({}, options || {});
+
+      if (options && Array.isArray(options.routeSearchBoundsBySegment) && options.routeSearchBoundsBySegment[i]) {
+        segmentOptions.searchBoundsList = options.routeSearchBoundsBySegment[i];
+      }
+
+      var segment = findPath(points[i], points[i + 1], segmentOptions);
 
       if (!segment.success) {
         return Object.assign({}, segment, {
@@ -937,6 +1345,7 @@
   }
 
   function clearCurrentRoute() {
+    beginCalculatorRouteRequest();
     state.calculatorStart = null;
     state.calculatorEnd = null;
     state.calculatorWaypoints = [];
@@ -944,6 +1353,20 @@
     clearRouteLayer();
     clearEndpointMarkers();
     clearPickPreviewMarker();
+  }
+
+  function renderCalculatorPending(message) {
+    var mount = state.calculatorPanel ? state.calculatorPanel.querySelector("[data-travel-result]") : null;
+
+    if (!mount) {
+      return;
+    }
+
+    mount.innerHTML =
+      '<h3>Result</h3>' +
+      '<p class="world-map-travel-calc-empty"><i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> ' +
+      escapeHtml(message || "Calculating route…") +
+      '</p>';
   }
 
   function renderCalculatorResult(result) {
@@ -965,6 +1388,7 @@
       '<div><dt>Effective</dt><dd>' + result.effectiveDistanceMiles + ' mi</dd></div>' +
       '<div><dt>Days</dt><dd>' + result.estimatedDays + '</dd></div>' +
       '<div><dt>Risk</dt><dd>' + result.riskScore + '</dd></div>' +
+      '<div><dt>Chunks</dt><dd>' + (Number.isFinite(Number(result.loadedChunkCount)) ? result.loadedChunkCount : '—') + '</dd></div>' +
       '</dl>' +
       (result.warnings && result.warnings.length ? '<p class="world-map-travel-calc-warning">' + escapeHtml(result.warnings.join(" ")) + '</p>' : '');
   }
@@ -1203,7 +1627,9 @@
       buildRegionsPanelMarkup() +
       '<div class="world-map-travel-editor__actions">' +
       '<button type="button" data-travel-auto-reveal aria-label="Auto Reveal Terrain" title="Auto Reveal Terrain"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>' +
-      '<button type="button" data-travel-editor-export aria-label="Export JSON" title="Export JSON"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>' +
+      '<button type="button" data-travel-editor-export aria-label="Export unified JSON" title="Export unified JSON"><i class="fa-solid fa-copy" aria-hidden="true"></i></button>' +
+      '<button type="button" data-travel-editor-export-visible-chunks aria-label="Export visible chunks" title="Export visible chunks"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i></button>' +
+      '<button type="button" data-travel-editor-export-dirty-chunks aria-label="Export dirty chunks" title="Export dirty chunks"><i class="fa-solid fa-file-export" aria-hidden="true"></i></button>' +
       '<button type="button" data-travel-editor-flush-local aria-label="Flush local override" title="Flush local override"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>' +
       '<button type="button" data-travel-editor-import aria-label="Import JSON" title="Import JSON"><i class="fa-solid fa-file-import" aria-hidden="true"></i></button>' +
       '<button type="button" data-travel-editor-save-close aria-label="Salva e chiudi" title="Salva e chiudi"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>' +
@@ -1466,7 +1892,7 @@
     }
 
     if (localStatus) {
-      localStatus.textContent = getGridSourceLabel();
+      localStatus.innerHTML = buildGridSourceStatusMarkup();
       localStatus.classList.toggle("is-local", !!state.hasLocalOverride);
       localStatus.classList.toggle("is-missing", !state.hasLocalOverride && !!state.staticGridMissing);
     }
@@ -1586,7 +2012,7 @@
   function detectRegions() {
     var visited = new Set();
     var regions = [];
-    var keys = Object.keys(state.cells || {});
+    var keys = getStoredCellKeys();
 
     keys.forEach(function (key) {
       if (visited.has(key)) {
@@ -1622,7 +2048,7 @@
         getHexNeighbors(current.q, current.r).forEach(function (neighbor) {
           var neighborKey = hexKey(neighbor.q, neighbor.r);
 
-          if (visited.has(neighborKey) || !state.cells[neighborKey]) {
+          if (visited.has(neighborKey) || !readStoredCell(neighbor.q, neighbor.r)) {
             return;
           }
 
@@ -2056,13 +2482,14 @@
 
     region.cells.forEach(function (cell) {
       var key = hexKey(cell.q, cell.r);
-      var existing = state.cells[key];
+      var existing = readStoredCell(cell.q, cell.r);
 
       if (!existing) {
         return;
       }
 
       existing.waterType = safeType;
+      writeStoredCell(cell.q, cell.r, existing);
     });
 
     state.regions = detectRegions();
@@ -2391,6 +2818,19 @@
     var rMin = Math.min.apply(null, rValues) - 6;
     var rMax = Math.max.apply(null, rValues) + 6;
 
+    state.lastVisibleHexBounds = {
+      minQ: qMin,
+      maxQ: qMax,
+      minR: rMin,
+      maxR: rMax,
+    };
+
+    if (shouldSkipDenseGridRender(qMin, qMax, rMin, rMax)) {
+      return;
+    }
+
+    requestVisibleGridChunks(state.lastVisibleHexBounds);
+
     state.ctx.lineWidth = getGridLineWidthForZoom(zoom);
     state.ctx.strokeStyle = getGridStrokeStyle();
 
@@ -2409,6 +2849,80 @@
         drawHex(q, r, center);
       }
     }
+  }
+
+  function shouldSkipDenseGridRender(qMin, qMax, rMin, rMax) {
+    var visibleHexes = getVisibleHexCount(qMin, qMax, rMin, rMax);
+    var maxVisibleHexes = getMaxVisibleHexesForCurrentMode();
+
+    if (visibleHexes > maxVisibleHexes) {
+      state.canvas.dataset.travelGridSkipped = String(visibleHexes);
+      return true;
+    }
+
+    delete state.canvas.dataset.travelGridSkipped;
+    return false;
+  }
+
+  function getVisibleHexCount(qMin, qMax, rMin, rMax) {
+    return Math.max(0, qMax - qMin + 1) * Math.max(0, rMax - rMin + 1);
+  }
+
+  function getMaxVisibleHexesForCurrentMode() {
+    if (state.displayMode === "debug") {
+      return Number(state.config.maxVisibleHexesDebug) || Number(state.config.maxVisibleHexes) || 26000;
+    }
+
+    return Number(state.config.maxVisibleHexes) || 18000;
+  }
+
+  function requestVisibleGridChunks(bounds) {
+    if (!state.gridStore && window.EnclaveTravelGridStore && typeof window.EnclaveTravelGridStore.init === "function") {
+      initializeTravelGridStore();
+    }
+
+    if (!state.gridStore || typeof state.gridStore.loadChunksForBounds !== "function") {
+      return;
+    }
+
+    var key = [bounds.minQ, bounds.maxQ, bounds.minR, bounds.maxR].join(":");
+
+    if (key === state.visibleChunkRequestKey) {
+      return;
+    }
+
+    state.visibleChunkRequestKey = key;
+
+    state.gridStore.loadChunksForBounds(bounds).then(function () {
+      syncLoadedGridStoreCellsIntoState();
+      scheduleRedraw();
+    }).catch(function (error) {
+      console.warn("Travel grid chunk load failed:", error);
+    });
+  }
+
+  function syncLoadedGridStoreCellsIntoState() {
+    if (!state.gridStore || typeof state.gridStore.forEachLoadedCell !== "function") {
+      return;
+    }
+
+    state.gridStore.forEachLoadedCell(function (cell) {
+      var normalized = sanitizeSingleCell(cell, cell.q, cell.r);
+
+      if (normalized) {
+        state.cells[hexKey(cell.q, cell.r)] = normalized;
+      }
+    });
+  }
+
+  function requestCurrentViewportChunks() {
+    if (!state.map || !state.world || !state.gridStore) {
+      return;
+    }
+
+    var bounds = getCurrentVisibleHexBounds();
+    state.lastVisibleHexBounds = bounds;
+    requestVisibleGridChunks(bounds);
   }
 
   function getGridStrokeStyle() {
@@ -2661,6 +3175,10 @@
     updateBrushPreviewFromPointer(event);
     scheduleRedraw();
 
+    if (state.pendingAutosave) {
+      scheduleGridAutosave();
+    }
+
     if (event && state.canvas && state.canvas.hasPointerCapture && state.canvas.hasPointerCapture(event.pointerId)) {
       state.canvas.releasePointerCapture(event.pointerId);
     }
@@ -2855,28 +3373,28 @@
     var tunnel = !!state.editorTunnel;
 
     if (state.editorErase) {
-      var existingCell = state.cells[key] || null;
+      var existingCell = readStoredCell(q, r) || null;
       var selectedEraseTerrains = Object.keys(state.selectiveEraseTerrains || {});
 
       if (!selectedEraseTerrains.length || (existingCell && selectedEraseTerrains.indexOf(existingCell.terrain) !== -1)) {
-        delete state.cells[key];
+        deleteStoredCell(q, r);
         scheduleGridAutosave();
       }
 
       return;
     }
 
-    if (!state.overwriteHexes && state.cells[key] && !road && !bridge && !tunnel) {
+    if (!state.overwriteHexes && readStoredCell(q, r) && !road && !bridge && !tunnel) {
       return;
     }
 
     if (terrain === state.config.defaultTerrain && !road && !bridge && !tunnel) {
-      delete state.cells[key];
+      deleteStoredCell(q, r);
       scheduleGridAutosave();
       return;
     }
 
-    state.cells[key] = {
+    writeStoredCell(q, r, {
       terrain: terrain,
       road: road,
       bridge: bridge,
@@ -2885,7 +3403,7 @@
       risk: TERRAIN_TYPES[terrain] ? TERRAIN_TYPES[terrain].risk : 0,
       blocked: terrain === "blocked",
       tags: [],
-    };
+    });
 
     scheduleGridAutosave();
   }
@@ -2900,10 +3418,14 @@
     }
 
     try {
-      autoReveal.openModal({
+      autoReveal.openModal(Object.assign({
         world: state.world,
         travel: window.EnclaveTravel,
-      });
+        gridStore: state.gridStore,
+        applyCells: function (cells, options) {
+          return applyAutoRevealCells(cells, Object.assign({ scope: "visible" }, options || {}));
+        },
+      }, getAutoRevealContext()));
 
       flashButton(button, original, '<i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>');
     } catch (error) {
@@ -2912,17 +3434,26 @@
     }
   }
 
-  function applyAutoRevealCells(cells) {
-    var next = Object.assign({}, state.cells);
+  function applyAutoRevealCells(cells, options) {
+    options = options || {};
+
+    var bounds = resolveAutoRevealBounds(options);
+    var chunkLookup = buildAutoRevealChunkLookup(options.chunkKeys);
+    var changed = 0;
 
     Object.keys(cells || {}).forEach(function (key) {
       var cell = cells[key];
+      var position = parseAutoRevealCellPosition(key, cell);
+
+      if (!position || !isAutoRevealCellAllowed(position.q, position.r, bounds, chunkLookup)) {
+        return;
+      }
 
       if (!cell || !TERRAIN_TYPES[cell.terrain]) {
         return;
       }
 
-      next[key] = {
+      var normalized = {
         terrain: cell.terrain,
         road: !!cell.road,
         bridge: !!cell.bridge,
@@ -2932,17 +3463,208 @@
         blocked: cell.terrain === "blocked" || !!cell.blocked,
         tags: Array.isArray(cell.tags) ? cell.tags.map(String) : [],
       };
+
+      writeStoredCell(position.q, position.r, normalized, {
+        markDirty: options.markDirty !== false,
+      });
+      changed += 1;
     });
 
-    state.cells = sanitizeCells(next);
+    if (!changed) {
+      return {
+        changed: 0,
+        bounds: bounds,
+      };
+    }
+
     state.regions = [];
     state.regionHexLookup = {};
     state.highlightedRegionCellLookup = {};
     renderRegionsList();
+    scheduleRedraw();
+
+    if (options.autosave !== false) {
+      scheduleGridAutosave();
+    }
+
+    return {
+      changed: changed,
+      bounds: bounds,
+    };
+  }
+
+  function getAutoRevealContext() {
+    var bounds = state.lastVisibleHexBounds || getCurrentVisibleHexBounds();
+    var gridConfig = state.gridStore && typeof state.gridStore.getConfig === "function" ? state.gridStore.getConfig() : {};
+
+    return {
+      mapId: state.mapId,
+      mapWidth: state.width,
+      mapHeight: state.height,
+      hexSize: state.config.hexSize,
+      milesPerHex: state.config.milesPerHex,
+      defaultTerrain: state.config.defaultTerrain,
+      chunkSize: state.config.chunkSize || 128,
+      scope: "visible",
+      bounds: bounds,
+      visibleHexBounds: bounds,
+      availableChunkKeys: Array.isArray(gridConfig.availableChunkKeys) ? gridConfig.availableChunkKeys.slice() : state.staticChunkKeys.slice(),
+      loadedChunkKeys: state.gridStore && typeof state.gridStore.getLoadedChunkKeys === "function" ? state.gridStore.getLoadedChunkKeys() : [],
+    };
+  }
+
+  function resolveAutoRevealBounds(options) {
+    if (options && options.bounds) {
+      return normalizeAutoRevealBounds(options.bounds);
+    }
+
+    if (options && options.scope === "visible") {
+      return normalizeAutoRevealBounds(state.lastVisibleHexBounds || getCurrentVisibleHexBounds());
+    }
+
+    return null;
+  }
+
+  function normalizeAutoRevealBounds(bounds) {
+    if (!bounds) {
+      return null;
+    }
+
+    var minQ = Number(bounds.minQ != null ? bounds.minQ : bounds.qMin);
+    var maxQ = Number(bounds.maxQ != null ? bounds.maxQ : bounds.qMax);
+    var minR = Number(bounds.minR != null ? bounds.minR : bounds.rMin);
+    var maxR = Number(bounds.maxR != null ? bounds.maxR : bounds.rMax);
+
+    if (!Number.isFinite(minQ) || !Number.isFinite(maxQ) || !Number.isFinite(minR) || !Number.isFinite(maxR)) {
+      return null;
+    }
+
+    return {
+      minQ: Math.min(minQ, maxQ),
+      maxQ: Math.max(minQ, maxQ),
+      minR: Math.min(minR, maxR),
+      maxR: Math.max(minR, maxR),
+    };
+  }
+
+  function parseAutoRevealCellPosition(key, cell) {
+    if (isCellKey(key)) {
+      return parseHexKey(key);
+    }
+
+    if (cell && Number.isFinite(Number(cell.q)) && Number.isFinite(Number(cell.r))) {
+      return {
+        q: Number(cell.q),
+        r: Number(cell.r),
+      };
+    }
+
+    return null;
+  }
+
+  function buildAutoRevealChunkLookup(chunkKeys) {
+    if (!Array.isArray(chunkKeys) || !chunkKeys.length) {
+      return null;
+    }
+
+    var lookup = {};
+
+    chunkKeys.forEach(function (chunkKey) {
+      if (chunkKey) {
+        lookup[String(chunkKey)] = true;
+      }
+    });
+
+    return lookup;
+  }
+
+  function isAutoRevealCellAllowed(q, r, bounds, chunkLookup) {
+    if (bounds && (q < bounds.minQ || q > bounds.maxQ || r < bounds.minR || r > bounds.maxR)) {
+      return false;
+    }
+
+    if (chunkLookup && !chunkLookup[getChunkKeyForHex(q, r)]) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function getChunkKeyForHex(q, r) {
+    var chunkSize = Number(state.config.chunkSize) || 128;
+    return Math.floor(Number(q) / chunkSize) + "_" + Math.floor(Number(r) / chunkSize);
   }
 
   function exportGridJson(button) {
-    var text = serializeGridPayload(buildGridPayload());
+    copyJsonToClipboard(button, buildGridPayload());
+  }
+
+  function exportVisibleChunksJson(button) {
+    if (!state.gridStore || typeof state.gridStore.loadChunksForBounds !== "function") {
+      copyJsonToClipboard(button, buildGridPayload());
+      return;
+    }
+
+    var bounds = state.lastVisibleHexBounds || getCurrentVisibleHexBounds();
+
+    state.gridStore.loadChunksForBounds(bounds).then(function (chunkKeys) {
+      var payload = buildChunksExportPayload(chunkKeys || []);
+      copyJsonToClipboard(button, payload);
+    }).catch(function (error) {
+      console.warn("Visible chunk export failed:", error);
+      copyJsonToClipboard(button, buildGridPayload());
+    });
+  }
+
+  function exportDirtyChunksJson(button) {
+    if (!state.gridStore || typeof state.gridStore.getDirtyChunkKeys !== "function") {
+      copyJsonToClipboard(button, buildGridPayload());
+      return;
+    }
+
+    var chunkKeys = state.gridStore.getDirtyChunkKeys();
+    copyJsonToClipboard(button, buildChunksExportPayload(chunkKeys));
+  }
+
+  function buildChunksExportPayload(chunkKeys) {
+    var chunks = [];
+    var unique = {};
+
+    (chunkKeys || []).forEach(function (chunkKey) {
+      if (!chunkKey || unique[chunkKey]) {
+        return;
+      }
+
+      unique[chunkKey] = true;
+
+      if (!state.gridStore || typeof state.gridStore.exportChunkPayload !== "function") {
+        return;
+      }
+
+      var payload = state.gridStore.exportChunkPayload(chunkKey);
+
+      if (payload) {
+        chunks.push(payload);
+      }
+    });
+
+    return {
+      version: 1,
+      format: "chunk-bundle",
+      mapId: state.mapId,
+      mapWidth: state.width,
+      mapHeight: state.height,
+      hexSize: state.config.hexSize,
+      milesPerHex: state.config.milesPerHex,
+      defaultTerrain: state.config.defaultTerrain,
+      chunkSize: state.config.chunkSize || 128,
+      chunkCount: chunks.length,
+      chunks: chunks,
+    };
+  }
+
+  function copyJsonToClipboard(button, payload) {
+    var text = serializeGridPayload(payload);
     var original = button ? button.innerHTML : "";
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2953,6 +3675,40 @@
     }
 
     console.log(text);
+  }
+
+  function getCurrentVisibleHexBounds() {
+    if (!state.map || !state.world) {
+      return { minQ: 0, maxQ: 0, minR: 0, maxR: 0 };
+    }
+
+    var bounds = state.map.getBounds();
+    var corners = [
+      state.world.toImagePoint(bounds.getNorthWest()),
+      state.world.toImagePoint(bounds.getNorthEast()),
+      state.world.toImagePoint(bounds.getSouthWest()),
+      state.world.toImagePoint(bounds.getSouthEast()),
+    ];
+    var margin = state.config.hexSize * 4;
+    var minX = clampNumber(Math.min.apply(null, corners.map(function (p) { return p.x; })) - margin, 0, state.width);
+    var maxX = clampNumber(Math.max.apply(null, corners.map(function (p) { return p.x; })) + margin, 0, state.width);
+    var minY = clampNumber(Math.min.apply(null, corners.map(function (p) { return p.y; })) - margin, 0, state.height);
+    var maxY = clampNumber(Math.max.apply(null, corners.map(function (p) { return p.y; })) + margin, 0, state.height);
+    var hexCorners = [
+      pixelToHex(minX, minY, state.config.hexSize),
+      pixelToHex(maxX, minY, state.config.hexSize),
+      pixelToHex(minX, maxY, state.config.hexSize),
+      pixelToHex(maxX, maxY, state.config.hexSize),
+    ];
+    var qValues = hexCorners.map(function (h) { return h.q; });
+    var rValues = hexCorners.map(function (h) { return h.r; });
+
+    return {
+      minQ: Math.min.apply(null, qValues) - 6,
+      maxQ: Math.max.apply(null, qValues) + 6,
+      minR: Math.min.apply(null, rValues) - 6,
+      maxR: Math.max.apply(null, rValues) + 6,
+    };
   }
 
   function serializeGridPayload(payload) {
@@ -2969,10 +3725,83 @@
     }
 
     if (state.staticGridLoaded) {
+      if (state.config.storageMode === "chunks") {
+        return "Static chunks" + (state.staticChunkKeys.length ? " (" + state.staticChunkKeys.length + ")" : "");
+      }
+
       return "Static JSON";
     }
 
-    return "No static JSON";
+    return state.config.storageMode === "chunks" ? "No static chunks" : "No static JSON";
+  }
+
+  function buildGridSourceStatusMarkup() {
+    var label = getGridSourceLabel();
+
+    if (!state.staticGridLoaded || state.config.storageMode !== "chunks") {
+      return escapeHtml(label);
+    }
+
+    return (
+      '<span class="world-map-travel-debug-bubble-wrap" tabindex="0">' +
+      '<span class="world-map-travel-debug-bubble-trigger">' + escapeHtml(label) + '</span>' +
+      buildChunkDebugBubbleMarkup() +
+      '</span>'
+    );
+  }
+
+  function buildChunkDebugBubbleMarkup() {
+    var stats = getChunkDebugStats();
+
+    return (
+      '<span class="world-map-travel-debug-bubble" role="tooltip">' +
+      '<strong>Chunk debug</strong>' +
+      '<span><b>Loaded</b><em>' + stats.loaded + '</em></span>' +
+      '<span><b>Available</b><em>' + stats.available + '</em></span>' +
+      '<span><b>Missing</b><em>' + stats.missing + '</em></span>' +
+      '<span><b>Dirty</b><em>' + stats.dirty + '</em></span>' +
+      '<span><b>Max loaded</b><em>' + stats.maxLoaded + '</em></span>' +
+      '<span><b>Visible request</b><em>' + escapeHtml(stats.visibleRequest || '—') + '</em></span>' +
+      '</span>'
+    );
+  }
+
+  function getChunkDebugStats() {
+    var gridConfig = state.gridStore && typeof state.gridStore.getConfig === "function" ? state.gridStore.getConfig() : {};
+    var loaded = state.gridStore && typeof state.gridStore.getLoadedChunkKeys === "function" ? state.gridStore.getLoadedChunkKeys() : [];
+    var dirty = state.gridStore && typeof state.gridStore.getDirtyChunkKeys === "function" ? state.gridStore.getDirtyChunkKeys() : [];
+    var available = Array.isArray(gridConfig.availableChunkKeys) ? gridConfig.availableChunkKeys : state.staticChunkKeys;
+    var missing = Array.isArray(gridConfig.missingStaticChunkKeys) ? gridConfig.missingStaticChunkKeys : [];
+
+    return {
+      loaded: loaded.length,
+      available: available.length,
+      missing: missing.length,
+      dirty: dirty.length,
+      maxLoaded: Number(gridConfig.maxLoadedChunks || state.config.maxLoadedChunks || 0) || '—',
+      visibleRequest: state.visibleChunkRequestKey || '',
+    };
+  }
+
+  function ensureTravelDebugBubbleStyles() {
+    if (document.querySelector("[data-travel-debug-bubble-styles]")) {
+      return;
+    }
+
+    var style = document.createElement("style");
+    style.setAttribute("data-travel-debug-bubble-styles", "");
+    style.textContent = [
+      ".world-map-travel-debug-bubble-wrap{position:relative;display:inline-flex;align-items:center;outline:none;}",
+      ".world-map-travel-debug-bubble-trigger{cursor:help;}",
+      ".world-map-travel-debug-bubble{position:absolute;right:0;top:calc(100% + 8px);z-index:30;display:grid;gap:0.35rem;min-width:190px;padding:0.72rem 0.78rem;border:1px solid rgba(113,221,202,0.32);border-radius:10px;background:rgba(9,18,22,0.96);box-shadow:0 14px 38px rgba(0,0,0,0.42);color:rgba(232,241,238,0.94);font-size:0.72rem;line-height:1.2;opacity:0;pointer-events:none;transform:translateY(-4px);transition:opacity 140ms ease,transform 140ms ease;}",
+      ".world-map-travel-debug-bubble::before{content:\"\";position:absolute;right:18px;top:-6px;width:10px;height:10px;border-left:1px solid rgba(113,221,202,0.32);border-top:1px solid rgba(113,221,202,0.32);background:rgba(9,18,22,0.96);transform:rotate(45deg);}",
+      ".world-map-travel-debug-bubble-wrap:hover .world-map-travel-debug-bubble,.world-map-travel-debug-bubble-wrap:focus-within .world-map-travel-debug-bubble{opacity:1;pointer-events:auto;transform:translateY(0);}",
+      ".world-map-travel-debug-bubble strong{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:rgba(113,221,202,0.94);}",
+      ".world-map-travel-debug-bubble span{display:flex;justify-content:space-between;gap:1rem;}",
+      ".world-map-travel-debug-bubble b{font-weight:600;color:rgba(232,241,238,0.72);}",
+      ".world-map-travel-debug-bubble em{font-style:normal;font-weight:700;color:rgba(241,213,165,0.95);text-align:right;max-width:8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}"
+    ].join(String.fromCharCode(10));
+    document.head.appendChild(style);
   }
 
   function importGridJson(button) {
@@ -3013,7 +3842,7 @@
   }
 
   function buildCompactGridPayload() {
-    var grouped = groupCellsForCompactExport(state.cells);
+    var grouped = groupCellsForCompactExport(getStoredCellsSnapshot());
 
     return {
       version: 2,
@@ -3029,9 +3858,27 @@
       roads: grouped.roads,
       bridges: grouped.bridges,
       tunnels: grouped.tunnels,
+      blocked: grouped.blocked,
       waterTypes: grouped.waterTypes,
+      risks: grouped.risks,
       tags: grouped.tags,
     };
+  }
+
+  function getStoredCellsSnapshot() {
+    var snapshot = Object.assign({}, state.cells || {});
+
+    if (state.gridStore && typeof state.gridStore.forEachLoadedCell === "function") {
+      state.gridStore.forEachLoadedCell(function (cell) {
+        var normalized = sanitizeSingleCell(cell, cell.q, cell.r);
+
+        if (normalized) {
+          snapshot[hexKey(cell.q, cell.r)] = normalized;
+        }
+      });
+    }
+
+    return snapshot;
   }
 
   function groupCellsForCompactExport(cells) {
@@ -3039,7 +3886,9 @@
     var roadRows = {};
     var bridgeRows = {};
     var tunnelRows = {};
+    var blockedRows = {};
     var waterTypeRows = {};
+    var riskRows = {};
     var tagRows = {};
 
     Object.keys(cells || {}).forEach(function (key) {
@@ -3063,6 +3912,14 @@
         pushRowValue(tunnelRows, "tunnels", parsed.r, parsed.q);
       }
 
+      if (cell.blocked) {
+        pushRowValue(blockedRows, "blocked", parsed.r, parsed.q);
+      }
+
+      if (Number.isFinite(Number(cell.risk)) && Number(cell.risk) !== TERRAIN_TYPES[terrain].risk) {
+        pushRowValue(riskRows, String(Number(cell.risk)), parsed.r, parsed.q);
+      }
+
       if (cell.waterType && WATER_REGION_TYPES[cell.waterType]) {
         pushRowValue(waterTypeRows, cell.waterType, parsed.r, parsed.q);
       }
@@ -3079,7 +3936,9 @@
       roads: rowsToRunsByGroup(roadRows).roads || [],
       bridges: rowsToRunsByGroup(bridgeRows).bridges || [],
       tunnels: rowsToRunsByGroup(tunnelRows).tunnels || [],
+      blocked: rowsToRunsByGroup(blockedRows).blocked || [],
       waterTypes: rowsToRunsByGroup(waterTypeRows),
+      risks: rowsToRunsByGroup(riskRows),
       tags: rowsToRunsByGroup(tagRows),
     };
   }
@@ -3168,12 +4027,33 @@
 
     state.regionNames = payload.regionNames && typeof payload.regionNames === "object" ? payload.regionNames : {};
 
+    if (payload.format === "chunk-bundle" && Array.isArray(payload.chunks)) {
+      state.cells = expandChunkBundlePayload(payload);
+      syncGridStoreFromCells();
+      return;
+    }
+
     if (payload.format === "rle" || payload.terrain || payload.roads) {
       state.cells = expandCompactGridPayload(payload);
+      syncGridStoreFromCells();
       return;
     }
 
     state.cells = sanitizeCells(payload.cells || {});
+    syncGridStoreFromCells();
+  }
+
+  function expandChunkBundlePayload(payload) {
+    var next = {};
+
+    (payload.chunks || []).forEach(function (chunkPayload) {
+      var chunkCells = expandCompactGridPayload(chunkPayload);
+      Object.keys(chunkCells).forEach(function (key) {
+        next[key] = chunkCells[key];
+      });
+    });
+
+    return sanitizeCells(next);
   }
 
   function expandCompactGridPayload(payload) {
@@ -3182,7 +4062,9 @@
     var roads = Array.isArray(payload.roads) ? payload.roads : [];
     var bridges = Array.isArray(payload.bridges) ? payload.bridges : [];
     var tunnels = Array.isArray(payload.tunnels) ? payload.tunnels : [];
+    var blocked = Array.isArray(payload.blocked) ? payload.blocked : [];
     var waterTypes = payload.waterTypes || {};
+    var risks = payload.risks || {};
     var tags = payload.tags || {};
 
     Object.keys(terrainGroups).forEach(function (terrain) {
@@ -3217,13 +4099,19 @@
       next[key] = existing;
     });
 
-    Object.keys(waterTypes).forEach(function (waterType) {
-      applyRunsToCells(waterTypes[waterType], function (q, r) {
-        var key = hexKey(q, r);
-        var existing = next[key] || createCellData(state.config.defaultTerrain, false, []);
-        existing.waterType = WATER_REGION_TYPES[waterType] ? waterType : "";
-        next[key] = existing;
-      });
+    applyRunsToCells(blocked, function (q, r) {
+      var key = hexKey(q, r);
+      var existing = next[key] || createCellData(state.config.defaultTerrain, false, []);
+      existing.blocked = true;
+      next[key] = existing;
+    });
+
+    applyGroupedOrKeyedValuesToCells(waterTypes, next, "waterType", function (value) {
+      return WATER_REGION_TYPES[value] ? value : "";
+    });
+
+    applyGroupedOrKeyedValuesToCells(risks, next, "risk", function (value) {
+      return Number.isFinite(Number(value)) ? Number(value) : null;
     });
 
     Object.keys(tags).forEach(function (tag) {
@@ -3244,6 +4132,32 @@
     });
 
     return sanitizeCells(next);
+  }
+
+  function applyGroupedOrKeyedValuesToCells(groups, cells, field, normalizeValue) {
+    Object.keys(groups || {}).forEach(function (groupOrKey) {
+      var value = groups[groupOrKey];
+
+      if (isCellKey(groupOrKey)) {
+        var parsed = parseHexKey(groupOrKey);
+        var keyedCell = cells[groupOrKey] || createCellData(state.config.defaultTerrain, false, []);
+        keyedCell[field] = normalizeValue(value);
+        cells[hexKey(parsed.q, parsed.r)] = keyedCell;
+        return;
+      }
+
+      applyRunsToCells(value, function (q, r) {
+        var key = hexKey(q, r);
+        var existing = cells[key] || createCellData(state.config.defaultTerrain, false, []);
+        existing[field] = normalizeValue(groupOrKey);
+        cells[key] = existing;
+      });
+    });
+  }
+
+  function isCellKey(value) {
+    var parts = String(value || "").split(",");
+    return parts.length === 2 && Number.isFinite(Number(parts[0])) && Number.isFinite(Number(parts[1]));
   }
 
   function applyRunsToCells(runs, callback) {
@@ -3294,7 +4208,20 @@
       var tunnel = !!cell.tunnel;
       var waterType = WATER_REGION_TYPES[cell.waterType] ? cell.waterType : "";
 
-      if (terrain === state.config.defaultTerrain && !road && !bridge && !tunnel) {
+      var blocked = terrain === "blocked" || !!cell.blocked;
+      var risk = Number.isFinite(Number(cell.risk)) ? Number(cell.risk) : TERRAIN_TYPES[terrain].risk;
+      var tags = Array.isArray(cell.tags) ? cell.tags.map(String) : [];
+
+      if (
+        terrain === state.config.defaultTerrain &&
+        !road &&
+        !bridge &&
+        !tunnel &&
+        !waterType &&
+        !blocked &&
+        risk === TERRAIN_TYPES[terrain].risk &&
+        !tags.length
+      ) {
         return;
       }
 
@@ -3304,9 +4231,9 @@
         bridge: bridge,
         tunnel: tunnel,
         waterType: waterType,
-        risk: Number.isFinite(Number(cell.risk)) ? Number(cell.risk) : TERRAIN_TYPES[terrain].risk,
-        blocked: terrain === "blocked" || !!cell.blocked,
-        tags: Array.isArray(cell.tags) ? cell.tags.map(String) : [],
+        risk: risk,
+        blocked: blocked,
+        tags: tags,
       };
     });
 
@@ -3314,19 +4241,45 @@
   }
 
   function scheduleGridAutosave() {
+    state.pendingAutosave = true;
+
     if (state.autosaveTimer) {
       window.clearTimeout(state.autosaveTimer);
     }
 
+    var delay = state.isPainting
+      ? Number(state.config.paintAutosaveDelayMs) || 1400
+      : Number(state.config.autosaveDelayMs) || 900;
+
     state.autosaveTimer = window.setTimeout(function () {
       state.autosaveTimer = null;
+
+      if (state.isPainting) {
+        scheduleGridAutosave();
+        return;
+      }
+
+      state.pendingAutosave = false;
       saveGridToLocalStorage();
-    }, 250);
+    }, delay);
   }
 
   function saveGridToLocalStorage() {
     try {
-      window.localStorage.setItem(getLocalStorageKey(), JSON.stringify(buildGridPayload()));
+      if (isChunkStorageActive() && state.gridStore && typeof state.gridStore.flushDirtyChunksToLocalStorage === "function") {
+        state.gridStore.flushDirtyChunksToLocalStorage();
+        window.localStorage.removeItem(getLocalStorageKey());
+        window.localStorage.setItem(getLocalStorageChunkMetaKey(), JSON.stringify({
+          version: 1,
+          mapId: state.mapId,
+          storageMode: "chunks",
+          updatedAt: new Date().toISOString(),
+        }));
+      } else {
+        window.localStorage.setItem(getLocalStorageKey(), JSON.stringify(buildGridPayload()));
+        window.localStorage.removeItem(getLocalStorageChunkMetaKey());
+      }
+
       state.hasLocalOverride = true;
       syncEditorPanel();
     } catch (error) {
@@ -3335,6 +4288,26 @@
   }
 
   function loadStaticGrid() {
+    var storageMode = state.config.storageMode || "auto";
+
+    if (storageMode === "chunks") {
+      return loadStaticChunkIndex();
+    }
+
+    if (storageMode === "unified") {
+      return loadUnifiedStaticGrid();
+    }
+
+    return loadUnifiedStaticGrid().then(function (loaded) {
+      if (loaded) {
+        return loaded;
+      }
+
+      return loadStaticChunkIndex();
+    });
+  }
+
+  function loadUnifiedStaticGrid() {
     var url = "data/travel/" + state.mapId + "-travel-grid.json";
 
     return fetch(url)
@@ -3346,30 +4319,83 @@
         }
 
         state.staticGridMissing = false;
-        return res.json();
-      })
-      .then(function (json) {
-        if (!json) {
-          return;
-        }
-
-        applyGridPayload(json);
-        state.staticGridLoaded = true;
-        state.staticGridMissing = false;
+        return res.json().then(function (json) {
+          applyGridPayload(json);
+          state.staticGridLoaded = true;
+          state.staticGridMissing = false;
+          return json;
+        });
       })
       .catch(function () {
         state.staticGridLoaded = false;
         state.staticGridMissing = true;
-        // fail silently (no static file yet)
+        return null;
       });
+  }
+
+  function loadStaticChunkIndex() {
+    var url = "data/travel/chunks/" + state.mapId + "/index.json";
+
+    return fetch(url)
+      .then(function (res) {
+        if (!res.ok) {
+          return null;
+        }
+
+        return res.json();
+      })
+      .then(function (index) {
+        if (!index || index.format !== "chunk-index") {
+          return null;
+        }
+
+        state.staticGridLoaded = true;
+        state.staticGridMissing = false;
+        state.staticChunkIndex = index;
+        state.staticChunkKeys = normalizeStaticChunkKeys(index);
+
+        if (state.gridStore && typeof state.gridStore.configure === "function") {
+          state.gridStore.configure({ availableChunkKeys: state.staticChunkKeys });
+        }
+
+        return index;
+      })
+      .catch(function () {
+        state.staticChunkIndex = null;
+        state.staticChunkKeys = [];
+        return null;
+      });
+  }
+
+  function normalizeStaticChunkKeys(index) {
+    if (!index || !Array.isArray(index.chunks)) {
+      return [];
+    }
+
+    return index.chunks.map(function (chunk) {
+      if (typeof chunk === "string") {
+        return chunk;
+      }
+
+      if (chunk && chunk.key) {
+        return String(chunk.key);
+      }
+
+      if (chunk && Number.isFinite(Number(chunk.chunkQ)) && Number.isFinite(Number(chunk.chunkR))) {
+        return Number(chunk.chunkQ) + "_" + Number(chunk.chunkR);
+      }
+
+      return "";
+    }).filter(Boolean);
   }
 
   function loadGridFromLocalStorage() {
     try {
       var raw = window.localStorage.getItem(getLocalStorageKey());
+      var chunkMeta = window.localStorage.getItem(getLocalStorageChunkMetaKey());
 
       if (!raw) {
-        state.hasLocalOverride = false;
+        state.hasLocalOverride = !!chunkMeta;
         return;
       }
 
@@ -3390,6 +4416,7 @@
 
     try {
       window.localStorage.removeItem(getLocalStorageKey());
+      window.localStorage.removeItem(getLocalStorageChunkMetaKey());
     } catch (error) {
       console.warn("Travel grid local flush failed:", error);
     }
@@ -3397,13 +4424,22 @@
     state.hasLocalOverride = false;
     state.staticGridLoaded = false;
     state.staticGridMissing = false;
+    state.staticChunkIndex = null;
+    state.staticChunkKeys = [];
     state.cells = {};
     state.regionNames = {};
+
+    if (state.gridStore && typeof state.gridStore.clearLocalOverride === "function") {
+      state.gridStore.clearLocalOverride();
+    }
+
+    initializeTravelGridStore();
     state.regions = [];
     state.regionHexLookup = {};
     state.highlightedRegionCellLookup = {};
 
     loadStaticGrid().then(function () {
+      requestCurrentViewportChunks();
       syncEditorPanel();
       renderRegionsList();
       redraw();
@@ -3413,6 +4449,14 @@
 
   function getLocalStorageKey() {
     return "enclave.travelGrid." + state.mapId + ".v1";
+  }
+
+  function getLocalStorageChunkMetaKey() {
+    return "enclave.travelGrid." + state.mapId + ".chunks.v1";
+  }
+
+  function isChunkStorageActive() {
+    return state.config && state.config.storageMode === "chunks";
   }
 
   function flashButton(button, original, replacement) {
@@ -3434,7 +4478,8 @@
     var modeKey = options.travelMode || "foot";
     var speedMode = options.speedMode || "normal";
     var mode = TRAVEL_MODES[modeKey] || TRAVEL_MODES.foot;
-    var maxIterations = Number(options.maxIterations) || 120000;
+    var maxIterations = Number(options.maxIterations) || Number(state.config.maxPathIterations) || 120000;
+    var searchBoundsList = options.disableSearchBounds ? null : options.searchBoundsList;
 
     if (!start || !goal) {
       return buildFailedPathResult(start, goal, ["Invalid start or destination."]);
@@ -3442,6 +4487,10 @@
 
     if (!isHexInsideMap(start.q, start.r) || !isHexInsideMap(goal.q, goal.r)) {
       return buildFailedPathResult(start, goal, ["Start or destination is outside the map."]);
+    }
+
+    if (!searchBoundsList) {
+      searchBoundsList = getRouteSegmentCorridorBoundsList(start, goal, options);
     }
 
     var startCellCost = getMovementCost(start.q, start.r, mode);
@@ -3499,6 +4548,10 @@
           continue;
         }
 
+        if (searchBoundsList && !isHexInsideAnyBounds(neighbor.q, neighbor.r, searchBoundsList)) {
+          continue;
+        }
+
         var neighborKey = hexKey(neighbor.q, neighbor.r);
 
         if (visited.has(neighborKey)) {
@@ -3523,6 +4576,22 @@
     }
 
     return buildFailedPathResult(start, goal, ["No path found."]);
+  }
+
+  function isHexInsideAnyBounds(q, r, boundsList) {
+    if (!Array.isArray(boundsList) || !boundsList.length) {
+      return true;
+    }
+
+    for (var i = 0; i < boundsList.length; i += 1) {
+      var bounds = boundsList[i];
+
+      if (q >= bounds.minQ && q <= bounds.maxQ && r >= bounds.minR && r <= bounds.maxR) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   function normalizePathEndpoint(input) {
@@ -3551,7 +4620,7 @@
 
   function getCellData(q, r) {
     var key = hexKey(q, r);
-    var cell = state.cells[key] || {};
+    var cell = readStoredCell(q, r) || {};
     var terrain = TERRAIN_TYPES[cell.terrain] ? cell.terrain : state.config.defaultTerrain;
 
     return {
@@ -3803,7 +4872,7 @@
       var points = getHexCorners(center.x, center.y, state.config.hexSize);
       var first = mapPixelToContainer(points[0]);
       var key = hexKey(hex.q, hex.r);
-      var existing = !!state.cells[key];
+      var existing = !!readStoredCell(hex.q, hex.r);
       var wouldSkip = !state.editorErase && !state.overwriteHexes && existing && !state.editorRoad && !state.editorBridge && !state.editorTunnel;
 
       state.ctx.beginPath();
@@ -3837,7 +4906,7 @@
 
   function drawHex(q, r, center) {
     var key = hexKey(q, r);
-    var cell = state.cells[key] || null;
+    var cell = readStoredCell(q, r) || null;
     var points = getHexCorners(center.x, center.y, state.config.hexSize);
     var first = mapPixelToContainer(points[0]);
 

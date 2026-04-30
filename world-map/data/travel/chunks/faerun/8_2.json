@@ -1,0 +1,5302 @@
+{
+  "format": "travel-grid-chunk",
+  "version": 1,
+  "mapId": "faerun",
+  "chunkKey": "8_2",
+  "chunkQ": 8,
+  "chunkR": 2,
+  "chunkSize": 128,
+  "generatedAt": "2026-04-30T20:41:29.033Z",
+  "source": "terrain-auto-reveal",
+  "exportMode": "detected-cells-only",
+  "cellsAreGlobalHexKeys": true,
+  "cellCount": 527,
+  "bounds": {
+    "minQ": 1024,
+    "maxQ": 1047,
+    "minR": 256,
+    "maxR": 302
+  },
+  "terrainCounts": {
+    "desert": 368,
+    "hill": 159
+  },
+  "warnings": [
+    "This export contains only cells detected by Terrain Auto Reveal.",
+    "Default terrain cells are omitted to keep chunks small.",
+    "Replacing existing chunk files with this export may remove manually authored data not present in the preview.",
+    "Use this as an initial terrain grid export, or merge it carefully with existing travel-grid chunks."
+  ],
+  "cells": {
+    "1024,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,280": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,281": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,282": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,283": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,284": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,285": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,286": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,287": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,288": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,289": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,290": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,291": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,292": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,293": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,294": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,295": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,296": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,297": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,298": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,299": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,301": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1024,302": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,280": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,281": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,282": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,283": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,284": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,285": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,286": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,287": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,288": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,289": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,290": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,291": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,292": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,293": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,294": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,295": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,296": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,297": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1025,298": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,280": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,281": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,282": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,283": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,284": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,285": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,286": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,287": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,288": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,289": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,290": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,291": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,292": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,293": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,294": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,295": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,296": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,297": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,298": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1026,299": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,280": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,281": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,282": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,283": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,284": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,286": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,287": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,288": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,289": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,290": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,291": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,292": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,293": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,294": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,295": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,296": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,280": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,281": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,282": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,283": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,284": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,285": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,286": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,287": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,288": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,289": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,290": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,291": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,292": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,293": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,294": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,281": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,282": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,283": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,284": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,285": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,286": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,287": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,288": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,289": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,290": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,291": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,280": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,281": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,282": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,283": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,284": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,285": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,286": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,287": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,288": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,289": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,290": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,280": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,281": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,283": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,284": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,285": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,286": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,287": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,288": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,289": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,275": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,280": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,281": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,282": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,283": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,284": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,285": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,286": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1032,287": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,273": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,274": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,275": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,278": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,279": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,280": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,281": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,282": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,283": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,284": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1033,285": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,273": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,274": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,275": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,278": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,279": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,280": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,281": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1034,282": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,273": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,274": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,275": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,279": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,280": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,273": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,274": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,277": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,278": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,279": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,269": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,270": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,271": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,273": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,276": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,277": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,266": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,267": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,268": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,270": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,271": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,272": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,273": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,274": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1038,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,265": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,266": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,267": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,268": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,269": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,271": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,272": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,265": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,266": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,267": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,268": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,269": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,270": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1040,271": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,264": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,267": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,268": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,269": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,264": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,265": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,266": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1042,267": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,257": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,264": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,265": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1044,256": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1044,258": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1044,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1044,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1044,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1044,262": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1044,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1045,256": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1045,257": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1045,258": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1045,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1045,260": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1045,261": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1046,256": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1046,257": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1046,258": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1046,259": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1047,256": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1047,257": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1027,285": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,279": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1031,282": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1035,278": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1036,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1037,275": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1039,270": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,266": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,280": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1041,265": {
+      "terrain": "hill",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 1,
+      "blocked": false,
+      "tags": []
+    },
+    "1043,263": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1028,266": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1029,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    },
+    "1030,267": {
+      "terrain": "desert",
+      "road": false,
+      "bridge": false,
+      "tunnel": false,
+      "waterType": "",
+      "risk": 2,
+      "blocked": false,
+      "tags": []
+    }
+  }
+}

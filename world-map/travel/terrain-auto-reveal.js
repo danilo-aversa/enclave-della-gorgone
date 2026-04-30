@@ -1,4 +1,4 @@
-// v0.7 2026-04-29T17:20:00.000Z
+// v0.12 2026-04-30T18:40:00.000Z
 (function () {
   "use strict";
 
@@ -49,6 +49,10 @@
   var state = {
     world: null,
     travel: null,
+    applyCells: null,
+    gridStore: null,
+    autoRevealScope: "full",
+    chunkSize: 128,
     palette: clonePalette(DEFAULT_PALETTE),
     ignoredColors: [],
     enabledTerrains: Object.keys(DEFAULT_PALETTE).reduce(function (acc, terrain) {
@@ -58,6 +62,7 @@
     options: Object.assign({}, DEFAULT_OPTIONS),
     previewCells: {},
     previewStats: null,
+    previewChunks: {},
     isAnalyzing: false,
     raster: null,
     modal: null,
@@ -74,6 +79,7 @@
     analyze: analyze,
     applyPreview: applyPreview,
     discardPreview: discardPreview,
+    exportPreviewChunks: exportPreviewChunks,
     setPalette: setPalette,
     setIgnoredColors: setIgnoredColors,
     setEnabledTerrains: setEnabledTerrains,
@@ -133,6 +139,10 @@
     context = context || {};
     state.world = context.world || window.EnclaveWorldMap || null;
     state.travel = context.travel || window.EnclaveTravel || null;
+    state.applyCells = typeof context.applyCells === "function" ? context.applyCells : null;
+    state.gridStore = context.gridStore || null;
+    state.autoRevealScope = context.scope === "visible" ? "visible" : "full";
+    state.chunkSize = Number(context.chunkSize) || 128;
 
     return !!(state.world && state.travel);
   }
@@ -170,6 +180,7 @@
       smoothed = absorbSmallTerrainClusters(smoothed);
 
       state.previewCells = smoothed;
+      state.previewChunks = buildPreviewChunks(smoothed);
       state.previewStats = buildStats(smoothed, classified.stats);
       return {
         cells: smoothed,
@@ -185,16 +196,349 @@
       return false;
     }
 
+    var chunks = Object.keys(state.previewChunks || {}).length ? state.previewChunks : buildPreviewChunks(state.previewCells);
+    var chunkKeys = Object.keys(chunks).sort();
+
+    if (typeof state.applyCells === "function") {
+      applyPreviewChunks(chunkKeys, chunks, state.applyCells);
+      return true;
+    }
+
     if (typeof state.travel.applyAutoRevealCells === "function") {
-      state.travel.applyAutoRevealCells(state.previewCells);
+      applyPreviewChunks(chunkKeys, chunks, state.travel.applyAutoRevealCells.bind(state.travel));
       return true;
     }
 
     return false;
   }
 
+  function applyPreviewChunks(chunkKeys, chunks, applyFn) {
+    if (!chunkKeys.length) {
+      return;
+    }
+
+    chunkKeys.forEach(function (chunkKey, index) {
+      applyFn(chunks[chunkKey], {
+        scope: "full",
+        chunkKeys: [chunkKey],
+        autosave: index === chunkKeys.length - 1,
+      });
+    });
+  }
+
+  async function runExportPreviewChunks(button) {
+    var original = button ? button.innerHTML : "";
+
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Exporting</span>';
+    }
+
+    try {
+      var result = await exportPreviewChunks();
+
+      if (button) {
+        button.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i><span>' + escapeHtml(result.label || "Exported") + '</span>';
+        window.setTimeout(function () {
+          button.innerHTML = original;
+          button.disabled = !state.previewCells || !Object.keys(state.previewCells).length;
+        }, 1400);
+      }
+    } catch (error) {
+      console.error("Auto Reveal chunk export failed:", error);
+      window.alert(error && error.message ? error.message : "Chunk export failed.");
+
+      if (button) {
+        button.innerHTML = original;
+        button.disabled = !state.previewCells || !Object.keys(state.previewCells).length;
+      }
+    }
+  }
+
+  async function exportPreviewChunks() {
+    if (!state.previewCells || !Object.keys(state.previewCells).length) {
+      throw new Error("No Auto Reveal preview to export.");
+    }
+
+    var chunks = Object.keys(state.previewChunks || {}).length ? state.previewChunks : buildPreviewChunks(state.previewCells);
+    var payload = buildChunkExportPayload(chunks);
+
+    if (window.showDirectoryPicker) {
+      await exportChunksToDirectory(payload);
+      return {
+        label: "Files exported",
+        mode: "directory",
+        payload: payload,
+      };
+    }
+
+    downloadJsonFile(payload.bundleFileName, payload.bundle);
+    return {
+      label: "Bundle downloaded",
+      mode: "bundle",
+      payload: payload,
+    };
+  }
+
+  function buildChunkExportPayload(chunks) {
+    var mapId = readMapId();
+    var chunkKeys = Object.keys(chunks || {}).sort(compareChunkKeys);
+    var now = new Date().toISOString();
+    var chunkPayloads = {};
+    var stats = state.previewStats ? Object.assign({}, state.previewStats) : null;
+    var warnings = getChunkExportWarnings();
+
+    chunkKeys.forEach(function (chunkKey) {
+      chunkPayloads[chunkKey] = buildStaticChunkPayload(mapId, chunkKey, chunks[chunkKey], now);
+    });
+
+    var index = {
+      format: "chunk-index",
+      version: 1,
+      mapId: mapId,
+      chunkSize: Number(state.chunkSize) || 128,
+      generatedAt: now,
+      source: "terrain-auto-reveal",
+      exportMode: "detected-cells-only",
+      cellsAreGlobalHexKeys: true,
+      warnings: warnings,
+      stats: stats,
+      chunks: chunkKeys.map(function (chunkKey) {
+        var parsed = parseChunkKey(chunkKey);
+        var chunkStats = buildChunkCellStats(chunks[chunkKey]);
+
+        return {
+          key: chunkKey,
+          chunkQ: parsed.chunkQ,
+          chunkR: parsed.chunkR,
+          file: chunkKey + ".json",
+          cellCount: chunkStats.cellCount,
+          bounds: chunkStats.bounds,
+          terrainCounts: chunkStats.terrainCounts,
+        };
+      }),
+    };
+
+    var readme = buildExportReadme(mapId, chunkKeys, index, stats, warnings);
+
+    return {
+      mapId: mapId,
+      chunkKeys: chunkKeys,
+      index: index,
+      chunks: chunkPayloads,
+      readme: readme,
+      bundleFileName: mapId + "-auto-reveal-chunks.json",
+      bundle: {
+        format: "travel-grid-chunks-bundle",
+        version: 1,
+        mapId: mapId,
+        generatedAt: now,
+        exportMode: "detected-cells-only",
+        cellsAreGlobalHexKeys: true,
+        warnings: warnings,
+        stats: stats,
+        index: index,
+        chunks: chunkPayloads,
+        readme: readme,
+      },
+    };
+  }
+
+  function buildStaticChunkPayload(mapId, chunkKey, cells, generatedAt) {
+    var parsed = parseChunkKey(chunkKey);
+    var chunkStats = buildChunkCellStats(cells);
+
+    return {
+      format: "travel-grid-chunk",
+      version: 1,
+      mapId: mapId,
+      chunkKey: chunkKey,
+      chunkQ: parsed.chunkQ,
+      chunkR: parsed.chunkR,
+      chunkSize: Number(state.chunkSize) || 128,
+      generatedAt: generatedAt,
+      source: "terrain-auto-reveal",
+      exportMode: "detected-cells-only",
+      cellsAreGlobalHexKeys: true,
+      cellCount: chunkStats.cellCount,
+      bounds: chunkStats.bounds,
+      terrainCounts: chunkStats.terrainCounts,
+      warnings: getChunkExportWarnings(),
+      cells: cells || {},
+    };
+  }
+
+  function buildChunkCellStats(cells) {
+    var keys = Object.keys(cells || {});
+    var terrainCounts = {};
+    var bounds = null;
+
+    keys.forEach(function (key) {
+      var cell = cells[key] || {};
+      var parsed = parseHexKey(key);
+      var terrain = cell.terrain || "unknown";
+
+      terrainCounts[terrain] = (terrainCounts[terrain] || 0) + 1;
+
+      if (!bounds) {
+        bounds = {
+          minQ: parsed.q,
+          maxQ: parsed.q,
+          minR: parsed.r,
+          maxR: parsed.r,
+        };
+        return;
+      }
+
+      bounds.minQ = Math.min(bounds.minQ, parsed.q);
+      bounds.maxQ = Math.max(bounds.maxQ, parsed.q);
+      bounds.minR = Math.min(bounds.minR, parsed.r);
+      bounds.maxR = Math.max(bounds.maxR, parsed.r);
+    });
+
+    return {
+      cellCount: keys.length,
+      terrainCounts: terrainCounts,
+      bounds: bounds,
+    };
+  }
+
+  async function exportChunksToDirectory(payload) {
+    var directory = await window.showDirectoryPicker({ mode: "readwrite" });
+
+    await writeJsonFileToDirectory(directory, "index.json", payload.index);
+    await writeTextFileToDirectory(directory, "README-auto-reveal.txt", payload.readme);
+
+    for (var i = 0; i < payload.chunkKeys.length; i += 1) {
+      var chunkKey = payload.chunkKeys[i];
+      await writeJsonFileToDirectory(directory, chunkKey + ".json", payload.chunks[chunkKey]);
+    }
+  }
+
+  async function writeJsonFileToDirectory(directory, fileName, payload) {
+    return writeTextFileToDirectory(directory, fileName, JSON.stringify(payload, null, 2));
+  }
+
+  async function writeTextFileToDirectory(directory, fileName, content) {
+    var fileHandle = await directory.getFileHandle(fileName, { create: true });
+    var writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+  }
+
+  function getChunkExportWarnings() {
+    return [
+      "This export contains only cells detected by Terrain Auto Reveal.",
+      "Default terrain cells are omitted to keep chunks small.",
+      "Replacing existing chunk files with this export may remove manually authored data not present in the preview.",
+      "Use this as an initial terrain grid export, or merge it carefully with existing travel-grid chunks.",
+    ];
+  }
+
+  function buildExportReadme(mapId, chunkKeys, index, stats, warnings) {
+    var lines = [];
+
+    lines.push("Terrain Auto Reveal chunk export");
+    lines.push("================================");
+    lines.push("");
+    lines.push("Map: " + mapId);
+    lines.push("Generated: " + (index.generatedAt || ""));
+    lines.push("Chunk size: " + index.chunkSize);
+    lines.push("Chunk files: " + chunkKeys.length);
+    lines.push("Detected cells: " + (stats && stats.painted ? stats.painted : 0));
+    lines.push("");
+    lines.push("Files:");
+    lines.push("- index.json");
+    lines.push("- <chunkKey>.json");
+    lines.push("");
+    lines.push("Important:");
+    warnings.forEach(function (warning) {
+      lines.push("- " + warning);
+    });
+    lines.push("");
+    lines.push("Recommended destination:");
+    lines.push("world-map/data/travel/chunks/" + mapId + "/");
+    lines.push("");
+    lines.push("Suggested check after copying:");
+    lines.push("- Hard refresh the page.");
+    lines.push("- Run EnclaveTravel.getGridStore().getConfig() in the console.");
+    lines.push("- Confirm availableChunkKeys matches the exported index.json.");
+    lines.push("");
+
+    return lines.join("");
+  }
+
+  function downloadJsonFile(fileName, payload) {
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 800);
+  }
+
+  function readMapId() {
+    if (state.world && state.world.mapId) {
+      return String(state.world.mapId);
+    }
+
+    if (state.world && state.world.mapConfig && state.world.mapConfig.id) {
+      return String(state.world.mapConfig.id);
+    }
+
+    return "world-map";
+  }
+
+  function parseChunkKey(chunkKey) {
+    var parts = String(chunkKey || "0_0").split("_");
+    return {
+      chunkQ: Number(parts[0]) || 0,
+      chunkR: Number(parts[1]) || 0,
+    };
+  }
+
+  function compareChunkKeys(a, b) {
+    var pa = parseChunkKey(a);
+    var pb = parseChunkKey(b);
+
+    if (pa.chunkQ !== pb.chunkQ) {
+      return pa.chunkQ - pb.chunkQ;
+    }
+
+    return pa.chunkR - pb.chunkR;
+  }
+
+  function buildPreviewChunks(cells) {
+    var chunks = {};
+
+    Object.keys(cells || {}).forEach(function (key) {
+      var parsed = parseHexKey(key);
+      var chunkKey = getCellChunkKey(parsed.q, parsed.r);
+
+      if (!chunks[chunkKey]) {
+        chunks[chunkKey] = {};
+      }
+
+      chunks[chunkKey][key] = cells[key];
+    });
+
+    return chunks;
+  }
+
+  function getCellChunkKey(q, r) {
+    var chunkSize = Number(state.chunkSize) || 128;
+    return Math.floor(Number(q) / chunkSize) + "_" + Math.floor(Number(r) / chunkSize);
+  }
+
   function discardPreview() {
     state.previewCells = {};
+    state.previewChunks = {};
     state.previewStats = null;
   }
 
@@ -678,6 +1022,7 @@
       '</section>' +
       '<footer class="terrain-auto-reveal-modal__footer">' +
       '<button type="button" class="terrain-auto-reveal-button terrain-auto-reveal-button--ghost" data-auto-reveal-discard>Discard</button>' +
+      '<button type="button" class="terrain-auto-reveal-button terrain-auto-reveal-button--ghost" data-auto-reveal-export disabled><i class="fa-solid fa-file-export" aria-hidden="true"></i><span>Export chunks</span></button>' +
       '<button type="button" class="terrain-auto-reveal-button" data-auto-reveal-analyze><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span>Analyze</span></button>' +
       '<button type="button" class="terrain-auto-reveal-button terrain-auto-reveal-button--primary" data-auto-reveal-apply disabled><i class="fa-solid fa-check" aria-hidden="true"></i><span>Apply</span></button>' +
       '</footer>' +
@@ -690,6 +1035,7 @@
       var close = event.target.closest("[data-auto-reveal-close]");
       var analyzeButton = event.target.closest("[data-auto-reveal-analyze]");
       var applyButton = event.target.closest("[data-auto-reveal-apply]");
+      var exportButton = event.target.closest("[data-auto-reveal-export]");
       var discardButton = event.target.closest("[data-auto-reveal-discard]");
       var pickTerrain = event.target.closest("[data-auto-reveal-pick-terrain]");
       var pickIgnore = event.target.closest("[data-auto-reveal-pick-ignore]");
@@ -740,10 +1086,16 @@
         return;
       }
 
+      if (exportButton) {
+        runExportPreviewChunks(exportButton);
+        return;
+      }
+
       if (discardButton) {
         discardPreview();
         renderStats(null);
         setApplyEnabled(false);
+        setExportEnabled(false);
       }
     });
 
@@ -843,7 +1195,9 @@
 
     mount.innerHTML =
       '<div><small>Hex da analizzare</small><strong>' + state.estimatedHexCount + '</strong></div>' +
+      '<div><small>Ambito</small><strong>Mappa intera</strong></div>' +
       '<div><small>Hex colorati</small><strong>' + (stats && stats.painted ? stats.painted : '—') + '</strong></div>' +
+      '<div><small>Chunk coinvolti</small><strong>' + (stats && stats.chunkCount ? stats.chunkCount : '—') + '</strong></div>' +
       '<div class="terrain-auto-reveal-modal__terrain-summary">' + terrainSummary + '</div>';
   }
 
@@ -856,6 +1210,7 @@
 
     mount.innerHTML =
       '<div><small>Hex da analizzare</small><strong>' + state.estimatedHexCount + '</strong></div>' +
+      '<div><small>Ambito</small><strong>Mappa intera</strong></div>' +
       '<div><small>Stato</small><strong><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Analisi</strong></div>' +
       '<div class="terrain-auto-reveal-modal__terrain-summary terrain-auto-reveal-modal__terrain-summary--loading">' +
       '<span class="terrain-auto-reveal-loading"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><span>Calcolo terreni in corso…</span></span>' +
@@ -888,6 +1243,14 @@
     }
   }
 
+  function setExportEnabled(enabled) {
+    var button = state.modal ? state.modal.querySelector("[data-auto-reveal-export]") : null;
+
+    if (button) {
+      button.disabled = !enabled;
+    }
+  }
+
   function runModalAnalyze(button) {
     var original = button ? button.innerHTML : "";
 
@@ -897,6 +1260,7 @@
     }
 
     setApplyEnabled(false);
+    setExportEnabled(false);
     renderAnalyzingState();
 
     waitForPaint().then(function () {
@@ -904,11 +1268,13 @@
     }).then(function (result) {
       renderStats(result.stats);
       setApplyEnabled(true);
+      setExportEnabled(true);
     }).catch(function (error) {
       console.error("Auto Reveal failed:", error);
       window.alert(error && error.message ? error.message : "Auto Reveal failed.");
       renderStats(null);
       setApplyEnabled(false);
+      setExportEnabled(false);
     }).finally(function () {
       if (button) {
         button.disabled = false;
@@ -1071,15 +1437,22 @@
 
   function buildStats(cells, rawStats) {
     var counts = {};
+    var chunkCounts = {};
 
     Object.keys(cells).forEach(function (key) {
       var terrain = cells[key].terrain;
+      var parsed = parseHexKey(key);
+      var chunkKey = getCellChunkKey(parsed.q, parsed.r);
+
       counts[terrain] = (counts[terrain] || 0) + 1;
+      chunkCounts[chunkKey] = (chunkCounts[chunkKey] || 0) + 1;
     });
 
     return Object.assign({}, rawStats || {}, {
       painted: Object.keys(cells).length,
       byTerrain: counts,
+      byChunk: chunkCounts,
+      chunkCount: Object.keys(chunkCounts).length,
     });
   }
 

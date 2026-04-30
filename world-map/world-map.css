@@ -2900,6 +2900,7 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
 ========================= */
 
 .world-map-travel-token-marker {
+  position: relative;
   width: 34px;
   height: 34px;
   display: inline-flex;
@@ -2950,6 +2951,7 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
 }
 
 .world-map-travel-waypoint-marker {
+  position: relative;
   width: 24px;
   height: 24px;
   display: inline-flex;
@@ -3008,6 +3010,113 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
     drop-shadow(0 0 14px color-mix(in srgb, var(--token-color, #71ddca) 55%, transparent));
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.world-map-travel-token-marker.is-calculating,
+.world-map-travel-waypoint-marker.is-calculating {
+  animation: world-map-travel-token-calculating-pulse 1.05s ease-in-out infinite;
+  filter: saturate(0.72) brightness(1.06);
+}
+
+.world-map-travel-token-marker__status,
+.world-map-travel-waypoint-marker__status {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 17px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(14, 23, 28, 0.94);
+  border-radius: 999px;
+  background: rgba(241, 213, 165, 0.96);
+  color: #10171b;
+  box-shadow:
+    0 0 0 2px rgba(14, 23, 28, 0.72),
+    0 0 12px rgba(241, 213, 165, 0.46);
+}
+
+.world-map-travel-token-marker__status i,
+.world-map-travel-waypoint-marker__status i {
+  font-size: 0.58rem;
+  filter: none;
+}
+
+.world-map-travel-waypoint-marker--destination .world-map-travel-waypoint-marker__status {
+  transform: rotate(45deg);
+}
+
+.world-map-travel-token-route.is-calculating {
+  opacity: 0.48;
+  filter:
+    drop-shadow(0 0 4px rgba(0, 0, 0, 0.9))
+    drop-shadow(0 0 9px rgba(241, 213, 165, 0.28));
+  stroke-dasharray: 10 8;
+  animation: world-map-travel-route-calculating 1.25s linear infinite;
+}
+
+.world-map-travel-token-row.is-calculating {
+  border-color: rgba(241, 213, 165, 0.58);
+  background: rgba(58, 48, 30, 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgba(241, 213, 165, 0.14),
+    0 0 14px rgba(241, 213, 165, 0.12);
+}
+
+.world-map-travel-token-row.is-calculating .world-map-travel-token-dot {
+  animation: world-map-travel-token-calculating-pulse 1.05s ease-in-out infinite;
+}
+
+@keyframes world-map-travel-token-calculating-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, 0.1),
+      0 10px 20px rgba(0, 0, 0, 0.58),
+      0 0 12px color-mix(in srgb, var(--token-color, #71ddca) 38%, transparent);
+  }
+
+  50% {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0 2px rgba(241, 213, 165, 0.34),
+      0 10px 20px rgba(0, 0, 0, 0.58),
+      0 0 20px color-mix(in srgb, var(--token-color, #71ddca) 62%, transparent);
+  }
+}
+
+@keyframes world-map-travel-route-calculating {
+  to {
+    stroke-dashoffset: -36;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-map-travel-token-marker.is-calculating,
+  .world-map-travel-waypoint-marker.is-calculating,
+  .world-map-travel-token-row.is-calculating .world-map-travel-token-dot,
+  .world-map-travel-token-route.is-calculating {
+    animation: none !important;
+  }
+
+  .world-map-travel-token-marker__status i,
+  .world-map-travel-waypoint-marker__status i {
+    animation: none !important;
+  }
+
+  .world-map-travel-token-marker.is-calculating,
+  .world-map-travel-waypoint-marker.is-calculating {
+    box-shadow:
+      0 0 0 2px rgba(241, 213, 165, 0.34),
+      0 10px 20px rgba(0, 0, 0, 0.58),
+      0 0 18px color-mix(in srgb, var(--token-color, #71ddca) 48%, transparent);
+  }
+
+  .world-map-travel-token-route.is-calculating {
+    stroke-dasharray: 8 7;
+  }
 }
 
 .world-map-travel-tokens {
