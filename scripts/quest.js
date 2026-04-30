@@ -256,13 +256,39 @@
     var title = readString(quest.title, "Missione senza titolo");
     var questId = toIdString(quest.id);
     var questSlug = readString(quest.slug, slugify(title || questId || "quest"));
+    var questHref = "quest.html?quest=" + encodeURIComponent(questSlug);
     var imagePath = readString(quest.image_url, FALLBACK_QUEST_IMAGE);
     var sessionInfo = buildQuestCardSessionInfo(quest);
     var statusInfo = mapQuestStatus(quest.status);
+    var summaryText = buildQuestCardSummary(quest);
 
-    var article = createElement("article", "quest-item");
-    article.setAttribute("aria-label", "Missione " + title);
+    var article = createElement("article", "quest-item quest-item--interactive");
+    article.setAttribute("aria-label", "Apri missione " + title);
+    article.setAttribute("role", "link");
+    article.tabIndex = 0;
+    article.dataset.questHref = questHref;
     article.style.setProperty("--quest-bg-image", toCssBackgroundImage(imagePath));
+
+    article.addEventListener("click", function onQuestCardClick(event) {
+      if (event.target.closest("a, button, input, select, textarea")) {
+        return;
+      }
+
+      window.location.href = questHref;
+    });
+
+    article.addEventListener("keydown", function onQuestCardKeydown(event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      if (event.target.closest("a, button, input, select, textarea")) {
+        return;
+      }
+
+      event.preventDefault();
+      window.location.href = questHref;
+    });
 
     var questTop = createElement("div", "quest-top");
     questTop.appendChild(createElement("h3", "", title));
@@ -282,20 +308,25 @@
     media.appendChild(image);
 
     var body = createElement("div", "quest-body");
+
+    var summary = createElement("p", "quest-card-summary", summaryText);
+    body.appendChild(summary);
+
     body.appendChild(renderQuestTokenRow(questId, characterMap, questCharacterMap));
 
     var metaGrid = createElement("div", "quest-meta-grid");
-    metaGrid.appendChild(renderQuestField("Luogo", readString(quest.location, "Luogo non disponibile")));
+    metaGrid.appendChild(
+      renderQuestField(
+        "Luogo",
+        readString(quest.location, "Luogo non disponibile")
+      )
+    );
     metaGrid.appendChild(renderQuestField(sessionInfo.label, sessionInfo.value));
 
     body.appendChild(metaGrid);
     layout.appendChild(media);
     layout.appendChild(body);
     article.appendChild(layout);
-
-    var cta = createElement("a", "quest-cta", "Apri missione");
-    cta.href = "quest.html?quest=" + encodeURIComponent(questSlug);
-    article.appendChild(cta);
 
     return article;
   }
@@ -352,11 +383,43 @@
     return wrapper;
   }
 
-  function renderQuestField(label, value) {
+  function renderQuestField(label, value, href) {
     var field = createElement("div", "quest-field");
     field.appendChild(createElement("span", "field-label", label));
-    field.appendChild(createElement("p", "", value));
+
+    var locationLink = parseQuestLocationLink(value, href);
+    var paragraph = document.createElement("p");
+
+    if (locationLink.href) {
+      var link = document.createElement("a");
+      link.className = "quest-field-link";
+      link.href = locationLink.href;
+      link.textContent = locationLink.label || "Apri posizione";
+      link.setAttribute("aria-label", "Apri luogo sulla mappa: " + (locationLink.label || "posizione missione"));
+      paragraph.appendChild(link);
+    } else {
+      paragraph.textContent = locationLink.label;
+    }
+
+    field.appendChild(paragraph);
     return field;
+  }
+
+  function parseQuestLocationLink(value) {
+    var raw = readString(value, "");
+    var match = raw.match(/^\[([^\]]+)\]\{([^}]+)\}$/);
+
+    if (match) {
+      return {
+        label: readString(match[1], "Apri posizione"),
+        href: readString(match[2], ""),
+      };
+    }
+
+    return {
+      label: raw,
+      href: "",
+    };
   }
 
   function buildQuestCardSessionInfo(quest) {
@@ -637,7 +700,7 @@
 
     var location = readString(quest.location, "");
     if (location) {
-      meta.appendChild(createBadge("quest-location", location));
+      meta.appendChild(createQuestLocationBadge(location));
     }
 
     var editButton = document.createElement("button");
@@ -720,7 +783,6 @@
     side.className = "quest-detail-side";
 
     side.appendChild(buildMissionDataCard(quest));
-
     side.appendChild(buildTeamCard(characters, characterIds));
 
     var objectivesSection = buildObjectivesSection(
@@ -735,6 +797,8 @@
     if (intelligenceSection) {
       side.appendChild(intelligenceSection);
     }
+
+    
 
     layout.appendChild(side);
 
@@ -817,7 +881,22 @@
       empty.textContent = "Nessun rapporto registrato.";
       section.appendChild(empty);
     } else {
-      var previewReports = reports.slice().sort(compareReportsNewestFirst).slice(0, 3);
+      var previewReports = reports.slice().sort(compareReportsNewestFirst);
+      var carousel = document.createElement("div");
+      carousel.className = "quest-reports-carousel";
+
+      var previousButton = document.createElement("button");
+      previousButton.type = "button";
+      previousButton.className = "quest-edit-action quest-report-action quest-report-action--icon quest-reports-carousel__button quest-reports-carousel__button--prev";
+      previousButton.innerHTML = '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>';
+      previousButton.title = "Rapporti precedenti";
+      previousButton.setAttribute("aria-label", "Rapporti precedenti");
+      carousel.appendChild(previousButton);
+
+      var viewport = document.createElement("div");
+      viewport.className = "quest-reports-carousel__viewport";
+      viewport.dataset.questReportsCarouselViewport = "true";
+
       var list = document.createElement("div");
       list.className = "quest-reports-list quest-reports-list--preview";
       list.dataset.questReportsList = "true";
@@ -831,10 +910,156 @@
         );
       }
 
-      section.appendChild(list);
+      viewport.appendChild(list);
+      carousel.appendChild(viewport);
+
+      var nextButton = document.createElement("button");
+      nextButton.type = "button";
+      nextButton.className = "quest-edit-action quest-report-action quest-report-action--icon quest-reports-carousel__button quest-reports-carousel__button--next";
+      nextButton.innerHTML = '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>';
+      nextButton.title = "Rapporti successivi";
+      nextButton.setAttribute("aria-label", "Rapporti successivi");
+      carousel.appendChild(nextButton);
+
+      section.appendChild(carousel);
+      bindQuestReportsCarousel(carousel);
     }
 
     return section;
+  }
+
+  function bindQuestReportsCarousel(carousel) {
+    var viewport = carousel && carousel.querySelector("[data-quest-reports-carousel-viewport]");
+    var previousButton = carousel && carousel.querySelector(".quest-reports-carousel__button--prev");
+    var nextButton = carousel && carousel.querySelector(".quest-reports-carousel__button--next");
+
+    if (!viewport) {
+      return;
+    }
+
+    var dragState = {
+      pending: false,
+      active: false,
+      startX: 0,
+      scrollLeft: 0,
+      moved: false,
+      pointerId: null,
+    };
+
+    function readStep() {
+      var firstCard = viewport.querySelector(".quest-report-card");
+      if (!firstCard) {
+        return Math.max(280, Math.round(viewport.clientWidth * 0.8));
+      }
+
+      var rect = firstCard.getBoundingClientRect();
+      return Math.max(240, Math.round(rect.width + 16));
+    }
+
+    function updateButtons() {
+      var maxScroll = viewport.scrollWidth - viewport.clientWidth - 2;
+      if (previousButton) {
+        previousButton.disabled = viewport.scrollLeft <= 2;
+      }
+      if (nextButton) {
+        nextButton.disabled = viewport.scrollLeft >= maxScroll;
+      }
+    }
+
+    if (previousButton) {
+      previousButton.addEventListener("click", function onPreviousReportsClick() {
+        viewport.style.scrollSnapType = "";
+        viewport.style.scrollBehavior = "smooth";
+        viewport.scrollBy({ left: -readStep(), behavior: "smooth" });
+      });
+    }
+
+    if (nextButton) {
+      nextButton.addEventListener("click", function onNextReportsClick() {
+        viewport.style.scrollSnapType = "";
+        viewport.style.scrollBehavior = "smooth";
+        viewport.scrollBy({ left: readStep(), behavior: "smooth" });
+      });
+    }
+
+    viewport.addEventListener("pointerdown", function onReportsPointerDown(event) {
+      if (event.button !== undefined && event.button !== 0) {
+        return;
+      }
+
+      if (event.target.closest("button, a, input, select, textarea")) {
+        return;
+      }
+
+      dragState.pending = true;
+      dragState.active = false;
+      dragState.startX = event.clientX;
+      dragState.scrollLeft = viewport.scrollLeft;
+      dragState.moved = false;
+      dragState.pointerId = event.pointerId;
+    });
+
+    viewport.addEventListener("pointermove", function onReportsPointerMove(event) {
+      if (!dragState.pending && !dragState.active) {
+        return;
+      }
+
+      var delta = event.clientX - dragState.startX;
+
+      if (!dragState.active) {
+        if (Math.abs(delta) < 10) {
+          return;
+        }
+
+        dragState.active = true;
+        dragState.moved = true;
+        viewport.style.scrollSnapType = "none";
+        viewport.style.scrollBehavior = "auto";
+        viewport.classList.add("is-grabbing");
+        viewport.setPointerCapture(event.pointerId);
+      }
+
+      viewport.scrollLeft = dragState.scrollLeft - delta;
+      event.preventDefault();
+    });
+
+    function endDrag(event) {
+      var wasActive = dragState.active;
+      dragState.pending = false;
+      dragState.active = false;
+      dragState.pointerId = null;
+      viewport.classList.remove("is-grabbing");
+      viewport.style.scrollBehavior = "auto";
+
+      if (!wasActive) {
+        dragState.moved = false;
+        return;
+      }
+
+      try {
+        viewport.releasePointerCapture(event.pointerId);
+      } catch (_error) {}
+    }
+
+    viewport.addEventListener("pointerup", endDrag);
+    viewport.addEventListener("pointercancel", endDrag);
+    viewport.addEventListener("scroll", updateButtons, { passive: true });
+
+    viewport.addEventListener(
+      "click",
+      function onCarouselClickAfterDrag(event) {
+        if (!dragState.moved) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        dragState.moved = false;
+      },
+      true
+    );
+
+    window.setTimeout(updateButtons, 0);
   }
 
   function compareReportsNewestFirst(a, b) {
@@ -988,7 +1213,8 @@
 
   function buildQuestReportCard(report, quest, characters, currentAuthorCharacterId, options) {
     var card = document.createElement("article");
-    card.className = "quest-objective-block quest-report-card";
+    var reportTypeClass = normalizeQuestReportTypeClass(readString(report && report.report_type, ""));
+    card.className = "quest-objective-block quest-report-card " + reportTypeClass;
 
     if (options && options.preview) {
       card.classList.add("quest-report-card--preview");
@@ -1055,6 +1281,7 @@
 
     var reportAuthorId = toIdString(report && report.author_character_id);
     var canManageReport =
+      !(options && options.preview) &&
       !!reportAuthorId &&
       !!toIdString(currentAuthorCharacterId) &&
       reportAuthorId === toIdString(currentAuthorCharacterId);
@@ -1409,8 +1636,27 @@
       deleteButton.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
       deleteButton.title = "Elimina rapporto";
       deleteButton.setAttribute("aria-label", "Elimina rapporto");
-      deleteButton.addEventListener("click", function onReaderDeleteReport() {
-        deleteQuestReport(selected, state.currentAuthorCharacterId);
+      deleteButton.addEventListener("click", async function onReaderDeleteReport() {
+        var deletedReportId = toIdString(selected && selected.id);
+        var deleted = await deleteQuestReport(selected, state.currentAuthorCharacterId);
+
+        if (!deleted) {
+          return;
+        }
+
+        state.reports = state.reports.filter(function keepReport(report) {
+          return toIdString(report && report.id) !== deletedReportId;
+        });
+        state.visibleReports = state.visibleReports.filter(function keepVisibleReport(report) {
+          return toIdString(report && report.id) !== deletedReportId;
+        });
+        allReports = state.reports.slice();
+
+        if (state.selectedReportId === deletedReportId) {
+          state.selectedReportId = toIdString(state.visibleReports[0] && state.visibleReports[0].id);
+        }
+
+        renderReader();
       });
       contentActions.appendChild(deleteButton);
     }
@@ -1990,15 +2236,17 @@
 
     if (!reportId || !playerCode || !localAuthorId || reportAuthorId !== localAuthorId) {
       console.info("[quest-report] deleteQuestReport:abort:not-author-or-invalid");
-      return;
+      return false;
     }
 
     var confirmed = window.confirm("Vuoi eliminare questo rapporto?");
     if (!confirmed) {
-      return;
+      return false;
     }
 
     try {
+      console.info("[quest-report] deleteQuestReport:function-delete:start");
+
       var response = await fetch(DELETE_QUEST_REPORT_URL, {
         method: "POST",
         headers: {
@@ -2012,51 +2260,27 @@
       });
 
       var result = await parseResponseBody(response);
-      console.info("[quest-report] deleteQuestReport:response", {
+
+      console.info("[quest-report] deleteQuestReport:function-delete:response", {
         status: response.status,
         ok: response.ok,
         result: result,
       });
 
       if (!response.ok || !result || result.success !== true) {
-        try {
-          console.info("[quest-report] deleteQuestReport:fallback-rest-delete:start");
-          await deleteQuestReportViaRest({
-            report_id: reportId,
-            author_character_id: localAuthorId,
-          });
-          console.info("[quest-report] deleteQuestReport:fallback-rest-delete:success");
-          await refreshQuestPageAfterReportMutation();
-          return;
-        } catch (fallbackError) {
-          console.info("[quest-report] deleteQuestReport:fallback-rest-delete:failed", {
-            message: fallbackError && fallbackError.message,
-          });
-        }
         window.alert(readSupabaseError(result, response.status) || "Impossibile eliminare il rapporto.");
-        return;
+        return false;
       }
 
-      window.location.reload();
+      await refreshQuestPageAfterReportMutation();
+      return true;
     } catch (error) {
-      console.info("[quest-report] deleteQuestReport:exception", {
+      console.info("[quest-report] deleteQuestReport:function-delete:failed", {
         message: error && error.message,
       });
-      try {
-        console.info("[quest-report] deleteQuestReport:fallback-rest-delete:start:exception-path");
-        await deleteQuestReportViaRest({
-          report_id: reportId,
-          author_character_id: localAuthorId,
-        });
-        console.info("[quest-report] deleteQuestReport:fallback-rest-delete:success:exception-path");
-        await refreshQuestPageAfterReportMutation();
-        return;
-      } catch (fallbackError) {
-        console.info("[quest-report] deleteQuestReport:fallback-rest-delete:failed:exception-path", {
-          message: fallbackError && fallbackError.message,
-        });
-      }
+
       window.alert(readString(error && error.message, "Impossibile eliminare il rapporto."));
+      return false;
     }
   }
 
@@ -2099,40 +2323,6 @@
 
     if (!Array.isArray(result) || !result.length) {
       throw new Error("Aggiornamento non applicato: nessun rapporto modificato.");
-    }
-  }
-
-  async function deleteQuestReportViaRest(payload) {
-    var reportId = parseMaybeNumericId(payload && payload.report_id);
-    var authorCharacterId = parseMaybeNumericId(payload && payload.author_character_id);
-    if (!reportId || !authorCharacterId) {
-      throw new Error("Dati report non validi per delete REST.");
-    }
-
-    var url =
-      SUPABASE_URL +
-      "/rest/v1/quest_reports?id=eq." +
-      encodeURIComponent(String(reportId)) +
-      "&author_character_id=eq." +
-      encodeURIComponent(String(authorCharacterId));
-
-    var response = await fetch(url, {
-      method: "DELETE",
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: "Bearer " + SUPABASE_ANON_KEY,
-        Prefer: "return=representation",
-      },
-    });
-
-    var result = await parseResponseBody(response);
-
-    if (!response.ok) {
-      throw new Error(readSupabaseError(result, response.status));
-    }
-
-    if (!Array.isArray(result) || !result.length) {
-      throw new Error("Eliminazione non applicata: nessun rapporto eliminato.");
     }
   }
 
@@ -2453,6 +2643,21 @@
       .replace(/'/g, "&#39;");
   }
 
+  function normalizeQuestReportTypeClass(type) {
+    switch (readString(type, "")) {
+      case "field_report":
+        return "quest-report-card--field";
+      case "archivist_report":
+        return "quest-report-card--archivist";
+      case "player_note":
+        return "quest-report-card--note";
+      case "final_report":
+        return "quest-report-card--final";
+      default:
+        return "quest-report-card--generic";
+    }
+  }
+
   function appendQuestReportTypeIcon(container, type) {
     var info = mapQuestReportTypeIcon(type);
     var icon = document.createElement("span");
@@ -2528,11 +2733,11 @@
     wrap.className = "quest-objectives";
 
     if (primaryText) {
-      wrap.appendChild(buildObjectiveBlock("Obiettivo principale", primaryText));
+      wrap.appendChild(buildObjectiveBlock("Principale", primaryText));
     }
 
     if (secondaryText) {
-      wrap.appendChild(buildObjectiveBlock("Obiettivi secondari", secondaryText));
+      wrap.appendChild(buildObjectiveBlock("Secondari", secondaryText));
     }
 
     section.appendChild(wrap);
@@ -2651,7 +2856,7 @@
     label.textContent = labelText;
     block.appendChild(label);
 
-    if (labelText === "Obiettivi secondari") {
+    if (labelText === "Secondari") {
       appendSecondaryObjectiveItems(block, bodyText);
     } else {
       appendRichText(block, bodyText);
@@ -2661,7 +2866,7 @@
   }
 
   function appendSecondaryObjectiveItems(container, bodyText) {
-    var items = parseQuestTextItems(bodyText);
+    var items = parseQuestObjectiveItems(bodyText);
 
     if (!items.length) {
       appendRichText(container, bodyText);
@@ -2674,11 +2879,57 @@
     for (var i = 0; i < items.length; i += 1) {
       var item = document.createElement("div");
       item.className = "quest-secondary-objective-item";
-      item.innerHTML = renderInlineMiniMarkdown(items[i]);
+      item.classList.toggle("is-complete", items[i].completed === true);
+      item.classList.toggle("is-pending", items[i].completed !== true);
+      item.innerHTML = renderInlineMiniMarkdown(items[i].text);
       list.appendChild(item);
     }
 
     container.appendChild(list);
+  }
+
+  function parseQuestObjectiveItems(value) {
+    var raw = readString(value, "");
+    if (!raw) {
+      return [];
+    }
+
+    try {
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map(function normalizeObjectiveItem(item) {
+            if (typeof item === "string") {
+              return {
+                text: readString(item, ""),
+                completed: false,
+              };
+            }
+
+            return {
+              text: readString(item && item.text, ""),
+              completed: item && item.completed === true,
+            };
+          })
+          .filter(function hasObjectiveText(item) {
+            return !!item.text;
+          });
+      }
+    } catch (_error) {
+      // Legacy plaintext objectives fall through to line parsing.
+    }
+
+    return raw
+      .split(String.fromCharCode(10))
+      .map(function normalizeObjectiveLine(line) {
+        return {
+          text: String(line || "").trim().replace(/^[-*][ 	]+/, ""),
+          completed: false,
+        };
+      })
+      .filter(function hasObjectiveText(item) {
+        return !!item.text;
+      });
   }
 
   function parseQuestTextItems(value) {
@@ -2727,7 +2978,12 @@
     grid.appendChild(buildSessionItem("Prossima sessione", formatDate(readString(quest.next_session_at, ""))));
 
     if (readString(quest.location, "")) {
-      grid.appendChild(buildSessionItem("Luogo", readString(quest.location, "")));
+      grid.appendChild(
+        buildSessionItem(
+          "Luogo",
+          readString(quest.location, "")
+        )
+      );
     }
 
     section.appendChild(grid);
@@ -2814,7 +3070,18 @@
     label.textContent = labelText;
 
     var value = document.createElement("p");
-    value.textContent = valueText || "Da pianificare";
+    var locationLink = parseQuestLocationLink(valueText || "Da pianificare");
+
+    if (locationLink.href) {
+      var link = document.createElement("a");
+      link.className = "quest-field-link";
+      link.href = locationLink.href;
+      link.textContent = locationLink.label || "Apri posizione";
+      link.setAttribute("aria-label", "Apri luogo sulla mappa: " + (locationLink.label || "posizione missione"));
+      value.appendChild(link);
+    } else {
+      value.textContent = locationLink.label;
+    }
 
     item.appendChild(label);
     item.appendChild(value);
@@ -2911,6 +3178,25 @@
     var el = document.createElement("span");
     el.className = className;
     el.textContent = text;
+    return el;
+  }
+
+  function createQuestLocationBadge(value) {
+    var locationLink = parseQuestLocationLink(value);
+    var el = document.createElement("span");
+    el.className = "quest-location";
+
+    if (locationLink.href) {
+      var link = document.createElement("a");
+      link.className = "quest-field-link quest-location-link";
+      link.href = locationLink.href;
+      link.textContent = locationLink.label || "Apri posizione";
+      link.setAttribute("aria-label", "Apri luogo sulla mappa: " + (locationLink.label || "posizione missione"));
+      el.appendChild(link);
+    } else {
+      el.textContent = locationLink.label;
+    }
+
     return el;
   }
 
@@ -3064,8 +3350,7 @@
     var style = document.createElement("style");
     style.id = "quest-editor-patch-styles";
     style.textContent = [
-      '.quest-modal__field:has([data-quest-summary]) { display: none !important; }',
-      '.quest-modal__field:has([data-quest-report]) { display: none !important; }'
+      '.quest-modal__field:has([data-quest-report]) { display: none !important; }',
     ].join("\n");
     document.head.appendChild(style);
   }
@@ -3090,16 +3375,17 @@
     }
 
     removeQuestEditorLegacyFields();
+    enhanceQuestLocationField(form);
+    ensureQuestSummaryField(form);
+    enhanceQuestSummaryField(form);
     enhanceQuestBriefingField(form);
     enhanceQuestSecondaryObjectivesField(form);
     enhanceQuestIntelligenceField(form);
   }
 
   function removeQuestEditorLegacyFields() {
-    var summaryInput = document.querySelector("[data-quest-summary]");
     var reportInput = document.querySelector("[data-quest-report]");
 
-    removeQuestEditorField(summaryInput);
     removeQuestEditorField(reportInput);
   }
 
@@ -3112,6 +3398,96 @@
     if (field) {
       field.remove();
     }
+  }
+
+  function enhanceQuestLocationField(form) {
+    var input = form.querySelector("[data-quest-location]");
+    if (!input || input.dataset.locationHintReady === "true") {
+      return;
+    }
+
+    input.dataset.locationHintReady = "true";
+    input.placeholder = "Brimstone oppure [Isola sconosciuta]{URL mappa}";
+
+    var field = input.closest(".quest-modal__field");
+    if (!field) {
+      return;
+    }
+
+    var hint = document.createElement("small");
+    hint.className = "quest-field-hint";
+    hint.textContent = "Per linkare la mappa usa: [Nome luogo]{URL}. Se inserisci testo semplice, resta testo normale.";
+    field.appendChild(hint);
+  }
+
+  function ensureQuestSummaryField(form) {
+    var grid = form.querySelector(".quest-modal__grid");
+    if (!grid || form.querySelector("[data-quest-summary]")) {
+      return;
+    }
+
+    var briefingField = form.querySelector("[data-quest-briefing]");
+    var anchorField = briefingField && briefingField.closest(".quest-modal__field");
+
+    var field = document.createElement("label");
+    field.className = "quest-modal__field quest-modal__field--full quest-summary-field";
+    field.setAttribute("for", "quest-summary-input");
+
+    var label = document.createElement("span");
+    label.textContent = "Sommario";
+    field.appendChild(label);
+
+    var input = document.createElement("textarea");
+    input.id = "quest-summary-input";
+    input.className = "quest-modal__textarea quest-summary-input";
+    input.rows = 3;
+    input.maxLength = QUEST_SUMMARY_MAX_LENGTH;
+    input.dataset.questSummary = "true";
+    input.placeholder = "Sintesi breve della missione, visibile nelle card.";
+    field.appendChild(input);
+
+    var counter = document.createElement("small");
+    counter.className = "quest-summary-counter";
+    counter.dataset.questSummaryCounter = "true";
+    field.appendChild(counter);
+
+    if (anchorField && anchorField.parentNode === grid) {
+      grid.insertBefore(field, anchorField);
+    } else {
+      grid.appendChild(field);
+    }
+  }
+
+  function enhanceQuestSummaryField(form) {
+    var textarea = form.querySelector("[data-quest-summary]");
+    if (!textarea) {
+      return;
+    }
+
+    textarea.maxLength = QUEST_SUMMARY_MAX_LENGTH;
+
+    var field = textarea.closest(".quest-modal__field");
+    var counter = field && field.querySelector("[data-quest-summary-counter]");
+    if (!counter) {
+      counter = document.createElement("small");
+      counter.className = "quest-summary-counter";
+      counter.dataset.questSummaryCounter = "true";
+      if (field) {
+        field.appendChild(counter);
+      }
+    }
+
+    function syncCounter() {
+      var count = readString(textarea.value, "").length;
+      counter.textContent = count + "/" + QUEST_SUMMARY_MAX_LENGTH + " caratteri";
+    }
+
+    if (textarea.dataset.summaryCounterReady !== "true") {
+      textarea.dataset.summaryCounterReady = "true";
+      textarea.addEventListener("input", syncCounter);
+    }
+
+    syncCounter();
   }
 
   function enhanceQuestBriefingField(form) {
@@ -3251,7 +3627,7 @@
 
     textarea.dataset.lastParsedTextItemsValue = currentValue;
 
-    var items = parseQuestTextItems(currentValue);
+    var items = parseQuestObjectiveItems(currentValue);
     list.innerHTML = "";
 
     for (var i = 0; i < items.length; i += 1) {
@@ -3267,7 +3643,10 @@
       return;
     }
 
-    appendQuestTextEditorRow(textarea, normalized);
+    appendQuestTextEditorRow(textarea, {
+      text: normalized,
+      completed: false,
+    });
     syncQuestTextEditorTextarea(textarea);
   }
 
@@ -3278,13 +3657,34 @@
       return;
     }
 
+    var objective = normalizeQuestObjectiveEditorValue(value);
+
     var row = document.createElement("div");
     row.className = "quest-text-items-editor__item";
+    row.classList.toggle("is-complete", objective.completed === true);
+
+    var completed = document.createElement("label");
+    completed.className = "quest-text-items-editor__complete";
+    completed.title = "Obiettivo raggiunto";
+
+    var completedInput = document.createElement("input");
+    completedInput.type = "checkbox";
+    completedInput.className = "quest-text-items-editor__complete-input";
+    completedInput.checked = objective.completed === true;
+    completedInput.setAttribute("aria-label", "Obiettivo raggiunto");
+    completed.appendChild(completedInput);
+
+    var completedVisual = document.createElement("span");
+    completedVisual.className = "quest-text-items-editor__complete-visual";
+    completedVisual.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i>';
+    completed.appendChild(completedVisual);
+
+    row.appendChild(completed);
 
     var text = document.createElement("input");
     text.type = "text";
     text.className = "quest-modal__input quest-text-items-editor__item-text";
-    text.value = readString(value, "");
+    text.value = objective.text;
     text.setAttribute("aria-label", "Testo obiettivo secondario");
     row.appendChild(text);
 
@@ -3295,6 +3695,11 @@
     remove.title = "Rimuovi obiettivo secondario";
     remove.setAttribute("aria-label", "Rimuovi obiettivo secondario");
     row.appendChild(remove);
+
+    completedInput.addEventListener("change", function onCompletedInputChange() {
+      row.classList.toggle("is-complete", completedInput.checked === true);
+      syncQuestTextEditorTextarea(textarea);
+    });
 
     text.addEventListener("input", function onTextItemInput() {
       syncQuestTextEditorTextarea(textarea);
@@ -3314,16 +3719,34 @@
     var items = [];
 
     for (var i = 0; i < rows.length; i += 1) {
+      var completedInput = rows[i].querySelector(".quest-text-items-editor__complete-input");
       var textInput = rows[i].querySelector(".quest-text-items-editor__item-text");
       var text = readString(textInput && textInput.value, "");
 
       if (text) {
-        items.push(text);
+        items.push({
+          text: text,
+          completed: !!(completedInput && completedInput.checked),
+        });
       }
     }
 
     textarea.value = items.length ? JSON.stringify(items) : "";
     textarea.dataset.lastParsedTextItemsValue = textarea.value;
+  }
+
+  function normalizeQuestObjectiveEditorValue(value) {
+    if (typeof value === "string") {
+      return {
+        text: readString(value, ""),
+        completed: false,
+      };
+    }
+
+    return {
+      text: readString(value && value.text, ""),
+      completed: value && value.completed === true,
+    };
   }
 
   function enhanceQuestIntelligenceField(form) {

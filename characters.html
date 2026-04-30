@@ -5,17 +5,40 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Personaggi | Enclave della Gorgone</title>
+
   <style>
-      html {background: #0f171b;}
-      body {margin: 0; background: #0f171b; opacity: 0; transition: opacity 160ms ease;}
-      body.is-page-ready {opacity: 1;}
-      body.is-page-leaving {opacity: 0;}
-      @media (prefers-reduced-motion: reduce) {body {transition: none;}}
+    html {
+      background: #0f171b;
+    }
+
+    body {
+      margin: 0;
+      background: #0f171b;
+      opacity: 0;
+      transition: opacity 160ms ease;
+    }
+
+    body.is-page-ready {
+      opacity: 1;
+    }
+
+    body.is-page-leaving {
+      opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body {
+        transition: none;
+      }
+    }
   </style>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Uncial+Antiqua&display=swap"
-    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Uncial+Antiqua&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" />
   <link rel="stylesheet" href="styles/styles.css" />
   <link rel="stylesheet" href="styles/characters.css" />
@@ -26,18 +49,27 @@
     <aside data-sidebar-container></aside>
 
     <div class="content-shell">
-
       <main class="main-content characters-page" aria-live="polite">
         <section class="section-card quest-page-header" aria-labelledby="characters-page-title">
           <div class="quest-page-header__top">
             <div class="quest-page-header__copy">
               <p class="quest-page-eyebrow">Enclave</p>
               <h1 id="characters-page-title">Personaggi</h1>
-              <p class="hero-support">Archivio operativo dei membri dell'Enclave, con filtri rapidi e schede complete.
+              <p class="hero-support">
+                Archivio operativo dei membri dell'Enclave, con filtri rapidi e schede complete.
               </p>
             </div>
           </div>
         </section>
+
+        <figure class="characters-page-hero-media" aria-hidden="true">
+          <img
+            src="assets/images/retinue-spellguards.webp"
+            alt=""
+            decoding="async"
+            loading="eager"
+          />
+        </figure>
 
         <section class="section-card characters-top-card" aria-label="Roster personaggi">
           <div class="characters-header-tools">
@@ -65,16 +97,27 @@
               </div>
 
               <div class="characters-search-tools">
-                <button type="button" class="characters-search-toggle" data-characters-search-toggle
-                  aria-expanded="false" aria-controls="characters-search-panel" aria-label="Apri ricerca personaggi">
+                <button
+                  type="button"
+                  class="characters-search-toggle"
+                  data-characters-search-toggle
+                  aria-expanded="false"
+                  aria-controls="characters-search-panel"
+                  aria-label="Apri ricerca personaggi"
+                >
                   <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                 </button>
 
                 <div id="characters-search-panel" class="characters-search-panel" data-characters-search-panel hidden>
                   <label class="characters-search" for="characters-search-input">
                     <span>Cerca per nome</span>
-                    <input id="characters-search-input" type="search" placeholder="Es. Wulfric" data-characters-search
-                      autocomplete="off" />
+                    <input
+                      id="characters-search-input"
+                      type="search"
+                      placeholder="Es. Wulfric"
+                      data-characters-search
+                      autocomplete="off"
+                    />
                   </label>
                 </div>
               </div>
@@ -82,8 +125,12 @@
           </div>
 
           <div class="characters-roster-shell">
-            <button type="button" class="characters-roster-nav" data-characters-roster-prev
-              aria-label="Scorri personaggi a sinistra">
+            <button
+              type="button"
+              class="characters-roster-nav"
+              data-characters-roster-prev
+              aria-label="Scorri personaggi a sinistra"
+            >
               <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
             </button>
 
@@ -91,8 +138,12 @@
               <p class="characters-state">Caricamento personaggi...</p>
             </div>
 
-            <button type="button" class="characters-roster-nav" data-characters-roster-next
-              aria-label="Scorri personaggi a destra">
+            <button
+              type="button"
+              class="characters-roster-nav"
+              data-characters-roster-next
+              aria-label="Scorri personaggi a destra"
+            >
               <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
             </button>
           </div>
@@ -100,30 +151,44 @@
 
         <section class="section-card" aria-labelledby="characters-detail-title">
           <h2 id="characters-detail-title" class="sr-only">Scheda personaggio</h2>
+
           <div class="character-detail" data-character-detail>
             <p class="characters-state">Seleziona un personaggio per visualizzare la scheda.</p>
           </div>
         </section>
       </main>
-      </div>
-
-      <aside class="profile-rail" aria-label="Profilo giocatore">
-        <div data-profile-widget class="data-profile-widget"></div>
-      </aside>
     </div>
-<div class="import-modal" data-character-import-modal hidden>
+
+    <aside class="profile-rail" aria-label="Profilo giocatore">
+      <div data-profile-widget class="data-profile-widget"></div>
+    </aside>
+  </div>
+
+  <div class="import-modal" data-character-import-modal hidden>
     <div class="import-modal__backdrop" data-character-import-close></div>
+
     <div class="import-modal__panel" role="dialog" aria-modal="true" aria-labelledby="import-title">
       <h3 id="import-title">Importa personaggio</h3>
 
       <form class="import-modal__form" data-character-import-form>
         <label class="import-modal__label" for="character-json-file">JSON personaggio</label>
-        <input id="character-json-file" class="import-modal__input" type="file" accept=".json,application/json"
-          data-character-json-file required />
+        <input
+          id="character-json-file"
+          class="import-modal__input"
+          type="file"
+          accept=".json,application/json"
+          data-character-json-file
+          required
+        />
 
         <label class="import-modal__label" for="character-portrait-file">Portrait</label>
-        <input id="character-portrait-file" class="import-modal__input" type="file"
-          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-character-portrait-file />
+        <input
+          id="character-portrait-file"
+          class="import-modal__input"
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+          data-character-portrait-file
+        />
 
         <p class="import-modal__status" data-character-import-status aria-live="polite"></p>
 
@@ -147,6 +212,3 @@
 </body>
 
 </html>
-
-
-

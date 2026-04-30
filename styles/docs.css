@@ -382,7 +382,7 @@ body[data-theme="light"] .wiki-tooltip-bubble__header {
     margin: 1rem 0 0;
     padding: 0 1rem;
     display: grid;
-    grid-template-columns: minmax(50px, 1fr) minmax(0, 100%);
+    grid-template-columns: minmax(1rem, 1fr) minmax(0, 100%);
     gap: 2rem;
     align-items: start;
 }
@@ -5737,4 +5737,69 @@ body.is-wiki-table-dragging * {
   .docs-reading-page [data-sidebar-container]:focus-within .btn-vtt {
     padding: 0.6rem 0.72rem;
   }
+}
+/* =========================
+   SIDEBAR ESTESA (NO HOVER EXPAND)
+========================= */
+.docs-reading-page [data-sidebar-container] {
+  width: min(272px, calc(100vw - 2rem)) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  overflow: visible !important;
+  z-index: 220;
+}
+
+.docs-reading-page [data-sidebar-container] .sidebar {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0.9rem !important;
+  gap: 0.85rem !important;
+  height: calc(100dvh - 2rem) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  box-shadow: var(--shadow) !important;
+}
+
+.docs-reading-page .sidebar-brand {
+  grid-template-columns: 50px minmax(0, 1fr) !important;
+  justify-items: stretch !important;
+  padding-bottom: 0.7rem !important;
+}
+
+.docs-reading-page .sidebar-brand > span:last-child {
+  display: block !important;
+}
+
+.docs-reading-page .sidebar-nav-group__title,
+.docs-reading-page .btn-vtt span,
+.docs-reading-page .nav-item span,
+.docs-reading-page .manage-caret {
+  display: inline !important;
+}
+
+.docs-reading-page .sidebar-nav {
+  gap: 0.58rem !important;
+}
+
+.docs-reading-page .sidebar-nav-group + .sidebar-nav-group {
+  padding-top: 0.42rem !important;
+}
+
+.docs-reading-page .nav-item,
+.docs-reading-page .manage-toggle {
+  grid-template-columns: 20px minmax(0, 1fr) !important;
+  justify-items: stretch !important;
+  height: auto !important;
+  padding: 0.3rem 0.58rem !important;
+}
+
+.docs-reading-page .manage-toggle {
+  grid-template-columns: 20px minmax(0, 1fr) auto !important;
+}
+
+.docs-reading-page .nav-item i,
+.docs-reading-page .manage-toggle i {
+  font-size: 0.94rem !important;
+  justify-self: center;
 }

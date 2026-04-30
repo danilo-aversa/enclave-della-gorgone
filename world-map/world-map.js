@@ -80,6 +80,7 @@
     dragOffsetX: 0,
     dragOffsetY: 0,
   };
+  var pendingDeepLink = null;
 
   document.addEventListener("DOMContentLoaded", initWorldMap);
 
@@ -183,6 +184,7 @@
     });
 
     await Promise.all([loadMarkers(map), loadOverlays(map), loadLabels(map)]);
+    pendingDeepLink = readMapDeepLink();
 
     bindLayerFilters(map);
     bindLayerFilterActions(map);
@@ -203,6 +205,7 @@
     updateLabelScaling(map);
     updateLayerDockState(map);
     initTravelSystemBridge();
+    applyPendingDeepLink(map);
   }
 
   function exposeWorldMapBridge(map, bounds) {
@@ -216,6 +219,9 @@
       toMapLatLng: toMapLatLng,
       toImagePoint: toImagePoint,
       isPointInsideImage: isPointInsideImage,
+      focusMapPoint: focusMapPoint,
+      buildMapPointLink: buildMapPointLink,
+      buildMapElementLink: buildMapElementLink,
       getLayerGroup: getLayerGroup,
       canManageMap: canManageMap,
     };
@@ -3331,11 +3337,13 @@
       var contextMoveButton = event.target.closest("[data-world-map-context-move]");
       var contextDeleteButton = event.target.closest("[data-world-map-context-delete]");
       var contextVerticesButton = event.target.closest("[data-world-map-context-vertices]");
+      var contextCopyLinkButton = event.target.closest("[data-world-map-context-copy-link]");
       var markerButton = event.target.closest("[data-world-map-draft-marker]");
       var overlayButton = event.target.closest("[data-world-map-draft-overlay]");
       var labelButton = event.target.closest("[data-world-map-draft-label]");
       var copyButton = event.target.closest("[data-world-map-copy-draft-json]");
       var copyCoordsButton = event.target.closest("[data-world-map-copy-coordinates]");
+      var copyMapLinkButton = event.target.closest("[data-world-map-copy-map-link]");
       var closeButton = event.target.closest("[data-world-map-draft-close]");
       var travelEditorButton = event.target.closest("[data-world-map-open-travel-editor]");
       var travelCalculatorButton = event.target.closest("[data-world-map-open-travel-calculator]");
@@ -3395,8 +3403,18 @@
         return;
       }
 
+      if (contextCopyLinkButton && panel._worldMapContextLayer) {
+        copyElementMapLink(panel._worldMapContextLayer, contextCopyLinkButton);
+        return;
+      }
+
       if (copyCoordsButton) {
         copyDraftCoordinates(panel, copyCoordsButton);
+        return;
+      }
+
+      if (copyMapLinkButton) {
+        copyDraftMapLink(panel, copyMapLinkButton);
         return;
       }
 
@@ -3876,6 +3894,7 @@
       '<button type="button" class="world-map-context-action" data-world-map-context-move><i class="fa-solid fa-arrows-up-down-left-right" aria-hidden="true"></i><span>Muovi ' +
       escapeHtml(label) +
       "</span></button>" +
+      '<button type="button" class="world-map-context-action" data-world-map-context-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i><span>Copia link posizione</span></button>' +
       (kind === "overlay"
         ? '<button type="button" class="world-map-context-action" data-world-map-context-vertices><i class="fa-solid fa-bezier-curve" aria-hidden="true"></i><span>Modifica vertici</span></button>'
         : "") +
@@ -3919,6 +3938,10 @@
       '<button type="button" class="world-map-context-action" data-world-map-copy-coordinates>' +
       '<i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>' +
       '<span>Copia coordinate</span>' +
+      '</button>' +
+      '<button type="button" class="world-map-context-action" data-world-map-copy-map-link>' +
+      '<i class="fa-solid fa-link" aria-hidden="true"></i>' +
+      '<span>Copia link posizione</span>' +
       '</button>' +
       (canManageMap()
         ? '<button type="button" class="world-map-context-action world-map-context-action--admin" data-world-map-draft-marker>' +
@@ -4413,6 +4436,47 @@
     }
   }
 
+  async function copyDraftMapLink(panel, button) {
+    var coords = readDraftCoords(panel);
+    var originalText = button.textContent;
+    var link = buildMapPointLink(coords.x, coords.y, window.__worldMapInstance ? window.__worldMapInstance.getZoom() : null);
+
+    try {
+      await navigator.clipboard.writeText(link);
+      button.textContent = "Link copiato";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1100);
+    } catch (_error) {
+      button.textContent = "Copia fallita";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1400);
+    }
+  }
+
+  async function copyElementMapLink(layer, button) {
+    if (!layer || !layer._worldMapData) {
+      return;
+    }
+
+    var originalText = button.textContent;
+    var link = buildMapElementLink(layer);
+
+    try {
+      await navigator.clipboard.writeText(link);
+      button.textContent = "Link copiato";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1100);
+    } catch (_error) {
+      button.textContent = "Copia fallita";
+      window.setTimeout(function () {
+        button.textContent = originalText;
+      }, 1400);
+    }
+  }
+
   async function copyDraftJson(panel, button) {
     var json = panel.dataset.draftJson || "";
 
@@ -4478,6 +4542,160 @@
 
     panel.style.left = left + "px";
     panel.style.top = top + "px";
+  }
+
+  function readMapDeepLink() {
+    var merged = new URLSearchParams(window.location.search || "");
+    var hash = String(window.location.hash || "").replace(/^#/, "");
+
+    if (hash) {
+      var hashParams = new URLSearchParams(hash);
+      hashParams.forEach(function (value, key) {
+        merged.set(key, value);
+      });
+    }
+
+    var mapId = merged.get("map");
+
+    if (mapId && mapId !== currentMapId && WORLD_MAPS[mapId]) {
+      return null;
+    }
+
+    return {
+      x: merged.has("x") ? Number(merged.get("x")) : null,
+      y: merged.has("y") ? Number(merged.get("y")) : null,
+      zoom: merged.has("zoom") ? Number(merged.get("zoom")) : null,
+      marker: merged.get("marker") || "",
+      label: merged.get("label") || "",
+      overlay: merged.get("overlay") || "",
+    };
+  }
+
+  function applyPendingDeepLink(map) {
+    if (!pendingDeepLink || !map) {
+      return;
+    }
+
+    if (pendingDeepLink.marker || pendingDeepLink.label || pendingDeepLink.overlay) {
+      if (focusMapElementByDeepLink(map, pendingDeepLink)) {
+        pendingDeepLink = null;
+        return;
+      }
+    }
+
+    if (Number.isFinite(pendingDeepLink.x) && Number.isFinite(pendingDeepLink.y)) {
+      focusMapPoint(pendingDeepLink.x, pendingDeepLink.y, pendingDeepLink.zoom, {
+        animate: false,
+        pulse: true,
+      });
+      pendingDeepLink = null;
+    }
+  }
+
+  function focusMapElementByDeepLink(map, deepLink) {
+    var targetId = deepLink.marker || deepLink.label || deepLink.overlay;
+    var targetKind = deepLink.marker ? "marker" : deepLink.label ? "label" : "overlay";
+
+    if (!targetId) {
+      return false;
+    }
+
+    var entry = mapSearchIndex.find(function (item) {
+      return item && item.kind === targetKind && item.data && item.data.id === targetId;
+    });
+
+    if (!entry) {
+      return false;
+    }
+
+    focusSearchMatch(map, entry);
+    return true;
+  }
+
+  function focusMapPoint(x, y, zoom, options) {
+    var map = window.__worldMapInstance;
+    var point = { x: Number(x), y: Number(y) };
+
+    if (!map || !isPointInsideImage(point)) {
+      return false;
+    }
+
+    var nextZoom = Number.isFinite(Number(zoom)) ? Number(zoom) : Math.max(map.getZoom(), 0);
+    var latlng = toMapLatLng(point.x, point.y);
+    var shouldAnimate = !options || options.animate !== false;
+
+    map.setView(latlng, nextZoom, { animate: shouldAnimate });
+
+    if (options && options.pulse) {
+      pulseMapPoint(latlng);
+    }
+
+    return true;
+  }
+
+  function pulseMapPoint(latlng) {
+    var map = window.__worldMapInstance;
+
+    if (!map || !latlng) {
+      return;
+    }
+
+    var marker = L.marker(latlng, {
+      interactive: false,
+      zIndexOffset: 1800,
+      icon: L.divIcon({
+        className: "",
+        html: '<span class="world-map-deep-link-pulse"><i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i></span>',
+        iconSize: [42, 42],
+        iconAnchor: [21, 21],
+      }),
+    }).addTo(map);
+
+    window.setTimeout(function () {
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
+    }, 1800);
+  }
+
+  function buildMapPointLink(x, y, zoom) {
+    var url = new URL(window.location.href);
+    url.searchParams.set("map", currentMapId);
+    url.hash = new URLSearchParams({
+      x: String(Math.round(Number(x) || 0)),
+      y: String(Math.round(Number(y) || 0)),
+      zoom: String(roundTo(Number.isFinite(Number(zoom)) ? Number(zoom) : 0, 2)),
+    }).toString();
+    return url.toString();
+  }
+
+  function buildMapElementLink(layer) {
+    var data = layer && layer._worldMapData ? layer._worldMapData : {};
+    var kind = layer && layer._worldMapKind ? layer._worldMapKind : "";
+    var url = new URL(window.location.href);
+    var zoom = window.__worldMapInstance ? window.__worldMapInstance.getZoom() : 0;
+    var hashParams = new URLSearchParams();
+
+    url.searchParams.set("map", currentMapId);
+
+    if (data.id && (kind === "marker" || kind === "label" || kind === "overlay")) {
+      hashParams.set(kind, data.id);
+      hashParams.set("zoom", String(roundTo(Number.isFinite(Number(zoom)) ? Number(zoom) : 0, 2)));
+      url.hash = hashParams.toString();
+      return url.toString();
+    }
+
+    if (kind === "overlay") {
+      var center = getOverlayCenterPoint(data);
+      return buildMapPointLink(center.x, center.y, zoom);
+    }
+
+    return buildMapPointLink(data.x, data.y, zoom);
+  }
+
+  function roundTo(value, digits) {
+    var factor = Math.pow(10, digits || 0);
+    return Math.round(Number(value) * factor) / factor;
   }
 
   function bindCoordinateReadout(map) {
