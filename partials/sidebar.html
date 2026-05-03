@@ -3,11 +3,11 @@
     type="button"
     class="sidebar-slide-toggle"
     data-sidebar-slide-toggle
-    aria-label="Nascondi barra laterale"
+    aria-label="Blocca barra laterale"
     aria-pressed="false"
-    title="Nascondi barra laterale"
+    title="Blocca barra laterale"
   >
-    <i class="fa-solid fa-angles-left" aria-hidden="true"></i>
+    <i class="fa-solid fa-thumbtack" aria-hidden="true"></i>
   </button>
   <a class="sidebar-brand" href="index.html" aria-label="Enclave della Gorgone">
     <span class="brand-mark" aria-hidden="true">
@@ -69,14 +69,9 @@
         <i class="fa-solid fa-map-location-dot" aria-hidden="true"></i>
         <span>Mondo</span>
       </a>
-      <a
-        class="nav-item"
-        href="docs.html?doc=regole/sessioni-e-quest"
-        data-active-for="docs-cronache"
-        data-doc-group-link="regole"
-      >
-        <i class="fa-solid fa-scroll" aria-hidden="true"></i>
-        <span>Cronache</span>
+      <a class="nav-item" href="timeline.html" data-active-for="timeline">
+        <i class="fa-solid fa-timeline" aria-hidden="true"></i>
+        <span>Linea Temporale</span>
       </a>
     </section>
 
@@ -138,6 +133,9 @@
   </nav>
 
   <div class="sidebar-footer">
+    <section class="sidebar-profile" aria-label="Profilo giocatore">
+      <div data-profile-widget class="data-profile-widget"></div>
+    </section>
     <div class="sidebar-theme" data-theme-toggle role="group" aria-label="Tema interfaccia">
       <button
         type="button"
@@ -168,3 +166,4 @@
     </a>
   </div>
 </aside>
+

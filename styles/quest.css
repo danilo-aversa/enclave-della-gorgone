@@ -298,17 +298,19 @@ body > * {
 
 [data-sidebar-container] {
   grid-column: 1;
-  position: sticky;
+  position: fixed;
   top: 1rem;
+  left: 1rem;
+  width: min(272px, calc(100vw - 2rem));
   align-self: start;
   z-index: 120;
 }
 
 .sidebar {
   width: 100%;
-  position: sticky;
-  top: 1rem;
-  height: calc(100dvh - 2.6rem);
+  position: relative;
+  top: 0;
+  height: calc(100dvh - 2rem);
   z-index: 120;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -596,22 +598,6 @@ body > * {
 .profile-widget__token--small {
   width: 22px;
   height: 22px;
-}
-
-.profile-widget__popover {
-  position: absolute;
-  top: calc(100% + 0.45rem);
-  right: 0;
-  min-width: 280px;
-  max-width: min(360px, calc(100vw - 1.6rem));
-  border: 1px solid rgba(var(--line-strong-rgb), 0.86);
-  border-radius: var(--radius-sm);
-  background: rgba(var(--popover-rgb), 0.97);
-  box-shadow: var(--shadow);
-  padding: 0.62rem;
-  display: grid;
-  gap: 0.45rem;
-  z-index: 900;
 }
 
 .profile-widget__popover[hidden] {

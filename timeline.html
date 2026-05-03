@@ -1,0 +1,387 @@
+﻿<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Timeline | Enclave della Gorgone</title>
+
+    <style>
+      html {
+        background: #0f171b;
+      }
+
+      body {
+        margin: 0;
+        background: #0f171b;
+        opacity: 0;
+        transition: opacity 160ms ease;
+      }
+
+      body.is-page-ready {
+        opacity: 1;
+      }
+
+      body.is-page-leaving {
+        opacity: 0;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        body {
+          transition: none;
+        }
+      }
+    </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Uncial+Antiqua&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="styles/styles.css" />
+    <link rel="stylesheet" href="styles/timeline.css" />
+  </head>
+  <body class="timeline-reading-page">
+    <div class="app-layout">
+      <aside data-sidebar-container></aside>
+
+      <div class="content-shell">
+        <main class="main-content timeline-page" aria-live="polite">
+          <section class="section-card quest-page-header" aria-labelledby="timeline-page-title">
+            <div class="quest-page-header__top">
+              <div class="quest-page-header__copy">
+                <p class="quest-page-eyebrow">Organizzazione</p>
+                <h1 id="timeline-page-title">Timeline</h1>
+                <p class="hero-support">
+                  Cronologia degli eventi, delle missioni e delle anomalie della campagna.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section class="section-card timeline-shell" aria-label="Cronologia dell'Enclave">
+            <div class="timeline-main">
+              <section class="timeline-toolbar" aria-label="Filtri timeline">
+                <label class="timeline-field timeline-field--search" for="timelineSearch">
+                  <span class="timeline-label">Ricerca</span>
+                  <input
+                    class="timeline-input"
+                    id="timelineSearch"
+                    data-timeline-search
+                    type="search"
+                    placeholder="Cerca eventi, luoghi, fazioni..."
+                    autocomplete="off"
+                  />
+                </label>
+
+                <label class="timeline-field" for="timelineTypeFilter">
+                  <span class="timeline-label">Tipo</span>
+                  <select
+                    class="timeline-select"
+                    id="timelineTypeFilter"
+                    data-timeline-type-filter
+                    aria-label="Filtra per tipo"
+                  >
+                    <option value="all">Tutti i tipi</option>
+                    <option value="campaign">Campagna</option>
+                    <option value="lore">Lore</option>
+                    <option value="mission">Missione</option>
+                    <option value="character">Personaggio</option>
+                    <option value="faction">Fazione</option>
+                    <option value="fracture">Frattura</option>
+                    <option value="alternate">Realtà alternativa</option>
+                  </select>
+                </label>
+
+                <label class="timeline-field" for="timelineVisibilityFilter">
+                  <span class="timeline-label">Visibilità</span>
+                  <select
+                    class="timeline-select"
+                    id="timelineVisibilityFilter"
+                    data-timeline-visibility-filter
+                  >
+                    <option value="all">Tutte</option>
+                    <option value="players">Giocatori</option>
+                    <option value="dm">Solo DM</option>
+                  </select>
+                </label>
+
+                <label class="timeline-field" for="timelineKnowledgeFilter">
+                  <span class="timeline-label">Conoscenza</span>
+                  <select
+                    class="timeline-select"
+                    id="timelineKnowledgeFilter"
+                    data-timeline-knowledge-filter
+                  >
+                    <option value="all">Tutti i livelli</option>
+                    <option value="unknown">Ignoto</option>
+                    <option value="partial">Parziale</option>
+                    <option value="known">Conosciuto</option>
+                    <option value="confirmed">Confermato</option>
+                    <option value="theory">Teoria</option>
+                    <option value="false">Falso</option>
+                  </select>
+                </label>
+
+                <label class="timeline-field" for="timelineStateFilter">
+                  <span class="timeline-label">Stato</span>
+                  <select
+                    class="timeline-select"
+                    id="timelineStateFilter"
+                    data-timeline-state-filter
+                  >
+                    <option value="all">Tutti gli stati</option>
+                    <option value="past">Avvenuto</option>
+                    <option value="current">In corso</option>
+                    <option value="future">Possibile</option>
+                    <option value="altered">Alterato</option>
+                    <option value="variant">Variante</option>
+                    <option value="cancelled">Cancellato</option>
+                  </select>
+                </label>
+
+                <div class="timeline-toolbar-actions">
+                  <div class="timeline-mode-toggle" id="timelineModeToggle" data-timeline-mode-toggle role="group" aria-label="Modalità timeline">
+                    <button
+                      type="button"
+                      class="timeline-mode-option is-active"
+                      data-timeline-mode="players"
+                      aria-pressed="true"
+                    >
+                      Player
+                    </button>
+                    <button
+                      type="button"
+                      class="timeline-mode-option"
+                      data-timeline-mode="dm"
+                      aria-pressed="false"
+                    >
+                      DM
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="timeline-content" aria-label="Elenco eventi">
+                <div class="timeline-list" id="timelineList" data-timeline-list></div>
+                <p class="timeline-empty" id="timelineEmpty" data-timeline-empty hidden>
+                  Nessun evento corrisponde ai filtri attivi.
+                </p>
+              </section>
+            </div>
+
+            <div class="timeline-shell-actions" aria-label="Azioni timeline">
+              <button
+                class="timeline-icon-button"
+                id="timelineEditButton"
+                data-timeline-edit
+                type="button"
+                aria-label="Modifica evento"
+                title="Modifica evento"
+                hidden
+              >
+                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+              </button>
+
+              <button
+                class="timeline-icon-button"
+                id="timelineDeleteButton"
+                data-timeline-delete
+                type="button"
+                data-variant="danger"
+                aria-label="Elimina evento"
+                title="Elimina evento"
+                hidden
+              >
+                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+              </button>
+
+              <button
+                type="button"
+                class="timeline-icon-button"
+                id="timelineNewButton"
+                data-timeline-new
+                aria-label="Nuovo evento"
+                title="Nuovo evento"
+                hidden
+              >
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+<div class="timeline-modal" id="timelineEventModal" data-timeline-modal hidden>
+      <div
+        class="timeline-modal-backdrop"
+        id="timelineModalBackdrop"
+        data-timeline-modal-backdrop
+        data-timeline-modal-close
+      ></div>
+
+      <section
+        class="timeline-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="timelineModalTitle"
+      >
+        <header class="timeline-modal-header">
+          <div>
+            <h2 class="timeline-modal-title" id="timelineModalTitle" data-timeline-modal-title>
+              Nuovo evento
+            </h2>
+            <p class="timeline-modal-subtitle">
+              Compila i campi essenziali per aggiungere o aggiornare un evento della cronologia.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="timeline-icon-button"
+            id="timelineModalClose"
+            data-timeline-modal-close
+            aria-label="Chiudi"
+            title="Chiudi"
+          >
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <form class="timeline-modal-body" id="timelineEventForm" data-timeline-form>
+          <input id="timelineEventId" name="id" type="hidden" />
+
+          <div class="timeline-form-grid">
+            <label class="timeline-field">
+              <span class="timeline-label">Titolo</span>
+              <input class="timeline-input" id="timelineEventTitle" name="title" required />
+            </label>
+
+            <label class="timeline-field">
+              <span class="timeline-label">Data testuale</span>
+              <input class="timeline-input" id="timelineEventDateLabel" name="date_label" required />
+            </label>
+
+            <label class="timeline-field">
+              <span class="timeline-label">Sort key</span>
+              <input
+                class="timeline-input"
+                id="timelineEventSortKey"
+                name="sort_key"
+                type="number"
+                step="0.001"
+                required
+              />
+            </label>
+
+            <label class="timeline-field">
+              <span class="timeline-label">Tipo</span>
+              <select class="timeline-select" id="timelineEventType" name="type">
+                <option value="campaign">Campagna</option>
+                <option value="lore">Lore</option>
+                <option value="mission">Missione</option>
+                <option value="character">Personaggio</option>
+                <option value="faction">Fazione</option>
+                <option value="fracture">Frattura</option>
+                <option value="alternate">Realtà alternativa</option>
+              </select>
+            </label>
+
+            <label class="timeline-field">
+              <span class="timeline-label">Visibilità</span>
+              <select class="timeline-select" id="timelineEventVisibility" name="visibility">
+                <option value="players">Giocatori</option>
+                <option value="dm">Solo DM</option>
+              </select>
+            </label>
+
+            <label class="timeline-field">
+              <span class="timeline-label">Stato</span>
+              <select class="timeline-select" id="timelineEventState" name="state">
+                <option value="past">Avvenuto</option>
+                <option value="current">In corso</option>
+                <option value="future">Possibile</option>
+                <option value="altered">Alterato</option>
+                <option value="variant">Variante</option>
+                <option value="cancelled">Cancellato</option>
+              </select>
+            </label>
+
+            <label class="timeline-field">
+              <span class="timeline-label">Importanza</span>
+              <input
+                class="timeline-input"
+                id="timelineEventImportance"
+                name="importance"
+                type="number"
+                min="1"
+                max="5"
+                step="1"
+              />
+            </label>
+
+            <label class="timeline-field is-full">
+              <span class="timeline-label">Sommario</span>
+              <textarea class="timeline-textarea" id="timelineEventSummary" name="summary"></textarea>
+            </label>
+
+            <label class="timeline-field is-full">
+              <span class="timeline-label">Descrizione</span>
+              <textarea class="timeline-textarea" id="timelineEventDescription" name="description"></textarea>
+            </label>
+
+            <label class="timeline-field is-full">
+              <span class="timeline-label">Note DM</span>
+              <textarea class="timeline-textarea" id="timelineEventDmNotes" name="dm_notes"></textarea>
+            </label>
+
+            <label class="timeline-field">
+              <span class="timeline-label">Tag (separati da virgola)</span>
+              <input class="timeline-input" id="timelineEventTags" name="tags" />
+            </label>
+
+            <label class="timeline-field">
+              <span class="timeline-label">Link (uno per riga)</span>
+              <input class="timeline-input" id="timelineEventLinks" name="links" />
+            </label>
+          </div>
+
+          <p class="timeline-form-note">I campi contrassegnati come obbligatori devono essere compilati.</p>
+
+          <div class="timeline-modal-footer">
+            <button
+              class="timeline-button"
+              type="button"
+              id="timelineModalCancel"
+              data-timeline-modal-cancel
+            >
+              Annulla
+            </button>
+            <button
+              class="timeline-button"
+              data-variant="primary"
+              type="submit"
+              id="timelineModalSave"
+              data-timeline-modal-save
+            >
+              Salva evento
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <p class="timeline-status" id="timelineStatus" data-timeline-status hidden aria-live="polite"></p>
+
+    <script src="scripts/page-transition.js" defer></script>
+    <script src="scripts/layout.js" defer></script>
+    <script src="scripts/main.js" defer></script>
+    <script src="scripts/timeline.js" defer></script>
+  </body>
+</html>
+
+

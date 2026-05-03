@@ -21,6 +21,7 @@
 
   var ACCESS_CODE_KEY = "gorgoneAccessCode";
   var THEME_KEY = "gorgoneTheme";
+  var SIDEBAR_PIN_KEY = "gorgoneSidebarPinned";
   var DEFAULT_THEME = "dark";
   var ADMIN_CODE = "Enclave";
   var MOBILE_SIDEBAR_BREAKPOINT = 980;
@@ -99,6 +100,11 @@
       return;
     }
 
+    if (event.key === SIDEBAR_PIN_KEY) {
+      setDesktopSidebarPinned(readStoredSidebarPinned());
+      return;
+    }
+
     if (event.key !== ACCESS_CODE_KEY) {
       return;
     }
@@ -113,10 +119,6 @@
     dom.sidebarContainers = Array.prototype.slice.call(
       document.querySelectorAll("[data-sidebar-container]"),
     );
-    dom.profileContainers = Array.prototype.slice.call(
-      document.querySelectorAll("[data-profile-widget]"),
-    );
-
     if (dom.sidebarContainers.length) {
       await injectSidebarPartial();
       initMobileSidebar();
@@ -126,6 +128,10 @@
       setActiveNavItem();
       document.dispatchEvent(new CustomEvent("enclave:sidebar-ready"));
     }
+
+    dom.profileContainers = Array.prototype.slice.call(
+      document.querySelectorAll("[data-profile-widget]"),
+    );
 
     if (dom.profileContainers.length) {
       renderProfileWidget();
@@ -160,7 +166,7 @@
       return;
     }
 
-    var html = await response.text();
+    var html = sanitizeSidebarPartialHtml(await response.text());
 
     for (var i = 0; i < dom.sidebarContainers.length; i += 1) {
       dom.sidebarContainers[i].innerHTML = html;
@@ -168,7 +174,24 @@
       rewriteSidebarLinks(dom.sidebarContainers[i]);
     }
   }
+  function sanitizeSidebarPartialHtml(html) {
+    var normalized = readString(html, "");
 
+    if (!normalized) {
+      return "";
+    }
+
+    // Remove UTF-8 BOM rendered as a text node when partial is injected.
+    normalized = normalized.replace(/^\uFEFF+/, "");
+
+    // Remove VS Code Live Preview injected script if present in fetched partial.
+    normalized = normalized.replace(
+      /<script[^>]*src=["']\/___vscode_livepreview_injected_script["'][^>]*>\s*<\/script>/gi,
+      "",
+    );
+
+    return normalized;
+  }
   function rewriteSidebarAssetUrls(container) {
     if (!container) {
       return;
@@ -414,8 +437,7 @@
       document.querySelectorAll("[data-sidebar-slide-toggle]"),
     );
 
-    var defaultCollapsed = isDesktopSidebarDefaultCollapsedPage();
-    setDesktopSidebarCollapsed(defaultCollapsed);
+    setDesktopSidebarPinned(readStoredSidebarPinned());
 
     for (var i = 0; i < dom.sidebarSlideToggles.length; i += 1) {
       if (dom.sidebarSlideToggles[i].dataset.sidebarSlideBound === "true") {
@@ -428,7 +450,7 @@
           return;
         }
 
-        setDesktopSidebarCollapsed(!dom.desktopSidebarCollapsed);
+        setDesktopSidebarPinned(!isDesktopSidebarPinned());
       });
     }
 
@@ -436,12 +458,8 @@
     syncDesktopSidebarOnResize();
   }
 
-  function isDesktopSidebarDefaultCollapsedPage() {
-    return !!(
-      document.body &&
-      (document.body.classList.contains("docs-reading-page") ||
-        document.body.classList.contains("world-map-reading-page"))
-    );
+  function isDesktopSidebarPinned() {
+    return !dom.desktopSidebarCollapsed;
   }
 
   function syncDesktopSidebarOnResize() {
@@ -451,38 +469,55 @@
 
     if (isMobileViewport()) {
       document.body.classList.remove("sidebar-collapsed");
-      updateSidebarSlideToggleControls(false);
+      updateSidebarSlideToggleControls(isDesktopSidebarPinned());
       return;
     }
 
     document.body.classList.toggle("sidebar-collapsed", !!dom.desktopSidebarCollapsed);
-    updateSidebarSlideToggleControls(!!dom.desktopSidebarCollapsed);
+    updateSidebarSlideToggleControls(isDesktopSidebarPinned());
   }
 
-  function setDesktopSidebarCollapsed(isCollapsed) {
-    dom.desktopSidebarCollapsed = !!isCollapsed;
+  function setDesktopSidebarPinned(isPinned) {
+    dom.desktopSidebarCollapsed = !isPinned;
+    writeStoredSidebarPinned(!!isPinned);
     syncDesktopSidebarOnResize();
   }
 
-  function updateSidebarSlideToggleControls(isCollapsed) {
+  function updateSidebarSlideToggleControls(isPinned) {
     for (var i = 0; i < dom.sidebarSlideToggles.length; i += 1) {
       var button = dom.sidebarSlideToggles[i];
       var icon = button.querySelector("i");
 
-      button.setAttribute("aria-pressed", String(!!isCollapsed));
+      button.setAttribute("aria-pressed", String(!!isPinned));
       button.setAttribute(
         "aria-label",
-        isCollapsed ? "Mostra barra laterale" : "Nascondi barra laterale",
+        isPinned ? "Sblocca barra laterale" : "Blocca barra laterale",
       );
       button.setAttribute(
         "title",
-        isCollapsed ? "Mostra barra laterale" : "Nascondi barra laterale",
+        isPinned ? "Sblocca barra laterale" : "Blocca barra laterale",
       );
+      button.classList.toggle("is-pinned", !!isPinned);
 
       if (icon) {
-        icon.classList.toggle("fa-angles-left", !isCollapsed);
-        icon.classList.toggle("fa-angles-right", isCollapsed);
+        icon.classList.toggle("fa-thumbtack", true);
       }
+    }
+  }
+
+  function readStoredSidebarPinned() {
+    try {
+      return window.localStorage.getItem(SIDEBAR_PIN_KEY) === "true";
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function writeStoredSidebarPinned(isPinned) {
+    try {
+      window.localStorage.setItem(SIDEBAR_PIN_KEY, isPinned ? "true" : "false");
+    } catch (_error) {
+      // Ignore storage errors.
     }
   }
 
@@ -1257,3 +1292,13 @@
       : fallback;
   }
 })();
+
+
+
+
+
+
+
+
+
+
