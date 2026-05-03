@@ -50,20 +50,17 @@
 .world-map-side {
   grid-column: 2;
   grid-row: 1 / span 2;
-
   min-width: 0;
   min-height: 0;
   height: 100%;
-
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
   gap: 0;
-
   align-self: stretch;
   overflow: hidden;
 }
 .world-map-side-tabs {
-  min-height: 42px;
+  /* min-height: 42px; */
   display: flex;
   align-items: end;
   justify-content: stretch;
@@ -850,6 +847,8 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
 
 .world-map-detail {
   min-height: 0;
+  height: 100%;
+  align-self: stretch;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   border-top-width: 0;
@@ -857,7 +856,8 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
   border-top-right-radius: 0 !important;
   background:rgba(13, 22, 27, 0.86);
   padding: 0.95rem;
-  overflow: hidden;
+  overflow: auto;
+  flex-grow: 1;
 }
 
 .world-map-detail__empty {
@@ -1862,12 +1862,14 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
 
 .world-map-travel-editor {
   min-height: 0;
+  height: 100%;
+  align-self: stretch;
   display: grid;
   grid-template-rows: auto auto auto auto auto auto;
   gap: 0.7rem;
   padding: 0;
   color: var(--text);
-  overflow: visible;
+  overflow: auto;
 }
 
 .world-map-travel-editor[hidden] {
@@ -2355,6 +2357,8 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
 }
 
 .world-map-travel-calculator {
+  height: 100%;
+  align-self: stretch;
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
 }
 
@@ -3124,6 +3128,8 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
 }
 
 .world-map-travel-tokens {
+  height: 100%;
+  align-self: stretch;
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
 }
 
@@ -3371,3 +3377,5 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
   font-size: 0.94rem !important;
   justify-self: center;
 }
+
+
