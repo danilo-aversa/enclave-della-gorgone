@@ -51,6 +51,7 @@ body[data-theme="dark"] {
   --tooltip-text: #dbe7eb;
 
   --accent: #4db8a6;
+  --accent-dim: #80a8a2;
   --accent-rgb: 77, 184, 166;
   --accent-strong: #71ddca;
   --accent-strong-rgb: 113, 221, 202;
@@ -162,6 +163,7 @@ body[data-theme="light"] {
   --tooltip-text: #17252b;
 
   --accent: #2f8f80;
+  --accent-dim: #57837c;
   --accent-rgb: 47, 143, 128;
   --accent-strong: #1f7065;
   --accent-strong-rgb: 31, 112, 101;
@@ -397,16 +399,17 @@ body:not(.sidebar-collapsed) [data-sidebar-container] .sidebar > :not(.sidebar-s
 
 .mobile-sidebar-toggle {
   position: fixed;
-  top: 0.85rem;
-  left: 0.85rem;
-  width: 42px;
-  height: 42px;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 50px;
+  height: 50px;
   display: none;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(var(--line-soft-rgb), 0.88);
   border-radius: var(--radius-sm);
-  background: rgba(var(--surface-strong-rgb), 0.97);
+  background: rgba(var(--surface-strong-rgb), 0.5);
+  backdrop-filter: blur(14px);
   color: var(--text);
   box-shadow: var(--shadow);
   cursor: pointer;
@@ -422,7 +425,7 @@ body:not(.sidebar-collapsed) [data-sidebar-container] .sidebar > :not(.sidebar-s
 }
 
 .mobile-sidebar-toggle i {
-  font-size: 1rem;
+  font-size: 1.4rem;
 }
 
 .mobile-sidebar-backdrop {
@@ -444,10 +447,10 @@ body:not(.sidebar-collapsed) [data-sidebar-container] .sidebar > :not(.sidebar-s
   right: 0.85rem;
   bottom: 0.85rem;
   left: 0.85rem;
-  z-index: 1260;
-  border: 1px solid rgba(var(--danger-rgb), 0.84);
+  z-index: 9999;
+  border: 1px solid rgba(var(--danger-rgb), 1);
   border-radius: var(--radius-sm);
-  background: linear-gradient(145deg, rgba(var(--surface-strong-rgb), 0.2), rgba(var(--danger-rgb), 0.2));
+  background: linear-gradient(145deg, rgba(var(--surface-strong-rgb), 1), rgba(var(--danger-rgb), 1));
   box-shadow: var(--shadow);
   padding: 0.72rem 2.2rem 0.72rem 0.78rem;
   display: grid;
@@ -1593,7 +1596,7 @@ body[data-theme="light"] .sidebar-theme__button[aria-pressed="true"] {
   .app-layout {
     margin: 1rem 0 1.4rem;
     padding: 0 1rem;
-    display: block;
+    display: block !important;
   }
 
   [data-sidebar-container] {
@@ -1652,6 +1655,7 @@ body[data-theme="light"] .sidebar-theme__button[aria-pressed="true"] {
     box-shadow: 14px 0 30px rgba(4, 8, 10, 0.44);
     overflow: hidden !important;
     z-index: 1246 !important;
+    backdrop-filter: blur(14px);
   }
 
   body.has-mobile-sidebar .sidebar-slide-toggle {
@@ -1745,6 +1749,3 @@ body[data-theme="light"] .sidebar-theme__button[aria-pressed="true"] {
     padding: 0.88rem;
   }
 }
-
-
-

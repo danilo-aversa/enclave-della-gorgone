@@ -3378,4 +3378,371 @@ body.world-map-expanded [data-sidebar-container] .sidebar {
   justify-self: center;
 }
 
+/* =========================
+   MOBILE FIXES
+   World Map
+========================= */
 
+@media (max-width: 980px) {
+  body.world-map-reading-page {
+    overflow-x: hidden;
+  }
+
+  .world-map-reading-page .app-layout {
+    display: block;
+    min-height: 100dvh;
+  }
+
+  .world-map-reading-page .content-shell {
+    width: 100%;
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .world-map-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 0.85rem;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .world-map-page > .quest-page-header {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 0.9rem;
+  }
+
+  .world-map-page > .quest-page-header h1 {
+    font-size: clamp(1.45rem, 8vw, 2.25rem);
+    line-height: 1.05;
+  }
+
+  .world-map-page .hero-support {
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .world-map-shell {
+    grid-column: 1;
+    grid-row: 2;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .world-map-stage {
+    height: min(68dvh, 620px);
+    min-height: 380px;
+    border-radius: var(--radius-md);
+  }
+
+  .world-map-side {
+    grid-column: 1;
+    grid-row: 3;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .world-map-side-tabs {
+    position: sticky;
+    top: 0.5rem;
+    z-index: 50;
+    padding-top: 0.15rem;
+    background: rgba(13, 22, 27, 0.96);
+    backdrop-filter: blur(10px);
+  }
+
+  .world-map-side-tab {
+    min-height: 40px;
+    padding: 0.45rem 0.35rem;
+  }
+
+  .world-map-detail,
+  .world-map-editor {
+    height: auto;
+    min-height: 220px;
+    max-height: none;
+    overflow: visible;
+    padding: 0.85rem;
+  }
+
+  .world-map-travel-editor,
+  .world-map-travel-calculator,
+  .world-map-travel-tokens {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .world-map-bottom-bar {
+    left: 0.55rem;
+    right: 0.55rem;
+    bottom: 0.55rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "search coords"
+      "dock dock";
+    align-items: center;
+    gap: 0.42rem;
+    padding: 0.38rem;
+    border-radius: var(--radius-md);
+    max-height: 44dvh;
+    overflow: hidden;
+  }
+
+  .world-map-search {
+    grid-area: search;
+    min-width: 0;
+    padding: 0.38rem 0.48rem;
+    background: rgba(20, 32, 38, 0.58);
+  }
+
+  .world-map-search input {
+    font-size: 16px;
+  }
+
+  .world-map-search__results {
+    bottom: calc(100% + 0.45rem);
+    max-height: min(280px, 46dvh);
+  }
+
+  .world-map-layer-dock {
+    grid-area: dock;
+    justify-content: flex-start;
+    gap: 0.32rem;
+    padding: 0.1rem 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .world-map-layer-toggle,
+  .world-map-layer-action {
+    width: 34px;
+    height: 34px;
+  }
+
+  .world-map-layer-separator {
+    margin: 0 4px;
+  }
+
+  .world-map-coordinates {
+    grid-area: coords;
+    width: auto;
+    min-width: 84px;
+    flex: 0 0 auto;
+    padding: 0.34rem 0.42rem;
+    font-size: 0.68rem;
+  }
+
+  .world-map-legend {
+    left: 0.55rem;
+    right: 0.55rem;
+    bottom: 5.35rem;
+    width: auto;
+    max-height: 32dvh;
+    overflow-y: auto;
+  }
+
+  .world-map-fullscreen-toggle {
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 36px;
+    height: 36px;
+  }
+
+  .world-map-stage .leaflet-control-zoom {
+    margin: 0.7rem 0 0 0.7rem;
+  }
+
+  .world-map-stage .leaflet-control-zoom a {
+    width: 36px;
+    height: 36px;
+  }
+
+  .world-map-current-header {
+    top: 0.7rem;
+    max-width: calc(100% - 6.5rem);
+    min-width: 0;
+  }
+
+  .world-map-marker-draft {
+    position: fixed;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    top: auto !important;
+    bottom: 0.75rem !important;
+    z-index: 12000;
+    width: auto;
+    max-height: min(72dvh, 620px);
+    transform: none !important;
+  }
+
+  .world-map-marker-draft__card,
+  .world-map-editor-card {
+    width: 100%;
+    min-width: 0;
+    max-height: min(72dvh, 620px);
+  }
+
+  .world-map-floating-regions {
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    top: auto !important;
+    bottom: 0.75rem !important;
+    width: auto;
+    max-height: min(70dvh, 560px);
+  }
+
+  .world-map-stage.is-expanded {
+    inset: 0.35rem;
+    border-radius: var(--radius-md);
+  }
+}
+
+@media (max-width: 640px) {
+  .world-map-stage {
+    height: 58dvh;
+    min-height: 320px;
+  }
+
+  .world-map-page > .quest-page-header {
+    padding: 0.8rem;
+  }
+
+  .world-map-page .hero-support {
+    display: none;
+  }
+
+  .world-map-bottom-bar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "search"
+      "dock";
+  }
+
+  .world-map-coordinates {
+    display: none;
+  }
+
+  .world-map-layer-toggle,
+  .world-map-layer-action {
+    width: 32px;
+    height: 32px;
+  }
+
+  .world-map-detail__meta-list,
+  .world-map-travel-calc-result {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .world-map-travel-token-create {
+    grid-template-columns: minmax(0, 1fr) 34px;
+  }
+
+  .world-map-travel-token-create select {
+    grid-column: 1 / -1;
+  }
+
+  .world-map-travel-editor__tool-row {
+    grid-template-columns: repeat(4, 34px);
+  }
+
+  .world-map-travel-editor__tool-row .world-map-travel-tool:last-child {
+    grid-column: auto;
+    justify-self: start;
+  }
+
+  .world-map-editor-form__row--xy,
+  .world-map-editor-form__row--compact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* =========================
+   TRUE FULLSCREEN MAP
+========================= */
+
+.world-map-stage.is-expanded {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  z-index: 20000 !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.world-map-stage.is-expanded .world-map-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100dvh !important;
+}
+
+body.world-map-expanded {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+body.world-map-expanded::before {
+  display: none !important;
+}
+
+body.world-map-expanded .world-map-shell {
+  position: relative;
+  z-index: 10000 !important;
+}
+
+body.world-map-expanded .world-map-side {
+  position: relative;
+  z-index: 0 !important;
+  pointer-events: none;
+}
+
+body.world-map-expanded .world-map-side-tabs,
+body.world-map-expanded .world-map-side-tab,
+body.world-map-expanded .world-map-detail,
+body.world-map-expanded .world-map-editor {
+  z-index: 0 !important;
+  pointer-events: none;
+}
+
+@media (max-width: 980px) {
+  body.world-map-expanded.has-mobile-sidebar .mobile-sidebar-toggle {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  .world-map-stage.is-expanded {
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+
+  .world-map-stage.is-expanded .world-map-bottom-bar {
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+
+  .world-map-stage.is-expanded .world-map-fullscreen-toggle {
+    top: calc(0.5rem + env(safe-area-inset-top));
+    right: calc(0.5rem + env(safe-area-inset-right));
+  }
+
+  .world-map-stage.is-expanded .leaflet-control-zoom {
+    margin-top: calc(0.5rem + env(safe-area-inset-top));
+    margin-left: calc(0.5rem + env(safe-area-inset-left));
+  }
+}

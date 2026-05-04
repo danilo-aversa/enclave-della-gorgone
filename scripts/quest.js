@@ -158,6 +158,8 @@
 
   async function initQuestSection() {
     var questList = document.querySelector("[data-quest-list]");
+    var archiveList = document.querySelector("[data-quest-archive-list]");
+    var archiveSection = document.querySelector("#archivio-missioni");
 
     if (!questList) {
       return;
@@ -167,10 +169,35 @@
       var data = await loadQuestDataFromSupabase();
       var characterMap = buildCharacterMap(data.characters);
       var questCharacterMap = buildQuestCharacterMap(data.questCharacters);
-      renderQuests(questList, data.quests, characterMap, questCharacterMap);
+      var activeQuests = [];
+      var archivedQuests = [];
+
+      for (var i = 0; i < data.quests.length; i += 1) {
+        var quest = data.quests[i];
+
+        if (isQuestCompleted(quest)) {
+          archivedQuests.push(quest);
+        } else {
+          activeQuests.push(quest);
+        }
+      }
+
+      renderQuests(questList, activeQuests, characterMap, questCharacterMap, "Nessuna missione attiva disponibile.");
+
+      if (archiveList) {
+        renderQuests(archiveList, archivedQuests, characterMap, questCharacterMap, "Nessuna missione conclusa.");
+      }
+
+      if (archiveSection) {
+        archiveSection.hidden = archivedQuests.length === 0;
+      }
     } catch (error) {
       console.error("Errore nel caricamento delle missioni:", error);
       renderQuestListMessage(questList, "Impossibile caricare le missioni in questo momento.");
+
+      if (archiveSection) {
+        archiveSection.hidden = true;
+      }
     }
   }
 
@@ -279,11 +306,11 @@
     return grouped;
   }
 
-  function renderQuests(container, quests, characterMap, questCharacterMap) {
+  function renderQuests(container, quests, characterMap, questCharacterMap, emptyMessage) {
     container.innerHTML = "";
 
     if (!Array.isArray(quests) || quests.length === 0) {
-      renderQuestListMessage(container, "Nessuna missione attiva disponibile.");
+      renderQuestListMessage(container, readString(emptyMessage, "Nessuna missione disponibile."));
       return;
     }
 
@@ -320,6 +347,7 @@
     var summaryText = buildQuestCardSummary(quest);
 
     var article = createElement("article", "quest-item quest-item--interactive");
+    article.dataset.questStatus = readString(quest.status, "in-corso");
     article.setAttribute("aria-label", "Apri missione " + title);
     article.setAttribute("role", "link");
     article.tabIndex = 0;

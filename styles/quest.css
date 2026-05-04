@@ -460,7 +460,8 @@ body > * {
   display: grid;
   grid-template-areas:
     "quests-hero"
-    "quests-list";
+    "quests-list"
+    "quests-archive";
   gap: 1rem;
 }
 
@@ -545,12 +546,34 @@ body > * {
   grid-area: quests-list;
 }
 
+.quests-page-list--archive {
+  grid-area: quests-archive;
+}
+
+.quests-page-list__head {
+  display: grid;
+  gap: 0.22rem;
+  margin: 0 0 1rem;
+}
+
+.quests-page-list__head h2 {
+  margin: 0;
+  font-family: var(--font-title-demi);
+  font-size: clamp(1.3rem, 2.4vw, 2rem);
+  font-weight: 400;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: var(--text-strong);
+}
+
 .quests-page .quest-list {
   display: grid;
   gap: 1rem;
 }
 
 .quests-page .quest-item {
+  --quest-status-rgb: var(--accent-rgb);
+  --quest-status-strong-rgb: var(--accent-strong-rgb);
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -559,7 +582,7 @@ body > * {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 0.9rem;
-  border: 1px solid rgba(var(--line-soft-rgb), 0.58);
+  border: 1px solid rgba(var(--quest-status-rgb), 0.58);
   border-radius: var(--radius-md);
   background:
     linear-gradient(90deg, rgba(var(--surface-deep-rgb), 0.98) 0%, rgba(var(--surface-rgb), 0.82) 52%, rgba(var(--surface-rgb), 0.54) 100%),
@@ -579,8 +602,8 @@ body > * {
 .quests-page .quest-item::before {
   inset: 0;
   background:
-    radial-gradient(circle at 78% 18%, rgba(var(--accent-strong-rgb), 0.13), transparent 28%),
-    linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), transparent 48%);
+    radial-gradient(circle at 78% 18%, rgba(var(--quest-status-strong-rgb), 0.13), transparent 28%),
+    linear-gradient(135deg, rgba(var(--quest-status-rgb), 0.1), transparent 48%);
   opacity: 0.85;
 }
 
@@ -589,8 +612,8 @@ body > * {
   bottom: 0;
   left: 0;
   width: 3px;
-  background: linear-gradient(180deg, rgba(var(--accent-strong-rgb), 0.92), rgba(var(--accent-rgb), 0.16));
-  box-shadow: 0 0 18px rgba(var(--accent-strong-rgb), 0.18);
+  background: linear-gradient(180deg, rgba(var(--quest-status-strong-rgb), 0.92), rgba(var(--quest-status-rgb), 0.16));
+  box-shadow: 0 0 18px rgba(var(--quest-status-strong-rgb), 0.18);
 }
 
 .quests-page .quest-item--interactive {
@@ -605,14 +628,39 @@ body > * {
 .quests-page .quest-item--interactive:hover,
 .quests-page .quest-item--interactive:focus-visible {
   transform: translateY(-2px);
-  border-color: rgba(var(--accent-strong-rgb), 0.72);
+  border-color: rgba(var(--quest-status-strong-rgb), 0.72);
   box-shadow: 0 22px 44px rgba(4, 8, 10, 0.32);
   outline: none;
 }
 
 .quests-page .quest-item--interactive:focus-visible {
-  outline: 1px solid rgba(var(--accent-strong-rgb), 0.82);
+  outline: 1px solid rgba(var(--quest-status-strong-rgb), 0.82);
   outline-offset: 3px;
+}
+
+.quests-page .quest-item[data-quest-status="preparazione"] {
+  --quest-status-rgb: var(--danger-rgb);
+  --quest-status-strong-rgb: var(--danger-rgb);
+}
+
+.quests-page .quest-item[data-quest-status="in-corso"] {
+  --quest-status-rgb: var(--accent-rgb);
+  --quest-status-strong-rgb: var(--accent-strong-rgb);
+}
+
+.quests-page .quest-item[data-quest-status="prioritaria"] {
+  --quest-status-rgb: var(--danger-rgb);
+  --quest-status-strong-rgb: var(--danger-rgb);
+}
+
+.quests-page .quest-item[data-quest-status="sospesa"] {
+  --quest-status-rgb: var(--warn-rgb);
+  --quest-status-strong-rgb: var(--warn-rgb);
+}
+
+.quests-page .quest-item[data-quest-status="conclusa"] {
+  --quest-status-rgb: var(--complete-rgb);
+  --quest-status-strong-rgb: var(--complete-rgb);
 }
 
 .quests-page .quest-top {
@@ -2372,5 +2420,558 @@ body > * {
   .app-layout {
     margin: 0.8rem 0 1.2rem;
     padding: 0 0.6rem;
+  }
+}
+/* =========================
+   MOBILE PAGE REFINEMENT
+   Solo override responsive
+========================= */
+
+@media (max-width: 980px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-layout {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .content-shell,
+  .main-content,
+  .section-card,
+  .quests-page,
+  .quest-page,
+  .quest-page-body,
+  .quest-detail-layout,
+  .quest-detail-main,
+  .quest-detail-side {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .content-shell {
+    grid-column: 1;
+  }
+
+  .quests-page .quest-list,
+  .quests-page .quest-item,
+  .quests-page .quest-layout,
+  .quests-page .quest-body,
+  .quests-page .quest-meta-grid,
+  .quest-detail-layout,
+  .quest-detail-main,
+  .quest-detail-side,
+  .quest-reports-section,
+  .quest-reports-carousel,
+  .quest-reports-carousel__viewport,
+  .quest-reports-list,
+  .quest-reports-list--preview {
+    min-width: 0;
+  }
+
+  .quest-page-header,
+  .quests-page > .quest-page-header {
+    padding: 1.15rem 1rem;
+  }
+
+  .quest-page-header h1 {
+    font-size: clamp(1.55rem, 6vw, 2.6rem);
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+
+  .quest-page-header .hero-support,
+  .quests-page .hero-support {
+    max-width: 100%;
+    font-size: 0.92rem;
+    line-height: 1.52;
+  }
+
+  .quest-detail-head {
+    padding: 1rem;
+  }
+
+  .quest-detail-layout {
+    display: grid;
+    gap: 1rem;
+    padding-bottom: 1.4rem;
+  }
+
+  .quest-detail-layout::after {
+    display: none;
+  }
+
+  .quest-detail-side {
+    float: none;
+    margin: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-layout {
+    margin-top: 0.6rem;
+    padding: 0 0.8rem 1.4rem;
+  }
+
+  .profile-rail {
+    position: relative;
+    top: auto;
+    right: auto;
+    z-index: 10;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 0.75rem;
+    justify-content: stretch;
+  }
+
+  .data-profile-widget,
+  .profile-widget,
+  .profile-widget__trigger {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .profile-widget__popover {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+
+  .quests-page {
+    gap: 0.85rem;
+  }
+
+  .quests-page > .quest-page-header,
+  .quests-page .quests-page-hero-media,
+  .quest-detail-media {
+    min-height: 220px;
+    height: 220px;
+    max-height: 220px;
+  }
+
+  .quests-page > .quest-page-header,
+  .quest-page-header {
+    align-content: end;
+    min-height: 220px;
+    padding: 4.35rem 0.85rem 0.9rem;
+  }
+
+  .quest-detail-head {
+    align-self: start;
+    padding: 0.72rem 0.85rem 0;
+  }
+
+  .quest-detail-head-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.55rem;
+  }
+
+  .quest-detail-meta {
+    max-width: 100%;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .quest-detail-meta .quest-location,
+  .quest-detail-meta .quest-type,
+  .quest-detail-meta .status {
+    max-width: 100%;
+  }
+
+  .quests-page .quests-page-hero-media::after,
+  .quest-detail-media::after {
+    background:
+      linear-gradient(180deg, rgba(5, 9, 11, 0.2) 0%, rgba(5, 9, 11, 0.76) 56%, rgba(5, 9, 11, 0.92) 100%),
+      linear-gradient(90deg, rgba(5, 9, 11, 0.7), rgba(5, 9, 11, 0.36));
+  }
+
+  .quest-page-eyebrow {
+    font-size: 0.66rem;
+  }
+
+  .quest-page-header h1 {
+    font-size: clamp(1.34rem, 8.5vw, 2.12rem);
+    line-height: 1.06;
+  }
+
+  .quest-page-header__meta,
+  .quest-detail-meta {
+    gap: 0.42rem;
+  }
+
+  .quest-location,
+  .quest-type,
+  .status {
+    font-size: 0.66rem;
+    padding: 0.22rem 0.42rem;
+  }
+
+  .quests-page-list__head {
+    margin-bottom: 0.75rem;
+  }
+
+  .quests-page-list__head h2 {
+    font-size: clamp(1.18rem, 6.8vw, 1.72rem);
+  }
+
+  .quests-page .quest-list {
+    gap: 0.82rem;
+  }
+
+  .quests-page .quest-item {
+    min-height: 0;
+    padding: 0.78rem;
+    gap: 0.72rem;
+    border-radius: var(--radius-sm);
+    background:
+      linear-gradient(180deg, rgba(var(--surface-deep-rgb), 0.98) 0%, rgba(var(--surface-rgb), 0.9) 58%, rgba(var(--surface-rgb), 0.72) 100%),
+      var(--quest-bg-image) center / cover no-repeat,
+      rgba(var(--surface-rgb), 0.88);
+  }
+
+  .quests-page .quest-top {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .quests-page .quest-top h3 {
+    max-width: 100%;
+    font-size: clamp(1.08rem, 6.2vw, 1.45rem);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+  }
+
+  .quests-page .quest-badges {
+    justify-content: flex-start;
+  }
+
+  .quests-page .quest-layout {
+    grid-template-columns: 1fr;
+    gap: 0.72rem;
+  }
+
+  .quests-page .quest-media,
+  .quests-page .quest-media img {
+    min-height: 165px;
+    height: 165px;
+  }
+
+  .quests-page .quest-body {
+    display: grid;
+    grid-template-rows: none;
+    gap: 0.72rem;
+  }
+
+  .quests-page .quest-card-summary {
+    max-width: 100%;
+    font-size: 0.88rem;
+    line-height: 1.52;
+  }
+
+  .quests-page .quest-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 0.52rem;
+  }
+
+  .quests-page .quest-field {
+    padding: 0.56rem 0.6rem;
+  }
+
+  .quests-page .token-list li,
+  .quests-page .quest-team-list li,
+  .token-list li,
+  .quest-team-list li {
+    width: 36px;
+    height: 36px;
+  }
+
+  .quest-edit-action--icon,
+  .quest-report-action--icon,
+  .quest-report-card__action,
+  .quest-report-markdown-tool {
+    width: 2rem;
+    min-width: 2rem;
+    height: 2rem;
+  }
+
+  .quest-detail-card {
+    padding: 0.78rem;
+  }
+
+  .quest-detail-layout > .quest-detail-section,
+  .quest-detail-main .quest-detail-section {
+    padding-bottom: 0.85rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .quest-detail-layout > .quest-detail-section p,
+  .quest-detail-main .quest-detail-section p {
+    font-size: 0.92rem;
+    line-height: 1.64;
+  }
+
+  .quest-detail-side .quest-detail-section p {
+    font-size: 0.88rem;
+  }
+
+  .quest-session-item {
+    grid-template-columns: 1fr;
+    gap: 0.14rem;
+    align-items: start;
+  }
+
+  .quest-session-item p {
+    text-align: left;
+  }
+
+  .quest-reports-carousel {
+    grid-template-columns: 1fr;
+    margin-top: 0.72rem;
+  }
+
+  .quest-reports-carousel__button {
+    display: none;
+  }
+
+  .quest-reports-list--preview {
+    min-width: 0;
+  }
+
+  .quest-reports-list--preview .quest-report-card {
+    flex-basis: min(82vw, 320px);
+  }
+
+  .quest-report-card {
+    padding: 0.82rem;
+  }
+
+  .quest-report-card__actions {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    margin-top: 0.65rem;
+  }
+
+  .quest-report-filters--bubble {
+    top: 3.65rem;
+    right: 0.7rem;
+    left: 0.7rem;
+    width: auto;
+  }
+
+  .quest-report-modal__panel {
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    padding: 0.74rem;
+    overflow-x: hidden;
+  }
+
+  .quest-report-modal__panel textarea.import-modal__input {
+    min-height: 38dvh;
+  }
+
+  .quest-report-markdown-tools {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    gap: 0.34rem;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.3rem 0 0.42rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .quest-report-markdown-tool {
+    flex: 0 0 2rem;
+    width: 2rem;
+    min-width: 2rem;
+    height: 2rem;
+  }
+
+  .quest-reports-reader__panel {
+    width: min(100vw - 1rem, 100%);
+    height: calc(100dvh - 1rem);
+    max-height: calc(100dvh - 1rem);
+    padding: 0.75rem;
+    overflow: hidden;
+  }
+
+  .quest-reports-reader__toolbar,
+  .quest-reports-reader__content-head {
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  .quest-reports-reader__toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .quest-reports-reader__toolbar h3 {
+    min-width: 0;
+    font-size: 0.92rem;
+    line-height: 1.16;
+    overflow-wrap: anywhere;
+  }
+
+  .quest-reports-reader__actions,
+  .quest-reports-reader__content-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .quest-reports-reader__layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.72rem;
+    min-height: 0;
+  }
+
+  .quest-reports-reader__toc {
+    max-height: 28dvh;
+    overflow: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(var(--line-soft-rgb), 0.36);
+    padding: 0 0 0.65rem;
+  }
+
+  .quest-reports-reader__toc-item {
+    padding: 0.52rem;
+  }
+
+  .quest-reports-reader__content {
+    min-height: 0;
+    overflow: auto;
+    padding: 0.15rem 0 0.75rem;
+  }
+
+  .quest-reports-reader__content-head {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .quest-reports-reader__content h2 {
+    font-size: clamp(1.12rem, 6vw, 1.55rem);
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+
+  .quest-reports-reader__content p,
+  .quest-reports-reader__content li {
+    font-size: 0.92rem;
+    line-height: 1.66;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-layout {
+    padding: 0 0.62rem 1.2rem;
+  }
+
+  .quests-page > .quest-page-header,
+  .quests-page .quests-page-hero-media,
+  .quest-detail-media {
+    min-height: 190px;
+    height: 190px;
+    max-height: 190px;
+  }
+
+  .quests-page > .quest-page-header,
+  .quest-page-header {
+    padding: 4.05rem 0.72rem 0.78rem;
+  }
+
+  .quest-detail-head {
+    padding: 0.62rem 0.72rem 0;
+  }
+
+  .quest-detail-head-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .quest-detail-meta {
+    gap: 0.28rem;
+  }
+
+  .quest-location,
+  .quest-type,
+  .status {
+    font-size: 0.61rem;
+    padding: 0.2rem 0.34rem;
+    letter-spacing: 0.035em;
+  }
+
+  .quest-page-header h1 {
+    font-size: clamp(1.22rem, 9vw, 1.84rem);
+  }
+
+  .quests-page .hero-support,
+  .quest-page-header .hero-support {
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  .quests-page .quest-item {
+    padding: 0.68rem;
+  }
+
+  .quests-page .quest-media,
+  .quests-page .quest-media img {
+    min-height: 145px;
+    height: 145px;
+  }
+
+  .quests-page .quest-card-summary {
+    font-size: 0.84rem;
+  }
+
+  .quest-modal__panel,
+  .import-modal__panel,
+  .quest-report-modal__panel {
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    padding: 0.74rem;
+  }
+
+  .quest-modal__section,
+  .quest-team-picker {
+    padding: 0.62rem;
+  }
+
+  .quest-modal__actions,
+  .import-modal__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .quest-modal__btn,
+  .import-modal__btn {
+    width: 100%;
+  }
+
+  .quest-reports-reader__panel {
+    width: calc(100vw - 0.65rem);
+    height: calc(100dvh - 0.65rem);
+    max-height: calc(100dvh - 0.65rem);
+    padding: 0.62rem;
+  }
+
+  .quest-reports-reader__toc {
+    max-height: 24dvh;
+  }
+
+  .quest-report-modal__panel textarea.import-modal__input {
+    min-height: 34dvh;
   }
 }

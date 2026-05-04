@@ -372,6 +372,7 @@
     ],
     wikiTooltipActive: null,
     wikiTooltipBubble: null,
+    mobileSearchOpen: false,
   };
 
   document.addEventListener("DOMContentLoaded", initDocsPage);
@@ -458,8 +459,10 @@
 
     state.elements = elements;
     repairEditorMarkdownTextarea();
+    ensureDocsHeroImageField();
 
     ensureDocsTreeContextEnhancements();
+    ensureDocsMobileNavigation();
     bindUIEvents();
     syncDocsTreeToggleState();
     syncManageAccessState();
@@ -542,6 +545,105 @@
     }
 
     return null;
+  }
+
+  function ensureDocsHeroImageField() {
+    if (!state.elements || !state.elements.editorForm) {
+      return;
+    }
+
+    var form = state.elements.editorForm;
+    if (form.elements.namedItem("hero_image_url")) {
+      return;
+    }
+
+    var label = document.createElement("label");
+    label.className = "docs-editor-form__field docs-editor-form__field--hero-image";
+    label.innerHTML = '<span>Immagine header</span><input type="url" name="hero_image_url" data-docs-hero-image-url placeholder="https://..." autocomplete="off" spellcheck="false">';
+
+    var excerpt = form.elements.namedItem("excerpt");
+    var excerptWrap = excerpt && excerpt.closest ? excerpt.closest("label, .docs-editor-form__field") : null;
+
+    if (excerptWrap && excerptWrap.parentNode) {
+      excerptWrap.parentNode.insertBefore(label, excerptWrap.nextSibling);
+      return;
+    }
+
+    var contentField = form.elements.namedItem("content_md");
+    var contentWrap = contentField && contentField.closest ? contentField.closest("label, .docs-editor-form__field, .docs-editor-form__content-wrap") : null;
+
+    if (contentWrap && contentWrap.parentNode) {
+      contentWrap.parentNode.insertBefore(label, contentWrap);
+      return;
+    }
+
+    form.appendChild(label);
+  }
+
+  function ensureDocsMobileNavigation() {
+    if (!state.elements || !state.elements.treePanel) {
+      return;
+    }
+
+    if (!state.elements.mobileNav) {
+      var mobileNav = document.createElement("nav");
+      mobileNav.className = "docs-mobile-nav";
+      mobileNav.setAttribute("data-docs-mobile-nav", "");
+      mobileNav.setAttribute("aria-label", "Navigazione documento mobile");
+      mobileNav.innerHTML =
+        '<span class="docs-mobile-nav__crumb" data-docs-mobile-crumb></span>' +
+        '<button type="button" class="docs-mobile-nav__btn docs-mobile-nav__btn--icon" data-docs-mobile-search-toggle aria-label="Cerca" title="Cerca" data-tooltip="Cerca" aria-expanded="false" aria-controls="docs-mobile-search-panel">' +
+        '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>' +
+        '</button>' +
+        '<button type="button" class="docs-mobile-nav__btn docs-mobile-nav__btn--icon" data-docs-mobile-index-toggle aria-label="Indice" title="Indice" data-tooltip="Indice" aria-expanded="false">' +
+        '<i class="fa-solid fa-list-ul" aria-hidden="true"></i>' +
+        '</button>';
+      document.body.appendChild(mobileNav);
+
+      state.elements.mobileNav = mobileNav;
+      state.elements.mobileCrumb = mobileNav.querySelector("[data-docs-mobile-crumb]");
+      state.elements.mobileSearchToggle = mobileNav.querySelector("[data-docs-mobile-search-toggle]");
+      state.elements.mobileIndexToggle = mobileNav.querySelector("[data-docs-mobile-index-toggle]");
+    }
+
+    if (!state.elements.mobileSearchPanel) {
+      var searchPanel = document.createElement("section");
+      searchPanel.id = "docs-mobile-search-panel";
+      searchPanel.className = "docs-mobile-search";
+      searchPanel.setAttribute("data-docs-mobile-search-panel", "");
+      searchPanel.setAttribute("aria-label", "Cerca nella documentazione");
+      searchPanel.hidden = true;
+      searchPanel.innerHTML =
+        '<div class="docs-mobile-search__bar">' +
+        '<label class="docs-mobile-search__field">' +
+        '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>' +
+        '<input type="search" data-docs-mobile-search-input placeholder="Cerca nella wiki..." autocomplete="off" spellcheck="false">' +
+        '</label>' +
+        '<button type="button" class="docs-mobile-search__clear" data-docs-mobile-search-clear hidden aria-label="Svuota ricerca"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
+        '<button type="button" class="docs-mobile-search__close" data-docs-mobile-search-close aria-label="Chiudi ricerca"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>' +
+        '</div>' +
+        '<div class="docs-mobile-search__results" data-docs-mobile-search-results hidden></div>';
+      document.body.appendChild(searchPanel);
+
+      state.elements.mobileSearchPanel = searchPanel;
+      state.elements.mobileSearchInput = searchPanel.querySelector("[data-docs-mobile-search-input]");
+      state.elements.mobileSearchResults = searchPanel.querySelector("[data-docs-mobile-search-results]");
+      state.elements.mobileSearchClear = searchPanel.querySelector("[data-docs-mobile-search-clear]");
+      state.elements.mobileSearchClose = searchPanel.querySelector("[data-docs-mobile-search-close]");
+    }
+
+    if (!state.elements.mobileTreeHead) {
+      var treeHead = document.createElement("div");
+      treeHead.className = "docs-mobile-tree-head";
+      treeHead.setAttribute("data-docs-mobile-tree-head", "");
+      treeHead.innerHTML =
+        '<div><p class="docs-mobile-tree-head__eyebrow">Documentazione</p><h2>Indice</h2></div>' +
+        '<button type="button" class="docs-mobile-tree-head__close" data-docs-mobile-index-close aria-label="Chiudi indice"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>';
+      state.elements.treePanel.insertBefore(treeHead, state.elements.treePanel.firstChild);
+
+      state.elements.mobileTreeHead = treeHead;
+      state.elements.mobileIndexClose = treeHead.querySelector("[data-docs-mobile-index-close]");
+    }
   }
 
   function ensureDocsTreeContextEnhancements() {
@@ -672,6 +774,7 @@
     if (state.elements.searchInput) {
       state.elements.searchInput.addEventListener("input", function onSearchInput(event) {
         state.searchQuery = readString(event.target.value, "");
+        syncDocsSearchInputs(event.target);
         renderDocsSearchResults();
       });
 
@@ -718,6 +821,8 @@
         clearDocsSearch();
       });
     }
+
+    bindDocsMobileNavigationEvents();
 
     if (state.elements.treeToggle) {
       state.elements.treeToggle.addEventListener("click", function onToggleClick() {
@@ -1931,6 +2036,7 @@
     }
 
     ensureVisualEditorStepperAddButtons(root);
+    applyWikiTableColumnWidths(root);
 
     var images = root.querySelectorAll(".wiki-image");
     for (var i = 0; i < images.length; i += 1) {
@@ -1955,6 +2061,8 @@
     if (!root || !root.querySelectorAll) {
       return;
     }
+
+    syncWikiTableColumnWidthAttributes(root);
 
     var stepperAddButtons = root.querySelectorAll("[data-wiki-stepper-add]");
     for (var stepperAddIndex = 0; stepperAddIndex < stepperAddButtons.length; stepperAddIndex += 1) {
@@ -3666,8 +3774,143 @@
       });
     }
   }
+  function bindDocsMobileNavigationEvents() {
+    if (!state.elements) {
+      return;
+    }
+
+    if (state.elements.mobileSearchToggle) {
+      state.elements.mobileSearchToggle.addEventListener("click", function onMobileSearchToggleClick() {
+        setMobileDocsSearchOpen(!isMobileDocsSearchOpen());
+      });
+    }
+
+    if (state.elements.mobileSearchClose) {
+      state.elements.mobileSearchClose.addEventListener("click", function onMobileSearchCloseClick() {
+        setMobileDocsSearchOpen(false);
+      });
+    }
+
+    if (state.elements.mobileSearchClear) {
+      state.elements.mobileSearchClear.addEventListener("click", function onMobileSearchClearClick() {
+        clearDocsSearch({ focusMobile: true });
+      });
+    }
+
+    if (state.elements.mobileSearchInput) {
+      state.elements.mobileSearchInput.addEventListener("input", function onMobileSearchInput(event) {
+        state.searchQuery = readString(event.target.value, "");
+        syncDocsSearchInputs(event.target);
+        renderDocsSearchResults();
+      });
+
+      state.elements.mobileSearchInput.addEventListener("keydown", function onMobileSearchKeydown(event) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          if (state.searchQuery) {
+            clearDocsSearch({ focusMobile: true });
+          } else {
+            setMobileDocsSearchOpen(false);
+          }
+          return;
+        }
+
+        if (event.key !== "Enter") {
+          return;
+        }
+
+        var firstResult = state.elements.mobileSearchResults
+          ? state.elements.mobileSearchResults.querySelector("a[data-doc-search-link]")
+          : null;
+
+        if (!firstResult) {
+          return;
+        }
+
+        event.preventDefault();
+        openDocByKey(firstResult.getAttribute("data-doc-search-link"), { historyMode: "push" });
+        clearDocsSearch({ focusMobile: true });
+        setMobileDocsSearchOpen(false);
+      });
+    }
+
+    if (state.elements.mobileSearchResults) {
+      state.elements.mobileSearchResults.addEventListener("click", function onMobileSearchResultClick(event) {
+        var link = event.target.closest("a[data-doc-search-link]");
+        if (!link) {
+          return;
+        }
+
+        event.preventDefault();
+        openDocByKey(link.getAttribute("data-doc-search-link"), { historyMode: "push" });
+        clearDocsSearch({ focusMobile: true });
+        setMobileDocsSearchOpen(false);
+      });
+    }
+
+    if (state.elements.mobileIndexToggle) {
+      state.elements.mobileIndexToggle.addEventListener("click", function onMobileIndexToggleClick() {
+        var nextExpanded = !isDocsTreeExpanded();
+        setMobileDocsSearchOpen(false);
+        setDocsTreeExpanded(nextExpanded);
+      });
+    }
+
+    if (state.elements.mobileIndexClose) {
+      state.elements.mobileIndexClose.addEventListener("click", function onMobileIndexCloseClick() {
+        setDocsTreeExpanded(false);
+      });
+    }
+  }
+
   function isMobileViewport() {
     return window.matchMedia("(max-width: 1080px)").matches;
+  }
+
+  function isMobileDocsSearchOpen() {
+    return !!(state.elements && state.elements.mobileSearchPanel && !state.elements.mobileSearchPanel.hasAttribute("hidden"));
+  }
+
+  function setMobileDocsSearchOpen(isOpen) {
+    if (!state.elements || !state.elements.mobileSearchPanel) {
+      return;
+    }
+
+    var open = !!isOpen;
+    state.mobileSearchOpen = open;
+    state.elements.mobileSearchPanel.hidden = !open;
+    document.body.classList.toggle("docs-mobile-search-open", open);
+
+    if (state.elements.mobileSearchToggle) {
+      state.elements.mobileSearchToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    if (open && state.elements.mobileSearchInput) {
+      syncDocsSearchInputs();
+      window.requestAnimationFrame(function focusMobileSearchInput() {
+        if (!state.elements || !state.elements.mobileSearchInput || !isMobileDocsSearchOpen()) {
+          return;
+        }
+
+        state.elements.mobileSearchInput.focus();
+      });
+    }
+  }
+
+  function syncDocsSearchInputs(activeInput) {
+    if (!state.elements) {
+      return;
+    }
+
+    var value = readString(state.searchQuery, "");
+
+    if (state.elements.searchInput && state.elements.searchInput !== activeInput) {
+      state.elements.searchInput.value = value;
+    }
+
+    if (state.elements.mobileSearchInput && state.elements.mobileSearchInput !== activeInput) {
+      state.elements.mobileSearchInput.value = value;
+    }
   }
 
   function isDocsTreeExpanded() {
@@ -3675,12 +3918,20 @@
   }
 
   function setDocsTreeExpanded(isExpanded) {
+    var expanded = !!isExpanded;
+
     if (state.elements.treePanel) {
-      state.elements.treePanel.classList.toggle("is-open", isExpanded);
+      state.elements.treePanel.classList.toggle("is-open", expanded);
     }
 
+    document.body.classList.toggle("docs-mobile-index-open", expanded && isMobileViewport());
+
     if (state.elements.treeToggle) {
-      state.elements.treeToggle.setAttribute("aria-expanded", String(isExpanded));
+      state.elements.treeToggle.setAttribute("aria-expanded", String(expanded));
+    }
+
+    if (state.elements.mobileIndexToggle) {
+      state.elements.mobileIndexToggle.setAttribute("aria-expanded", String(expanded));
     }
   }
 
@@ -4152,6 +4403,7 @@
       depth: Math.max(0, toDepth(entry.depth)),
       is_published: !!isPublished,
       excerpt: toNullableString(entry.excerpt),
+      hero_image_url: toNullableString(entry.heroImageUrl),
       content_md: String(entry.contentMd || ""),
       previous_section: readString(entry.sectionSlug, ""),
       previous_slug: normalizeDocPath(readString(entry.rawSlug, entry.docKey || "")),
@@ -4277,6 +4529,7 @@
     setFormFieldValue(form, "depth", String(toDepth(entry.depth)));
     setFormCheckboxValue(form, "is_published", entry.isPublished !== false);
     setFormFieldValue(form, "excerpt", readString(entry.excerpt, ""));
+    setFormFieldValue(form, "hero_image_url", readString(entry.heroImageUrl, ""));
     setFormFieldValue(form, "content_md", readString(entry.contentMd, ""));
     syncMarkdownToVisualEditor();
 
@@ -4303,6 +4556,7 @@
     setFormFieldValue(form, "depth", "0");
     setFormCheckboxValue(form, "is_published", true);
     setFormFieldValue(form, "excerpt", "");
+    setFormFieldValue(form, "hero_image_url", "");
     setFormFieldValue(form, "content_md", "<h2>Nuova pagina</h2><p>Scrivi qui il contenuto della nuova pagina.</p>");
     syncMarkdownToVisualEditor();
 
@@ -6132,6 +6386,7 @@
       { action: "col-left", icon: "fa-solid fa-arrow-left", label: "Colonna a sinistra" },
       { action: "col-right", icon: "fa-solid fa-arrow-right", label: "Colonna a destra" },
       { action: "delete-col", icon: "fa-solid fa-trash", label: "Elimina colonna" },
+      { action: "col-width", icon: "fa-solid fa-ruler-horizontal", label: "Larghezza colonna" },
       { separator: true },
       { action: "align-left", icon: "fa-solid fa-align-left", label: "Allinea a sinistra" },
       { action: "align-center", icon: "fa-solid fa-align-center", label: "Allinea al centro" },
@@ -6215,6 +6470,11 @@
     var context = state.editorTableContext;
     if (!context || !context.table || !context.cell || !context.table.isConnected) {
       closeEditorTableMenu();
+      return;
+    }
+
+    if (action === "col-width") {
+      applyVisualTableColumnWidthPrompt(context);
       return;
     }
 
@@ -6321,6 +6581,197 @@
       if (cells[index]) {
         cells[index].remove();
       }
+    }
+  }
+
+  function normalizeWikiTableColumnWidth(value) {
+    var raw = readString(value, "").toLowerCase().replace(new RegExp(String.fromCharCode(92) + "s+", "g"), "");
+
+    if (!raw || raw === "auto" || raw === "base" || raw === "reset" || raw === "default") {
+      return { valid: true, value: "" };
+    }
+
+    var match = raw.match(new RegExp("^([0-9]+(?:[.][0-9]+)?)(px|%)?$"));
+    if (!match) {
+      return { valid: false, value: "" };
+    }
+
+    var amount = Number(match[1]);
+    var unit = match[2] || "px";
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { valid: false, value: "" };
+    }
+
+    if (unit === "%") {
+      amount = Math.max(1, Math.min(amount, 100));
+    } else {
+      amount = Math.max(24, Math.min(amount, 1800));
+    }
+
+    return {
+      valid: true,
+      value: String(Math.round(amount * 100) / 100) + unit,
+    };
+  }
+
+  function getVisualTableColumnCells(table, columnIndex) {
+    var cells = [];
+    var rows = getVisualTableRows(table);
+    var index = Math.max(0, Number(columnIndex) || 0);
+
+    for (var r = 0; r < rows.length; r += 1) {
+      var rowCells = getVisualTableRowCells(rows[r]);
+      if (rowCells[index]) {
+        cells.push(rowCells[index]);
+      }
+    }
+
+    return cells;
+  }
+
+  function readVisualTableColumnWidth(table, columnIndex) {
+    var cells = getVisualTableColumnCells(table, columnIndex);
+
+    for (var i = 0; i < cells.length; i += 1) {
+      var cell = cells[i];
+      var width = readString(cell.getAttribute("data-wiki-col-width"), "") || readString(cell.getAttribute("width"), "");
+
+      if (!width && cell.style) {
+        width = readString(cell.style.width, "");
+      }
+
+      var normalized = normalizeWikiTableColumnWidth(width);
+      if (normalized.valid && normalized.value) {
+        return normalized.value;
+      }
+    }
+
+    return "";
+  }
+
+  function updateWikiTableFixedLayoutState(table) {
+    if (!table || !table.querySelectorAll) {
+      return;
+    }
+
+    var hasWidths = !!table.querySelector("th[data-wiki-col-width], td[data-wiki-col-width]");
+    table.classList.toggle("wiki-table--fixed", hasWidths);
+
+    if (hasWidths) {
+      table.setAttribute("data-wiki-table-fixed", "true");
+      table.style.tableLayout = "fixed";
+    } else {
+      table.removeAttribute("data-wiki-table-fixed");
+      table.style.removeProperty("table-layout");
+    }
+  }
+
+  function setVisualTableColumnWidth(table, columnIndex, width) {
+    var normalized = normalizeWikiTableColumnWidth(width);
+    if (!normalized.valid) {
+      return false;
+    }
+
+    var cells = getVisualTableColumnCells(table, columnIndex);
+    for (var i = 0; i < cells.length; i += 1) {
+      if (normalized.value) {
+        cells[i].setAttribute("data-wiki-col-width", normalized.value);
+        cells[i].setAttribute("width", normalized.value);
+        cells[i].style.width = normalized.value;
+      } else {
+        cells[i].removeAttribute("data-wiki-col-width");
+        cells[i].removeAttribute("width");
+        cells[i].style.removeProperty("width");
+      }
+    }
+
+    updateWikiTableFixedLayoutState(table);
+    return true;
+  }
+
+  function applyVisualTableColumnWidthPrompt(context) {
+    if (!context || !context.table) {
+      closeEditorTableMenu();
+      return;
+    }
+
+    var currentWidth = readVisualTableColumnWidth(context.table, context.columnIndex);
+    var input = window.prompt("Larghezza colonna: usa auto, 120px, 25% oppure solo 120 per px.", currentWidth || "auto");
+
+    if (input === null) {
+      return;
+    }
+
+    var normalized = normalizeWikiTableColumnWidth(input);
+    if (!normalized.valid) {
+      window.alert("Larghezza non valida. Usa valori come auto, 120px, 25% oppure 120.");
+      return;
+    }
+
+    rememberVisualEditorHistoryBeforeProgrammaticChange();
+    setVisualTableColumnWidth(context.table, context.columnIndex, normalized.value);
+    prepareVisualEditorDomForEditing(state.elements.editorVisualEditor);
+    closeEditorTableMenu();
+
+    if (context.cell && context.cell.isConnected) {
+      showVisualTableControls(context.cell);
+    } else {
+      closeVisualTableControls();
+    }
+  }
+
+  function readWikiTableColumnWidths(table) {
+    var widths = [];
+    if (!table) {
+      return widths;
+    }
+
+    var columnCount = getVisualTableColumnCount(table);
+    for (var c = 0; c < columnCount; c += 1) {
+      widths[c] = readVisualTableColumnWidth(table, c);
+    }
+
+    return widths;
+  }
+
+  function applyWikiTableColumnWidths(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    var tables = root.querySelectorAll("table");
+    for (var t = 0; t < tables.length; t += 1) {
+      var table = tables[t];
+      var widths = readWikiTableColumnWidths(table);
+
+      for (var c = 0; c < widths.length; c += 1) {
+        if (widths[c]) {
+          setVisualTableColumnWidth(table, c, widths[c]);
+        }
+      }
+
+      updateWikiTableFixedLayoutState(table);
+    }
+  }
+
+  function syncWikiTableColumnWidthAttributes(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    var tables = root.querySelectorAll("table");
+    for (var t = 0; t < tables.length; t += 1) {
+      var table = tables[t];
+      var columnCount = getVisualTableColumnCount(table);
+
+      for (var c = 0; c < columnCount; c += 1) {
+        var width = readVisualTableColumnWidth(table, c);
+        if (width) {
+          setVisualTableColumnWidth(table, c, width);
+        }
+      }
+
+      updateWikiTableFixedLayoutState(table);
     }
   }
 
@@ -8656,6 +9107,7 @@
 
     appendEditorToolbarGroup(toolbar, [
       { action: "box", icon: "fa-solid fa-square-caret-right", label: "Box" },
+      { action: "stepper", icon: "fa-solid fa-list-ol", label: "Stepper" },
       { action: "expandable", icon: "fa-solid fa-square-caret-down", label: "Expandable" },
       { action: "quote", icon: "fa-solid fa-quote-left", label: "Citazione" },
     ]);
@@ -13321,6 +13773,7 @@
       depth: Math.max(0, depth.value === null ? 0 : depth.value),
       is_published: !!(publishedInput && publishedInput.checked),
       excerpt: toNullableString(getFormValue(form, "excerpt")),
+      hero_image_url: toNullableString(getFormValue(form, "hero_image_url")),
       content_md: normalizeEditorSourceForStorage(String(getFormValue(form, "content_md") || "")),
     };
 
@@ -13612,26 +14065,38 @@
   }
 
   async function fetchWikiPagesPublic() {
+    var baseFields = [
+      "section",
+      "slug",
+      "title",
+      "content_md",
+      "excerpt",
+      "parent_slug",
+      "sort_order",
+      "is_published",
+      "nav_group",
+      "nav_group_order",
+      "nav_group_icon",
+      "nav_label",
+      "page_icon",
+      "depth",
+    ];
+
+    try {
+      return await fetchWikiPagesPublicWithFields(baseFields.concat(["hero_image_url"]));
+    } catch (error) {
+      if (isMissingWikiHeroColumnError(error)) {
+        console.warn("Campo hero_image_url non disponibile su wiki_pages. Header immagine disattivato finché la colonna non viene aggiunta.");
+        return fetchWikiPagesPublicWithFields(baseFields);
+      }
+
+      throw error;
+    }
+  }
+
+  async function fetchWikiPagesPublicWithFields(selectFields) {
     var queryParts = [
-      "select=" +
-        encodeURIComponent(
-          [
-            "section",
-            "slug",
-            "title",
-            "content_md",
-            "excerpt",
-            "parent_slug",
-            "sort_order",
-            "is_published",
-            "nav_group",
-            "nav_group_order",
-            "nav_group_icon",
-            "nav_label",
-            "page_icon",
-            "depth",
-          ].join(",")
-        ),
+      "select=" + encodeURIComponent(selectFields.join(",")),
       "order=" + encodeURIComponent("section.asc,nav_group_order.asc.nullslast,nav_group.asc.nullslast,sort_order.asc,title.asc"),
     ];
 
@@ -13656,6 +14121,11 @@
     }
 
     return payload;
+  }
+
+  function isMissingWikiHeroColumnError(error) {
+    var message = readString(error && error.message, "").toLowerCase();
+    return message.indexOf("hero_image_url") !== -1 || message.indexOf("wiki_pages.hero_image_url") !== -1;
   }
 
   function buildWikiIndex(rows, options) {
@@ -13821,6 +14291,7 @@
       slug: getLeafSlug(docKey),
       contentMd: readString(row.content_md, ""),
       excerpt: readString(row.excerpt, ""),
+      heroImageUrl: readString(row.hero_image_url, ""),
       isPublished: row.is_published !== false,
       navGroup: navGroup,
       navGroupDisplay: navGroupDisplay,
@@ -15014,6 +15485,7 @@
   function setupWikiInteractiveBlocks(root, entry) {
     setupWikiChecklistState(root, entry);
     setupWikiExpandablesDefaultCollapsed(root);
+    applyWikiTableColumnWidths(root);
   }
 
   function setupWikiExpandablesDefaultCollapsed(root) {
@@ -15083,6 +15555,53 @@
 
     var parentPath = Array.isArray(entry.parentPath) ? entry.parentPath.join(" / ") : "";
     state.elements.metaCrumb.textContent = parentPath;
+
+    if (state.elements.mobileCrumb) {
+      state.elements.mobileCrumb.textContent = parentPath || entry.sectionTitle || "Documentazione";
+    }
+
+    applyDocsPageHero(entry);
+  }
+
+  function getDocsMetaRoot() {
+    if (!state.elements || !state.elements.metaTitle) {
+      return null;
+    }
+
+    if (state.elements.metaTitle.closest) {
+      return state.elements.metaTitle.closest(".docs-meta, .section-card, [data-docs-meta]") || state.elements.metaTitle.parentElement;
+    }
+
+    return state.elements.metaTitle.parentElement || null;
+  }
+
+  function escapeCssUrl(value) {
+    var backslash = String.fromCharCode(92);
+    var doubleQuote = String.fromCharCode(34);
+    var lineBreakPattern = new RegExp("[" + String.fromCharCode(13) + String.fromCharCode(10) + "]+", "g");
+
+    return String(value || "")
+      .split(backslash).join(backslash + backslash)
+      .split(doubleQuote).join(backslash + doubleQuote)
+      .replace(lineBreakPattern, "");
+  }
+
+  function applyDocsPageHero(entry) {
+    var root = getDocsMetaRoot();
+    if (!root) {
+      return;
+    }
+
+    var imageUrl = readString(entry && entry.heroImageUrl, "");
+    root.classList.add("docs-page-header");
+    root.classList.toggle("has-hero-image", !!imageUrl);
+
+    if (imageUrl) {
+      root.style.setProperty("--docs-page-header-image", 'url("' + escapeCssUrl(imageUrl) + '")');
+      return;
+    }
+
+    root.style.removeProperty("--docs-page-header-image");
   }
 
   function addHeadingAnchors(root) {
@@ -15115,11 +15634,14 @@
     return tocItems;
   }
 
-  function clearDocsSearch() {
+  function clearDocsSearch(options) {
+    var opts = options || {};
     state.searchQuery = "";
+    syncDocsSearchInputs();
 
-    if (state.elements && state.elements.searchInput) {
-      state.elements.searchInput.value = "";
+    if (state.elements && opts.focusMobile && state.elements.mobileSearchInput) {
+      state.elements.mobileSearchInput.focus();
+    } else if (state.elements && state.elements.searchInput) {
       state.elements.searchInput.focus();
     }
 
@@ -15127,64 +15649,83 @@
   }
 
   function renderDocsSearchResults() {
-    if (!state.elements || !state.elements.searchResults) {
+    if (!state.elements) {
       return;
     }
 
-    var panel = state.elements.searchResults;
+    syncDocsSearchInputs();
+
     var normalizedQuery = normalizeSearchText(state.searchQuery);
 
     if (state.elements.searchClear) {
       state.elements.searchClear.hidden = normalizedQuery.length === 0;
     }
 
+    if (state.elements.mobileSearchClear) {
+      state.elements.mobileSearchClear.hidden = normalizedQuery.length === 0;
+    }
+
+    var panels = [];
+    if (state.elements.searchResults) {
+      panels.push(state.elements.searchResults);
+    }
+    if (state.elements.mobileSearchResults) {
+      panels.push(state.elements.mobileSearchResults);
+    }
+
     if (normalizedQuery.length < DOCS_SEARCH_MIN_CHARS) {
-      panel.hidden = true;
-      panel.innerHTML = "";
+      for (var emptyIndex = 0; emptyIndex < panels.length; emptyIndex += 1) {
+        panels[emptyIndex].hidden = true;
+        panels[emptyIndex].innerHTML = "";
+      }
       return;
     }
 
     var results = searchWikiPages(normalizedQuery);
-    panel.hidden = false;
+    var html = "";
 
     if (!results.length) {
-      panel.innerHTML = '<p class="docs-search__empty">Nessun risultato per "' + escapeHtml(state.searchQuery) + '".</p>';
-      return;
-    }
+      html = '<p class="docs-search__empty">Nessun risultato per "' + escapeHtml(state.searchQuery) + '".</p>';
+    } else {
+      var itemsHtml = [];
+      for (var i = 0; i < results.length; i += 1) {
+        var result = results[i];
+        var entry = result.entry;
+        var meta = entry.sectionTitle;
+        if (entry.navGroup) {
+          meta += " / " + entry.navGroup;
+        }
 
-    var itemsHtml = [];
-    for (var i = 0; i < results.length; i += 1) {
-      var result = results[i];
-      var entry = result.entry;
-      var meta = entry.sectionTitle;
-      if (entry.navGroup) {
-        meta += " / " + entry.navGroup;
+        var hiddenBadge = "";
+        if (state.isManageUnlocked && entry.isPublished === false) {
+          hiddenBadge = ' <span class="docs-search-result__badge">Nascosta</span>';
+        }
+
+        itemsHtml.push(
+          '<li><a class="docs-search-result" href="docs.html?doc=' +
+            encodeURIComponent(entry.docKey) +
+            '" data-doc-search-link="' +
+            escapeHtml(entry.docKey) +
+            '"><strong class="docs-search-result__title">' +
+            highlightSearchMatch(entry.title, result.terms) +
+            hiddenBadge +
+            '</strong><span class="docs-search-result__meta">' +
+            escapeHtml(meta) +
+            '</span>' +
+            (result.snippet
+              ? '<span class="docs-search-result__snippet">' + highlightSearchMatch(result.snippet, result.terms) + '</span>'
+              : "") +
+            "</a></li>"
+        );
       }
 
-      var hiddenBadge = "";
-      if (state.isManageUnlocked && entry.isPublished === false) {
-        hiddenBadge = ' <span class="docs-search-result__badge">Nascosta</span>';
-      }
-
-      itemsHtml.push(
-        '<li><a class="docs-search-result" href="docs.html?doc=' +
-          encodeURIComponent(entry.docKey) +
-          '" data-doc-search-link="' +
-          escapeHtml(entry.docKey) +
-          '"><strong class="docs-search-result__title">' +
-          highlightSearchMatch(entry.title, result.terms) +
-          hiddenBadge +
-          '</strong><span class="docs-search-result__meta">' +
-          escapeHtml(meta) +
-          '</span>' +
-          (result.snippet
-            ? '<span class="docs-search-result__snippet">' + highlightSearchMatch(result.snippet, result.terms) + '</span>'
-            : "") +
-          "</a></li>"
-      );
+      html = '<ul class="docs-search-result-list">' + itemsHtml.join("") + "</ul>";
     }
 
-    panel.innerHTML = '<ul class="docs-search-result-list">' + itemsHtml.join("") + "</ul>";
+    for (var panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
+      panels[panelIndex].hidden = false;
+      panels[panelIndex].innerHTML = html;
+    }
   }
 
   function searchWikiPages(normalizedQuery) {
@@ -16765,6 +17306,7 @@
     state.elements.metaSection.textContent = "Documentazione";
     state.elements.metaTitle.textContent = "Errore caricamento";
     state.elements.metaCrumb.textContent = "";
+    applyDocsPageHero(null);
 
     renderDocErrorState({
       title: "Documentazione non disponibile",
@@ -16788,6 +17330,7 @@
     state.elements.metaSection.textContent = "Documentazione";
     state.elements.metaTitle.textContent = "Documento non trovato";
     state.elements.metaCrumb.textContent = "Doc richiesto: " + docKey;
+    applyDocsPageHero(null);
 
     renderDocErrorState({
       title: "Documento non trovato",
