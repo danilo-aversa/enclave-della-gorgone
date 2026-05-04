@@ -1439,6 +1439,7 @@
   transition:
     opacity 180ms ease,
     filter 180ms ease;
+  justify-content: center;
 }
 
 .timeline-event-title i {

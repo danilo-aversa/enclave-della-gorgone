@@ -1171,7 +1171,7 @@ body > * {
   grid-template-columns: 1.65rem minmax(0, 1fr);
   gap: 0.5rem;
   align-items: start;
-  padding: 0.42rem 0;
+  padding: 0.42rem 0 0;
   border-top: 1px solid rgba(var(--line-soft-rgb), 0.28);
 }
 

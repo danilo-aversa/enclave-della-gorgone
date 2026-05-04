@@ -12,6 +12,59 @@
   var lastQuestEditorQuest = null;
   var QUEST_SUMMARY_MAX_LENGTH = 180;
   var QUEST_FINAL_STATUS = "conclusa";
+  var QUEST_TIMELINE_EVENT_SELECT = [
+    "id",
+    "quest_id",
+    "quest_event_key",
+    "quest_event_kind",
+    "title",
+    "short_title",
+    "summary",
+    "description",
+    "dm_notes",
+    "location",
+    "date_label",
+    "sort_key",
+    "type",
+    "visibility",
+    "knowledge",
+    "truth",
+    "state",
+    "importance",
+    "tags",
+    "links",
+    "background_image_url"
+  ].join(",");
+
+  var CURRENT_CAMPAIGN_YEAR_DR = 1492;
+
+  var HARPTOS_MONTHS = [
+    { id: "Hammer", common: "Deepwinter", offset: 0 },
+    { id: "Alturiak", common: "The Claw of Winter", offset: 31 },
+    { id: "Ches", common: "The Claw of Sunsets", offset: 61 },
+    { id: "Tarsakh", common: "The Claw of Storms", offset: 91 },
+    { id: "Mirtul", common: "The Melting", offset: 122 },
+    { id: "Kythorn", common: "The Time of Flowers", offset: 152 },
+    { id: "Flamerule", common: "Summertide", offset: 182 },
+    { id: "Eleasis", common: "Highsun", offset: 214 },
+    { id: "Eleint", common: "The Fading", offset: 244 },
+    { id: "Marpenoth", common: "Leaffall", offset: 275 },
+    { id: "Uktar", common: "The Rotting", offset: 305 },
+    { id: "Nightal", common: "The Drawing Down", offset: 336 }
+  ];
+
+  var HARPTOS_FESTIVALS = [
+    { id: "Midwinter", label: "Midwinter", offset: 30 },
+    { id: "Greengrass", label: "Greengrass", offset: 121 },
+    { id: "Midsummer", label: "Midsummer", offset: 212 },
+    { id: "Shieldmeet", label: "Shieldmeet", offset: 213 },
+    { id: "Highharvestide", label: "Highharvestide", offset: 274 },
+    { id: "Feast of the Moon", label: "The Feast of the Moon", offset: 335 }
+  ];
+
+  var HARPTOS_YEAR_NAMES = {
+    1492: "Year of Three Ships Sailing"
+  };
 
   var QUEST_INTELLIGENCE_ICONS = [
     { icon: "fa-circle-info", label: "Informazione" },
@@ -477,12 +530,20 @@
       }
       var reports = [];
       var reportsLoadFailed = false;
+      var timelineEvents = [];
       try {
         reports = await fetchQuestReports(quest.id);
       } catch (reportsError) {
         console.warn("Errore caricamento rapporti missione:", reportsError);
         reports = [];
         reportsLoadFailed = true;
+      }
+
+      try {
+        timelineEvents = await fetchQuestTimelineEvents(quest.id);
+      } catch (timelineError) {
+        console.warn("Errore caricamento eventi timeline missione:", timelineError);
+        timelineEvents = [];
       }
 
       var relations = await fetchQuestCharacters(quest.id);
@@ -499,7 +560,8 @@
         characterIds,
         reports,
         reportsLoadFailed,
-        currentAuthorCharacterId
+        currentAuthorCharacterId,
+        timelineEvents
       );
 
       setQuestHeaderState(elements, {
@@ -588,6 +650,37 @@
     }
 
     return payload[0];
+  }
+
+  async function fetchQuestTimelineEvents(questId) {
+    var questKey = toIdString(questId);
+    if (!questKey) {
+      return [];
+    }
+
+    var url =
+      SUPABASE_URL +
+      "/rest/v1/timeline_events?select=" +
+      encodeURIComponent(QUEST_TIMELINE_EVENT_SELECT) +
+      "&quest_id=eq." +
+      encodeURIComponent(questKey) +
+      "&order=sort_key.asc&order=created_at.asc";
+
+    var response = await fetch(url, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: "Bearer " + SUPABASE_ANON_KEY,
+      },
+    });
+
+    var payload = await parseResponseBody(response);
+
+    if (!response.ok) {
+      throw new Error(readSupabaseError(payload, response.status));
+    }
+
+    return Array.isArray(payload) ? payload : [];
   }
 
   async function fetchQuestReports(questId) {
@@ -684,7 +777,7 @@
     return Array.isArray(payload) ? payload : [];
   }
 
-  function renderQuestDetail(container, quest, characters, characterIds, reports, reportsLoadFailed, currentAuthorCharacterId) {
+  function renderQuestDetail(container, quest, characters, characterIds, reports, reportsLoadFailed, currentAuthorCharacterId, timelineEvents) {
     container.innerHTML = "";
 
     var article = document.createElement("article");
@@ -743,6 +836,7 @@
               notes: readString(quest.notes, ""),
               last_session_at: readString(quest.last_session_at, ""),
               next_session_at: readString(quest.next_session_at, ""),
+              timeline_events: Array.isArray(timelineEvents) ? timelineEvents.slice() : [],
             },
             characterIds: characterIds.slice(),
           },
@@ -805,7 +899,7 @@
     var side = document.createElement("aside");
     side.className = "quest-detail-side";
 
-    side.appendChild(buildMissionDataCard(quest));
+    side.appendChild(buildMissionDataCard(quest, timelineEvents));
     side.appendChild(buildTeamCard(characters, characterIds));
 
     var objectivesSection = buildObjectivesSection(
@@ -3006,7 +3100,7 @@
       .filter(Boolean);
   }
 
-  function buildMissionDataCard(quest) {
+  function buildMissionDataCard(quest, timelineEvents) {
     var section = document.createElement("section");
     section.className = "quest-detail-section quest-detail-card";
 
@@ -3016,6 +3110,26 @@
 
     var grid = document.createElement("div");
     grid.className = "quest-session-grid";
+
+    var events = Array.isArray(timelineEvents) ? timelineEvents : [];
+    var startEvent = findQuestTimelineEvent(events, "start", "quest_start");
+    var endEvent = findQuestTimelineEvent(events, "end", "quest_end");
+
+    grid.appendChild(
+      buildSessionItem(
+        "Inizio operazione",
+        formatHarptosDateLabel(readString(startEvent && startEvent.date_label, "Da pianificare"))
+      )
+    );
+
+    if (isQuestCompleted(quest)) {
+      grid.appendChild(
+        buildSessionItem(
+          "Fine operazione",
+          formatHarptosDateLabel(readString(endEvent && endEvent.date_label, "Da pianificare"))
+        )
+      );
+    }
 
     grid.appendChild(buildSessionItem("Ultima sessione", formatDate(readString(quest.last_session_at, ""))));
 
@@ -3034,6 +3148,10 @@
 
     section.appendChild(grid);
     return section;
+  }
+
+  function formatHarptosDateLabel(value) {
+    return readString(value, "").split(" — ")[0] || "Da pianificare";
   }
 
   function buildTeamCard(characters, characterIds) {
@@ -3388,14 +3506,14 @@
       var method = readString(requestOptions.method, "GET").toUpperCase();
 
       if (method === "POST" && url && url.indexOf("/functions/v1/upsert-quest") !== -1) {
-        requestOptions = addQuestCompletionFieldsToFetchOptions(requestOptions);
+        requestOptions = addQuestEditorFieldsToFetchOptions(requestOptions);
       }
 
       return originalFetch(resource, requestOptions);
     };
   }
 
-  function addQuestCompletionFieldsToFetchOptions(options) {
+  function addQuestEditorFieldsToFetchOptions(options) {
     var form = document.querySelector("[data-quest-form]");
     if (!form || !options || typeof options.body !== "string") {
       return options;
@@ -3404,20 +3522,30 @@
     var outcomeInput = form.querySelector("[data-quest-outcome]");
     var debriefingInput = form.querySelector("[data-quest-debriefing]");
 
-    if (!outcomeInput && !debriefingInput) {
-      return options;
-    }
-
     try {
       var payload = JSON.parse(options.body);
-      payload.outcome = readString(outcomeInput && outcomeInput.value, "");
-      payload.debriefing = readString(debriefingInput && debriefingInput.value, "");
+      var timelineEvents = readQuestTimelineEventsFromEditor(form);
+
+      if (outcomeInput) {
+        payload.outcome = readString(outcomeInput.value, "");
+      }
+
+      if (debriefingInput) {
+        payload.debriefing = readString(debriefingInput.value, "");
+      }
+
+      payload.timeline_events = timelineEvents;
+
+      console.info("Payload upsert-quest aggiornato con eventi timeline.", {
+        timelineCount: timelineEvents.length,
+        timelineEvents: timelineEvents,
+      });
 
       return Object.assign({}, options, {
         body: JSON.stringify(payload),
       });
     } catch (error) {
-      console.warn("Impossibile aggiungere outcome/debriefing al payload missione:", error);
+      console.warn("Impossibile aggiungere campi extra al payload missione:", error);
       return options;
     }
   }
@@ -3450,6 +3578,33 @@
     style.textContent = [
       '.quest-modal__field:has([data-quest-report]) { display: none !important; }',
       '.quest-modal__field.is-hidden { display: none !important; }',
+      '.quest-timeline-editor { display: grid; gap: 0.75rem; border: 1px solid rgba(var(--line-soft-rgb), 0.58); border-radius: var(--radius-sm); background: rgba(var(--surface-deep-rgb), 0.28); padding: 0.75rem; }',
+      '.quest-timeline-editor__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }',
+      '.quest-timeline-editor__title { margin: 0; color: var(--accent-strong); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }',
+      '.quest-timeline-editor__hint { margin: 0; color: var(--text-muted); font-size: 0.76rem; line-height: 1.45; }',
+      '.quest-timeline-editor__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }',
+      '.quest-timeline-event-card { display: grid; gap: 0.48rem; border: 1px solid rgba(var(--line-soft-rgb), 0.52); border-radius: var(--radius-sm); background: rgba(var(--surface-muted-rgb), 0.44); padding: 0.62rem; }',
+      '.quest-timeline-event-card__head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }',
+      '.quest-timeline-event-card__kind { color: var(--text-dim); font-size: 0.68rem; font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase; }',
+      '.quest-timeline-event-card__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.48rem; }',
+      '.quest-timeline-event-card__fields .is-full { grid-column: 1 / -1; }',
+      '.quest-timeline-event-card textarea { min-height: 4.6rem; resize: vertical; }',
+      '.quest-timeline-editor__milestones { display: grid; gap: 0.7rem; }',
+      '.quest-timeline-editor__empty { margin: 0; color: var(--text-muted); font-size: 0.8rem; }',
+      '.quest-timeline-date-picker { position: relative; display: grid; gap: 0.34rem; }',
+      '.quest-timeline-date-control { display: grid; grid-template-columns: minmax(0, 1fr) 2.35rem; gap: 0.42rem; align-items: stretch; }',
+      '.quest-timeline-date-display { cursor: pointer; }',
+      '.quest-timeline-date-toggle { width: 2.35rem; min-width: 2.35rem; padding: 0; }',
+      '.quest-timeline-date-panel { position: fixed; z-index: 260; left: 50%; top: 50%; width: min(760px, calc(100vw - 3rem)); max-height: min(78dvh, 760px); overflow: auto; border: 1px solid rgba(var(--accent-rgb), 0.42); border-radius: var(--radius-md); background: rgba(var(--surface-strong-rgb), 0.98); box-shadow: var(--shadow); padding: 0.95rem; transform: translate(-50%, -50%); }',
+      '.quest-timeline-date-panel[hidden], .quest-timeline-harptos-calendar[hidden], .quest-timeline-harptos-festivals[hidden] { display: none !important; }',
+      '.quest-timeline-date-panel__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.62rem; }',
+      '.quest-timeline-harptos-calendar, .quest-timeline-harptos-festivals { display: grid; gap: 0.34rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(var(--line-soft-rgb), 0.42); }',
+      '.quest-timeline-harptos-days { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 0.28rem; }',
+      '.quest-timeline-harptos-festivals { grid-template-columns: repeat(2, minmax(0, 1fr)); }',
+      '.quest-timeline-harptos-day, .quest-timeline-harptos-festival { border: 1px solid rgba(var(--line-soft-rgb), 0.68); border-radius: var(--radius-sm); background: rgba(var(--surface-deep-rgb), 0.72); color: var(--text-soft); font: inherit; font-size: 0.78rem; font-weight: 800; min-height: 2rem; cursor: pointer; }',
+      '.quest-timeline-harptos-day:hover, .quest-timeline-harptos-festival:hover, .quest-timeline-harptos-day.is-selected, .quest-timeline-harptos-festival.is-selected { border-color: rgba(var(--accent-rgb), 0.84); background: rgba(var(--accent-rgb), 0.16); color: var(--accent-strong); }',
+      '.quest-timeline-date-preview { margin: 0.65rem 0 0; color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; }',
+      '@media (max-width: 760px) { .quest-timeline-editor__grid, .quest-timeline-event-card__fields { grid-template-columns: 1fr; } }',
       '.quest-detail-layout { display: block !important; }',
       '.quest-detail-layout::after { content: ""; display: block; clear: both; }',
       '.quest-detail-layout .quest-detail-side { float: right; width: min(360px, 34%); margin: 0 0 1rem 3rem; }',
@@ -3486,6 +3641,7 @@
     enhanceQuestSummaryField(form);
     enhanceQuestBriefingField(form);
     enhanceQuestCompletionFields(form);
+    enhanceQuestTimelineFields(form);
     enhanceQuestSecondaryObjectivesField(form);
     enhanceQuestIntelligenceField(form);
   }
@@ -3612,6 +3768,870 @@
     quest.debriefing = readString(debriefingInput && debriefingInput.value, "");
 
     return payload;
+  }
+
+  function enhanceQuestTimelineFields(form) {
+    ensureQuestTimelineEditor(form);
+    populateQuestTimelineEditor(form);
+  }
+
+  function ensureQuestTimelineEditor(form) {
+    if (form.querySelector("[data-quest-timeline-editor]")) {
+      return;
+    }
+
+    var grid = form.querySelector(".quest-modal__grid") || form;
+    var anchor = form.querySelector("[data-quest-debriefing]") || form.querySelector("[data-quest-briefing]");
+    var anchorField = anchor && anchor.closest(".quest-modal__field");
+
+    var field = document.createElement("div");
+    field.className = "quest-modal__field quest-modal__field--full quest-timeline-field";
+
+    var editor = document.createElement("div");
+    editor.className = "quest-timeline-editor";
+    editor.dataset.questTimelineEditor = "true";
+
+    var head = document.createElement("div");
+    head.className = "quest-timeline-editor__head";
+
+    var title = document.createElement("h4");
+    title.className = "quest-timeline-editor__title";
+    title.textContent = "Linea temporale";
+    head.appendChild(title);
+
+    var addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "quest-modal__btn quest-timeline-editor__add";
+    addButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i> Evento intermedio';
+    addButton.addEventListener("click", function onAddTimelineMilestoneClick() {
+      appendQuestTimelineMilestoneCard(editor, null, true);
+      syncQuestTimelineEmptyState(editor);
+    });
+    head.appendChild(addButton);
+    editor.appendChild(head);
+
+    var hint = document.createElement("p");
+    hint.className = "quest-timeline-editor__hint";
+    hint.textContent = "Usa il calendario Harptos per impostare la data degli eventi da pubblicare nella Timeline. Lascia vuoto un blocco per non pubblicarlo.";
+    editor.appendChild(hint);
+
+    var gridWrap = document.createElement("div");
+    gridWrap.className = "quest-timeline-editor__grid";
+    gridWrap.appendChild(buildQuestTimelineFixedCard("quest_start", "start", "Inizio missione"));
+    gridWrap.appendChild(buildQuestTimelineFixedCard("quest_end", "end", "Fine missione"));
+    editor.appendChild(gridWrap);
+
+    var milestones = document.createElement("div");
+    milestones.className = "quest-timeline-editor__milestones";
+    milestones.dataset.questTimelineMilestones = "true";
+    editor.appendChild(milestones);
+
+    var empty = document.createElement("p");
+    empty.className = "quest-timeline-editor__empty";
+    empty.dataset.questTimelineEmpty = "true";
+    empty.textContent = "Nessun evento intermedio.";
+    milestones.appendChild(empty);
+
+    field.appendChild(editor);
+
+    if (anchorField && anchorField.parentNode === grid) {
+      anchorField.insertAdjacentElement("afterend", field);
+    } else {
+      grid.appendChild(field);
+    }
+  }
+
+  function buildQuestTimelineFixedCard(kind, key, labelText) {
+    return buildQuestTimelineEventCard({
+      quest_event_kind: kind,
+      quest_event_key: key,
+      label: labelText,
+      fixed: true,
+    });
+  }
+
+  function appendQuestTimelineMilestoneCard(editor, eventData, focusTitle) {
+    var list = editor && editor.querySelector("[data-quest-timeline-milestones]");
+    if (!list) {
+      return null;
+    }
+
+    var card = buildQuestTimelineEventCard({
+      quest_event_kind: "quest_milestone",
+      quest_event_key: readString(eventData && eventData.quest_event_key, "") || createQuestTimelineMilestoneKey(),
+      label: "Evento intermedio",
+      fixed: false,
+      event: eventData || null,
+    });
+
+    var empty = list.querySelector("[data-quest-timeline-empty]");
+    if (empty) {
+      list.insertBefore(card, empty);
+    } else {
+      list.appendChild(card);
+    }
+
+    if (focusTitle) {
+      window.setTimeout(function focusNewTimelineTitle() {
+        var input = card.querySelector("[data-quest-timeline-title]");
+        if (input) {
+          input.focus();
+        }
+      }, 0);
+    }
+
+    return card;
+  }
+
+  function buildQuestTimelineEventCard(options) {
+    var card = document.createElement("div");
+    card.className = "quest-timeline-event-card";
+    card.dataset.questTimelineEvent = "true";
+    card.dataset.questTimelineKind = readString(options && options.quest_event_kind, "quest_milestone");
+    card.dataset.questTimelineKey = readString(options && options.quest_event_key, createQuestTimelineMilestoneKey());
+
+    var head = document.createElement("div");
+    head.className = "quest-timeline-event-card__head";
+
+    var label = document.createElement("span");
+    label.className = "quest-timeline-event-card__kind";
+    label.textContent = readString(options && options.label, "Evento timeline");
+    head.appendChild(label);
+
+    if (!(options && options.fixed)) {
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "quest-modal__btn quest-timeline-event-card__remove";
+      remove.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i>';
+      remove.title = "Rimuovi evento intermedio";
+      remove.setAttribute("aria-label", "Rimuovi evento intermedio");
+      remove.addEventListener("click", function onRemoveTimelineMilestoneClick() {
+        var editor = card.closest("[data-quest-timeline-editor]");
+        card.remove();
+        syncQuestTimelineEmptyState(editor);
+      });
+      head.appendChild(remove);
+    }
+
+    card.appendChild(head);
+
+    var fields = document.createElement("div");
+    fields.className = "quest-timeline-event-card__fields";
+
+    fields.appendChild(buildQuestTimelineInput("Titolo", "title", "text", "Titolo evento", true));
+    fields.appendChild(buildQuestTimelineDatePicker(card));
+    fields.appendChild(buildQuestTimelineHiddenInput("dateLabel"));
+    fields.appendChild(buildQuestTimelineHiddenInput("sortKey"));
+    fields.appendChild(buildQuestTimelineTextarea("Sommario", "summary", "Sintesi breve dell'evento", true));
+    fields.appendChild(buildQuestTimelineTextarea("Descrizione", "description", "Descrizione estesa dell'evento", true));
+
+    card.appendChild(fields);
+    initializeQuestTimelineDatePicker(card);
+    setQuestTimelineCardValues(card, options && options.event ? options.event : null);
+    return card;
+  }
+
+  function buildQuestTimelineInput(labelText, name, type, placeholder, isFull) {
+    var label = document.createElement("label");
+    label.className = isFull ? "is-full" : "";
+    label.appendChild(createElement("span", "field-label", labelText));
+
+    var input = document.createElement("input");
+    input.type = type || "text";
+    input.className = "quest-modal__input";
+    input.placeholder = placeholder || "";
+    input.dataset.questTimelineField = name;
+    if (name === "title") input.dataset.questTimelineTitle = "true";
+    label.appendChild(input);
+    return label;
+  }
+
+  function buildQuestTimelineTextarea(labelText, name, placeholder, isFull) {
+    var label = document.createElement("label");
+    label.className = isFull ? "is-full" : "";
+    label.appendChild(createElement("span", "field-label", labelText));
+
+    var textarea = document.createElement("textarea");
+    textarea.className = "quest-modal__textarea";
+    textarea.placeholder = placeholder || "";
+    textarea.dataset.questTimelineField = name;
+    label.appendChild(textarea);
+    return label;
+  }
+
+  function buildQuestTimelineSelect(labelText, name, options) {
+    var label = document.createElement("label");
+    label.appendChild(createElement("span", "field-label", labelText));
+
+    var select = document.createElement("select");
+    select.className = "quest-modal__input";
+    select.dataset.questTimelineField = name;
+
+    for (var i = 0; i < options.length; i += 1) {
+      var option = document.createElement("option");
+      option.value = options[i][0];
+      option.textContent = options[i][1];
+      select.appendChild(option);
+    }
+
+    label.appendChild(select);
+    return label;
+  }
+
+  function buildQuestTimelineHiddenInput(name) {
+    var input = document.createElement("input");
+    input.type = "hidden";
+    input.dataset.questTimelineField = name;
+    return input;
+  }
+
+  function buildQuestTimelineDatePicker(card) {
+    var field = document.createElement("div");
+    field.className = "quest-timeline-date-picker is-full";
+    field.dataset.questHarptosPicker = "true";
+
+    field.appendChild(createElement("span", "field-label", "Data"));
+
+    var control = document.createElement("div");
+    control.className = "quest-timeline-date-control";
+
+    var display = document.createElement("input");
+    display.type = "text";
+    display.className = "quest-modal__input quest-timeline-date-display";
+    display.placeholder = "Seleziona data Harptos";
+    display.readOnly = true;
+    display.dataset.questHarptosDisplay = "true";
+    control.appendChild(display);
+
+    var toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "quest-modal__btn quest-timeline-date-toggle";
+    toggle.title = "Apri calendario Harptos";
+    toggle.setAttribute("aria-label", "Apri calendario Harptos");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.innerHTML = '<i class="fa-solid fa-calendar-days" aria-hidden="true"></i>';
+    control.appendChild(toggle);
+    field.appendChild(control);
+
+    var panel = document.createElement("div");
+    panel.className = "quest-timeline-date-panel";
+    panel.dataset.questHarptosPanel = "true";
+    panel.hidden = true;
+
+    var panelGrid = document.createElement("div");
+    panelGrid.className = "quest-timeline-date-panel__grid";
+    panelGrid.appendChild(buildQuestTimelineDateNumberField("Anno DR", "year", String(CURRENT_CAMPAIGN_YEAR_DR)));
+    panelGrid.appendChild(buildQuestTimelineDateSelectField("Mese", "month", []));
+    panelGrid.appendChild(buildQuestTimelineDateSelectField("Formato", "mode", [
+      ["day", "Giorno del mese"],
+      ["festival", "Festival"]
+    ]));
+    panel.appendChild(panelGrid);
+
+    var calendar = document.createElement("div");
+    calendar.className = "quest-timeline-harptos-calendar";
+    calendar.dataset.questHarptosCalendar = "true";
+    panel.appendChild(calendar);
+
+    var festivals = document.createElement("div");
+    festivals.className = "quest-timeline-harptos-festivals";
+    festivals.dataset.questHarptosFestivals = "true";
+    panel.appendChild(festivals);
+
+    var preview = document.createElement("p");
+    preview.className = "quest-timeline-date-preview";
+    preview.dataset.questHarptosPreview = "true";
+    panel.appendChild(preview);
+
+    field.appendChild(panel);
+    return field;
+  }
+
+  function buildQuestTimelineDateNumberField(labelText, name, value) {
+    var label = document.createElement("label");
+    label.appendChild(createElement("span", "field-label", labelText));
+
+    var input = document.createElement("input");
+    var normalizedValue = value || "";
+    input.type = "number";
+    input.className = "quest-modal__input";
+    input.value = normalizedValue;
+    input.defaultValue = normalizedValue;
+    if (normalizedValue) {
+      input.setAttribute("value", normalizedValue);
+    }
+    input.dataset.questHarptosControl = name;
+    label.appendChild(input);
+    return label;
+  }
+
+  function buildQuestTimelineDateSelectField(labelText, name, options) {
+    var label = document.createElement("label");
+    label.appendChild(createElement("span", "field-label", labelText));
+
+    var select = document.createElement("select");
+    select.className = "quest-modal__input";
+    select.dataset.questHarptosControl = name;
+
+    for (var i = 0; i < options.length; i += 1) {
+      var option = document.createElement("option");
+      option.value = options[i][0];
+      option.textContent = options[i][1];
+      select.appendChild(option);
+    }
+
+    label.appendChild(select);
+    return label;
+  }
+
+  function initializeQuestTimelineDatePicker(card) {
+    if (!card || card.dataset.questHarptosReady === "true") {
+      return;
+    }
+
+    card.dataset.questHarptosReady = "true";
+    card.dataset.questHarptosSelected = "false";
+    card.dataset.questHarptosDay = "1";
+    card.dataset.questHarptosFestival = "Midwinter";
+    setQuestTimelineDefaultHarptosYear(card);
+
+    populateQuestTimelineDatePickerOptions(card);
+    renderQuestTimelineHarptosCalendar(card);
+    renderQuestTimelineHarptosFestivals(card);
+    syncQuestTimelineCalendarMode(card);
+    updateQuestTimelineDateFields(card, false);
+
+    var display = card.querySelector("[data-quest-harptos-display]");
+    var toggle = card.querySelector(".quest-timeline-date-toggle");
+    var controls = card.querySelectorAll("[data-quest-harptos-control]");
+    var picker = card.querySelector("[data-quest-harptos-picker]");
+
+    if (display) {
+      display.addEventListener("click", function onDateDisplayClick(event) {
+        event.stopPropagation();
+        openQuestTimelineDatePanel(card);
+      });
+    }
+
+    if (toggle) {
+      toggle.addEventListener("click", function onDateToggleClick(event) {
+        event.stopPropagation();
+        toggleQuestTimelineDatePanel(card);
+      });
+    }
+
+    if (picker) {
+      picker.addEventListener("click", handleQuestTimelineDatePickerClick);
+    }
+
+    for (var i = 0; i < controls.length; i += 1) {
+      controls[i].addEventListener("input", function onQuestDateControlInput() {
+        updateQuestTimelineDateFields(card, true);
+      });
+      controls[i].addEventListener("change", function onQuestDateControlChange() {
+        syncQuestTimelineCalendarMode(card);
+        renderQuestTimelineHarptosCalendar(card);
+        renderQuestTimelineHarptosFestivals(card);
+        updateQuestTimelineDateFields(card, true);
+      });
+    }
+
+    ensureQuestTimelineDateOutsideClickHandler();
+  }
+
+  function populateQuestTimelineDatePickerOptions(card) {
+    var monthSelect = getQuestTimelineHarptosControl(card, "month");
+    if (monthSelect && monthSelect.options.length === 0) {
+      for (var i = 0; i < HARPTOS_MONTHS.length; i += 1) {
+        var option = document.createElement("option");
+        option.value = HARPTOS_MONTHS[i].id;
+        option.textContent = HARPTOS_MONTHS[i].id + " — " + HARPTOS_MONTHS[i].common;
+        monthSelect.appendChild(option);
+      }
+    }
+  }
+
+  function handleQuestTimelineDatePickerClick(event) {
+    var card = event.target.closest("[data-quest-timeline-event]");
+    if (!card) {
+      return;
+    }
+
+    var dayButton = event.target.closest("[data-quest-harptos-day]");
+    if (dayButton) {
+      event.preventDefault();
+      card.dataset.questHarptosDay = String(clampInteger(dayButton.dataset.questHarptosDay, 1, 30, 1));
+      renderQuestTimelineHarptosCalendar(card);
+      updateQuestTimelineDateFields(card, true);
+      return;
+    }
+
+    var festivalButton = event.target.closest("[data-quest-harptos-festival]");
+    if (festivalButton) {
+      event.preventDefault();
+      card.dataset.questHarptosFestival = readString(festivalButton.dataset.questHarptosFestival, "Midwinter");
+      renderQuestTimelineHarptosFestivals(card);
+      updateQuestTimelineDateFields(card, true);
+    }
+  }
+
+  function toggleQuestTimelineDatePanel(card) {
+    var panel = card && card.querySelector("[data-quest-harptos-panel]");
+    if (!panel) {
+      return;
+    }
+
+    if (panel.hidden) {
+      openQuestTimelineDatePanel(card);
+    } else {
+      closeQuestTimelineDatePanel(card);
+    }
+  }
+
+  function openQuestTimelineDatePanel(card) {
+    closeAllQuestTimelineDatePanels(card);
+    var panel = card && card.querySelector("[data-quest-harptos-panel]");
+    var toggle = card && card.querySelector(".quest-timeline-date-toggle");
+    if (!panel) {
+      return;
+    }
+
+    panel.hidden = false;
+    if (toggle) {
+      toggle.setAttribute("aria-expanded", "true");
+    }
+  }
+
+  function closeQuestTimelineDatePanel(card) {
+    var panel = card && card.querySelector("[data-quest-harptos-panel]");
+    var toggle = card && card.querySelector(".quest-timeline-date-toggle");
+    if (panel) {
+      panel.hidden = true;
+    }
+    if (toggle) {
+      toggle.setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function closeAllQuestTimelineDatePanels(exceptCard) {
+    document.querySelectorAll("[data-quest-timeline-event]").forEach(function closeTimelinePanel(card) {
+      if (exceptCard && card === exceptCard) {
+        return;
+      }
+      closeQuestTimelineDatePanel(card);
+    });
+  }
+
+  function ensureQuestTimelineDateOutsideClickHandler() {
+    if (window.__questTimelineDateOutsideClickReady === true) {
+      return;
+    }
+
+    window.__questTimelineDateOutsideClickReady = true;
+    document.addEventListener("click", function onQuestTimelineDateOutsideClick(event) {
+      if (event.target.closest("[data-quest-harptos-picker]")) {
+        return;
+      }
+      closeAllQuestTimelineDatePanels(null);
+    });
+  }
+
+  function renderQuestTimelineHarptosCalendar(card) {
+    var calendar = card && card.querySelector("[data-quest-harptos-calendar]");
+    if (!calendar) {
+      return;
+    }
+
+    var selectedDay = clampInteger(card.dataset.questHarptosDay, 1, 30, 1);
+    var html = '<div class="quest-timeline-harptos-days">';
+    for (var day = 1; day <= 30; day += 1) {
+      html += '<button type="button" class="quest-timeline-harptos-day' + (day === selectedDay ? " is-selected" : "") + '" data-quest-harptos-day="' + day + '">' + day + '</button>';
+    }
+    html += '</div>';
+    calendar.innerHTML = html;
+  }
+
+  function renderQuestTimelineHarptosFestivals(card) {
+    var festivals = card && card.querySelector("[data-quest-harptos-festivals]");
+    if (!festivals) {
+      return;
+    }
+
+    var selectedFestival = readString(card.dataset.questHarptosFestival, "Midwinter");
+    festivals.innerHTML = HARPTOS_FESTIVALS.map(function renderFestivalButton(festival) {
+      return '<button type="button" class="quest-timeline-harptos-festival' + (festival.id === selectedFestival ? " is-selected" : "") + '" data-quest-harptos-festival="' + escapeHtml(festival.id) + '">' + escapeHtml(festival.label) + '</button>';
+    }).join("");
+  }
+
+  function syncQuestTimelineCalendarMode(card) {
+    var mode = getQuestTimelineHarptosMode(card);
+    var calendar = card && card.querySelector("[data-quest-harptos-calendar]");
+    var festivals = card && card.querySelector("[data-quest-harptos-festivals]");
+    if (calendar) {
+      calendar.hidden = mode === "festival";
+    }
+    if (festivals) {
+      festivals.hidden = mode !== "festival";
+    }
+  }
+
+  function updateQuestTimelineDateFields(card, commit) {
+    if (!card) {
+      return;
+    }
+
+    if (commit) {
+      card.dataset.questHarptosSelected = "true";
+    }
+
+    var selected = card.dataset.questHarptosSelected === "true";
+    var display = card.querySelector("[data-quest-harptos-display]");
+    var preview = card.querySelector("[data-quest-harptos-preview]");
+
+    if (!selected) {
+      setQuestTimelineCardField(card, "dateLabel", "");
+      setQuestTimelineCardField(card, "sortKey", "");
+      if (display) {
+        display.value = "";
+      }
+      if (preview) {
+        preview.textContent = "";
+      }
+      return;
+    }
+
+    var label = getQuestTimelineHarptosDateLabel(card);
+    var sortKey = getQuestTimelineHarptosSortKey(card);
+    setQuestTimelineCardField(card, "dateLabel", label);
+    setQuestTimelineCardField(card, "sortKey", String(sortKey));
+
+    if (display) {
+      display.value = label;
+    }
+    if (preview) {
+      preview.textContent = "Data Harptos: " + label;
+    }
+  }
+
+  function setQuestTimelinePickerFromEvent(card, event) {
+    if (!card) {
+      return;
+    }
+
+    var dateLabel = readString(event && event.date_label, "");
+    var sortKey = event && event.sort_key != null ? String(event.sort_key) : "";
+
+    if (!dateLabel && !sortKey) {
+      card.dataset.questHarptosSelected = "false";
+      setQuestTimelineDefaultHarptosYear(card);
+      updateQuestTimelineDateFields(card, false);
+      return;
+    }
+
+    var parsed = parseQuestTimelineHarptosDate(event);
+    var yearInput = getQuestTimelineHarptosControl(card, "year");
+    var monthSelect = getQuestTimelineHarptosControl(card, "month");
+    var modeSelect = getQuestTimelineHarptosControl(card, "mode");
+
+    if (yearInput) yearInput.value = String(parsed.year || CURRENT_CAMPAIGN_YEAR_DR);
+    if (monthSelect) monthSelect.value = parsed.month || "Hammer";
+    if (modeSelect) modeSelect.value = parsed.mode || "day";
+
+    card.dataset.questHarptosDay = String(clampInteger(parsed.day, 1, 30, 1));
+    card.dataset.questHarptosFestival = parsed.festival || "Midwinter";
+    card.dataset.questHarptosSelected = "true";
+
+    syncQuestTimelineCalendarMode(card);
+    renderQuestTimelineHarptosCalendar(card);
+    renderQuestTimelineHarptosFestivals(card);
+    updateQuestTimelineDateFields(card, true);
+  }
+
+  function setQuestTimelineDefaultHarptosYear(card) {
+    var yearInput = getQuestTimelineHarptosControl(card, "year");
+    if (!yearInput) {
+      return;
+    }
+
+    var yearValue = String(CURRENT_CAMPAIGN_YEAR_DR);
+    if (!readString(yearInput.value, "")) {
+      yearInput.value = yearValue;
+    }
+    yearInput.defaultValue = yearValue;
+    yearInput.setAttribute("value", yearValue);
+  }
+
+  function parseQuestTimelineHarptosDate(event) {
+    var label = readString(event && event.date_label, "");
+    var sortKey = Number(event && event.sort_key);
+    var year = Number.isFinite(sortKey) ? Math.trunc(sortKey / 1000) : CURRENT_CAMPAIGN_YEAR_DR;
+    var beforeDr = label.toLowerCase().indexOf("dr") > 0 ? label.slice(0, label.toLowerCase().indexOf("dr")).trim().split(" ").pop() : "";
+    var parsedYear = Number(beforeDr);
+    if (Number.isFinite(parsedYear)) {
+      year = parsedYear;
+    }
+
+    var lowerLabel = label.toLowerCase();
+    var festival = HARPTOS_FESTIVALS.find(function findFestival(item) {
+      return lowerLabel.indexOf(item.id.toLowerCase()) >= 0 || lowerLabel.indexOf(item.label.toLowerCase()) >= 0;
+    });
+
+    if (festival) {
+      return {
+        mode: "festival",
+        year: year,
+        month: "Hammer",
+        day: 1,
+        festival: festival.id
+      };
+    }
+
+    var month = HARPTOS_MONTHS.find(function findMonth(item) {
+      return lowerLabel.indexOf(item.id.toLowerCase()) >= 0;
+    });
+    var firstChunk = label.trim().split(" ")[0] || "";
+    var parsedDay = Number(firstChunk.split(".").join("").split(",").join(""));
+
+    return {
+      mode: "day",
+      year: year,
+      month: month ? month.id : "Hammer",
+      day: Number.isFinite(parsedDay) ? clampInteger(parsedDay, 1, 30, 1) : 1,
+      festival: "Midwinter"
+    };
+  }
+
+  function getQuestTimelineHarptosDateLabel(card) {
+    var year = getQuestTimelineHarptosYear(card);
+    var yearName = HARPTOS_YEAR_NAMES[year] || "Year Unnamed";
+    var mode = getQuestTimelineHarptosMode(card);
+
+    if (mode === "festival") {
+      var festival = getQuestTimelineSelectedFestival(card);
+      return festival.label + ", " + year + " DR — " + yearName;
+    }
+
+    var month = getQuestTimelineSelectedMonth(card);
+    var day = clampInteger(card.dataset.questHarptosDay, 1, 30, 1);
+    return day + " " + month.id + ", " + year + " DR — " + yearName;
+  }
+
+  function getQuestTimelineHarptosSortKey(card) {
+    var year = getQuestTimelineHarptosYear(card);
+    var mode = getQuestTimelineHarptosMode(card);
+    var dayOfYear = mode === "festival"
+      ? getQuestTimelineSelectedFestival(card).offset
+      : getQuestTimelineSelectedMonth(card).offset + clampInteger(card.dataset.questHarptosDay, 1, 30, 1);
+
+    return year * 1000 + dayOfYear;
+  }
+
+  function getQuestTimelineHarptosYear(card) {
+    var input = getQuestTimelineHarptosControl(card, "year");
+    return clampInteger(input && input.value, -10000, 10000, CURRENT_CAMPAIGN_YEAR_DR);
+  }
+
+  function getQuestTimelineHarptosMode(card) {
+    var select = getQuestTimelineHarptosControl(card, "mode");
+    return readString(select && select.value, "day") === "festival" ? "festival" : "day";
+  }
+
+  function getQuestTimelineSelectedMonth(card) {
+    var select = getQuestTimelineHarptosControl(card, "month");
+    var id = readString(select && select.value, "Hammer");
+    return HARPTOS_MONTHS.find(function findMonth(month) { return month.id === id; }) || HARPTOS_MONTHS[0];
+  }
+
+  function getQuestTimelineSelectedFestival(card) {
+    var id = readString(card && card.dataset.questHarptosFestival, "Midwinter");
+    return HARPTOS_FESTIVALS.find(function findFestival(festival) { return festival.id === id; }) || HARPTOS_FESTIVALS[0];
+  }
+
+  function getQuestTimelineHarptosControl(card, name) {
+    return card ? card.querySelector('[data-quest-harptos-control="' + name + '"]') : null;
+  }
+
+  function populateQuestTimelineEditor(form) {
+    var editor = form.querySelector("[data-quest-timeline-editor]");
+    if (!editor) {
+      return;
+    }
+
+    var quest = lastQuestEditorQuest || {};
+    var questId = toIdString(quest.id || "new");
+    if (editor.dataset.questTimelineSyncedFor === questId) {
+      return;
+    }
+
+    editor.dataset.questTimelineSyncedFor = questId;
+
+    var events = Array.isArray(quest.timeline_events) ? quest.timeline_events.slice() : [];
+    var start = findQuestTimelineEvent(events, "start", "quest_start");
+    var end = findQuestTimelineEvent(events, "end", "quest_end");
+
+    setQuestTimelineCardValues(editor.querySelector('[data-quest-timeline-kind="quest_start"]'), start);
+    setQuestTimelineCardValues(editor.querySelector('[data-quest-timeline-kind="quest_end"]'), end);
+
+    var milestones = editor.querySelector("[data-quest-timeline-milestones]");
+    if (milestones) {
+      Array.from(milestones.querySelectorAll('[data-quest-timeline-event]')).forEach(function removeExistingMilestone(card) {
+        card.remove();
+      });
+
+      events.filter(function isMilestone(event) {
+        return readString(event && event.quest_event_kind, "") === "quest_milestone";
+      }).forEach(function appendExistingMilestone(event) {
+        appendQuestTimelineMilestoneCard(editor, event, false);
+      });
+    }
+
+    syncQuestTimelineEmptyState(editor);
+  }
+
+  function setQuestTimelineCardValues(card, event) {
+    if (!card) {
+      return;
+    }
+
+    if (event && event.quest_event_key) {
+      card.dataset.questTimelineKey = readString(event.quest_event_key, card.dataset.questTimelineKey);
+    }
+
+    setQuestTimelineCardField(card, "title", getQuestTimelineDefaultTitle(card, event));
+    setQuestTimelineCardField(card, "dateLabel", readString(event && event.date_label, ""));
+    setQuestTimelineCardField(card, "sortKey", event && event.sort_key != null ? String(event.sort_key) : "");
+    setQuestTimelineCardField(card, "summary", readString(event && event.summary, ""));
+    setQuestTimelineCardField(card, "description", readString(event && event.description, ""));
+    setQuestTimelinePickerFromEvent(card, event);
+  }
+
+  function setQuestTimelineCardField(card, fieldName, value) {
+    var field = card && card.querySelector('[data-quest-timeline-field="' + fieldName + '"]');
+    if (field) {
+      field.value = value == null ? "" : String(value);
+    }
+  }
+
+  function findQuestTimelineEvent(events, key, kind) {
+    for (var i = 0; i < events.length; i += 1) {
+      var event = events[i];
+      if (readString(event && event.quest_event_key, "") === key) {
+        return event;
+      }
+      if (kind && readString(event && event.quest_event_kind, "") === kind) {
+        return event;
+      }
+    }
+    return null;
+  }
+
+  function readQuestTimelineEventsFromEditor(form) {
+    var editor = form.querySelector("[data-quest-timeline-editor]");
+    if (!editor) {
+      return [];
+    }
+
+    var events = [];
+    var cards = editor.querySelectorAll("[data-quest-timeline-event]");
+
+    for (var i = 0; i < cards.length; i += 1) {
+      updateQuestTimelineDateFields(cards[i], false);
+      var parsed = readQuestTimelineEventCard(cards[i]);
+      if (parsed) {
+        events.push(parsed);
+      }
+    }
+
+    return events;
+  }
+
+  function readQuestTimelineEventCard(card) {
+    var title = readQuestTimelineCardField(card, "title");
+    var dateLabel = readQuestTimelineCardField(card, "dateLabel");
+    var sortKey = readQuestTimelineCardField(card, "sortKey");
+    var summary = readQuestTimelineCardField(card, "summary");
+    var description = readQuestTimelineCardField(card, "description");
+
+    if (!title && !dateLabel && !sortKey && !summary && !description) {
+      return null;
+    }
+
+    if (!dateLabel || !sortKey) {
+      return null;
+    }
+
+    return {
+      quest_event_key: readString(card.dataset.questTimelineKey, createQuestTimelineMilestoneKey()),
+      quest_event_kind: readString(card.dataset.questTimelineKind, "quest_milestone"),
+      title: resolveQuestTimelineEventTitle(card, title),
+      summary: summary,
+      description: description,
+      date_label: dateLabel,
+      sort_key: sortKey,
+      type: "mission",
+      visibility: "players",
+      knowledge: "known",
+      truth: "confirmed",
+      state: "past",
+      importance: "3",
+      tags: ["Missione"],
+      links: [],
+    };
+  }
+
+  function resolveQuestTimelineEventTitle(card, title) {
+    var explicitTitle = readString(title, "");
+    if (explicitTitle) {
+      return explicitTitle;
+    }
+
+    var questTitle = getCurrentQuestEditorTitle();
+    var kind = readString(card && card.dataset.questTimelineKind, "quest_milestone");
+
+    if (kind === "quest_start" || kind === "quest_end") {
+      return questTitle;
+    }
+
+    return "Evento missione: " + questTitle;
+  }
+
+  function getQuestTimelineDefaultTitle(card, event) {
+    var explicitTitle = readString(event && event.title, "");
+    if (explicitTitle) {
+      return explicitTitle;
+    }
+
+    var kind = readString(card && card.dataset.questTimelineKind, "quest_milestone");
+    if (kind === "quest_start" || kind === "quest_end") {
+      return getCurrentQuestEditorTitle();
+    }
+
+    return "";
+  }
+
+  function getCurrentQuestEditorTitle() {
+    var form = document.querySelector("[data-quest-form]");
+    var titleInput = form && form.querySelector("[data-quest-title], [data-quest-title-input], [name='title'], #quest-title-input, #questTitle");
+    return readString(titleInput && titleInput.value, readString(lastQuestEditorQuest && lastQuestEditorQuest.title, "Missione"));
+  }
+
+  function readQuestTimelineCardField(card, fieldName) {
+    var field = card && card.querySelector('[data-quest-timeline-field="' + fieldName + '"]');
+    return readString(field && field.value, "");
+  }
+
+  function syncQuestTimelineEmptyState(editor) {
+    var empty = editor && editor.querySelector("[data-quest-timeline-empty]");
+    var list = editor && editor.querySelector("[data-quest-timeline-milestones]");
+    if (!empty || !list) {
+      return;
+    }
+
+    empty.hidden = !!list.querySelector('[data-quest-timeline-kind="quest_milestone"]');
+  }
+
+  function createQuestTimelineMilestoneKey() {
+    return "milestone-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
   }
 
   function enhanceQuestCompletionFields(form) {
@@ -4508,6 +5528,15 @@
     }
 
     return /^\d+$/.test(id) ? Number(id) : id;
+  }
+
+  function clampInteger(value, min, max, fallback) {
+    var number = Number(value);
+    if (!Number.isFinite(number)) {
+      return fallback;
+    }
+
+    return Math.max(min, Math.min(max, Math.round(number)));
   }
 
   function readString(value, fallback) {
