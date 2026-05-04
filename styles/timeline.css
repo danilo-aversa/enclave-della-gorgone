@@ -1333,6 +1333,7 @@
   opacity: 0.72;
   transform: translateY(-0.08rem);
   -webkit-line-clamp: 4;
+  line-clamp: 4;
 }
 
 .timeline-event-date {
@@ -1488,6 +1489,7 @@
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   opacity: 0.72;
@@ -1505,12 +1507,14 @@
   opacity: 1;
   transform: translateY(0);
   -webkit-line-clamp: 4;
+  line-clamp: 4;
 }
 
 .timeline-event:not(.is-near-focus):not(.is-expanded) .timeline-event-summary {
   max-height: 1.35rem;
   opacity: 0.72;
   -webkit-line-clamp: 4;
+  line-clamp: 4;
 }
 
 .timeline-event-meta {

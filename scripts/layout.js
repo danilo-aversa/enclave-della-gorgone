@@ -25,6 +25,7 @@
   var DEFAULT_THEME = "dark";
   var ADMIN_CODE = "Enclave";
   var MOBILE_SIDEBAR_BREAKPOINT = 980;
+  var MOBILE_WARNING_BREAKPOINT = 1024;
   var RESOLVE_PLAYER_ENDPOINT = SUPABASE_URL + "/functions/v1/resolve-player";
   var FALLBACK_TOKEN_IMAGE =
     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23162229'/><circle cx='32' cy='24' r='12' fill='%234db8a6'/><rect x='14' y='40' width='36' height='16' fill='%233b5865'/></svg>";
@@ -62,6 +63,10 @@
     mobileSidebarEventsBound: false,
     sidebarSlideToggles: [],
     desktopSidebarCollapsed: false,
+    mobileWarning: null,
+    mobileWarningClose: null,
+    mobileWarningDismissed: false,
+    mobileWarningEventsBound: false,
   };
 
   var bootstrapPromise = null;
@@ -137,6 +142,8 @@
       renderProfileWidget();
     }
 
+
+    initMobileExperienceWarning();
     state.code = readStoredAccessCode();
 
     if (dom.input && state.code) {
@@ -753,6 +760,66 @@
     return value === "light" ? "light" : DEFAULT_THEME;
   }
 
+
+  function initMobileExperienceWarning() {
+    if (!document.body) {
+      return;
+    }
+
+    dom.mobileWarning = document.createElement("aside");
+    dom.mobileWarning.className = "mobile-unsupported-warning";
+    dom.mobileWarning.setAttribute("role", "status");
+    dom.mobileWarning.setAttribute("aria-live", "polite");
+    dom.mobileWarning.hidden = true;
+    dom.mobileWarning.innerHTML =
+      '<p class="mobile-unsupported-warning__label">Avviso mobile</p>' +
+      '<p class="mobile-unsupported-warning__text">Il portale non è ancora ottimizzato per larghezze inferiori a 1024px: layout e funzioni possono non funzionare correttamente.</p>' +
+      '<button type="button" class="mobile-unsupported-warning__close" aria-label="Chiudi avviso">' +
+      '  <i class="fa-solid fa-xmark" aria-hidden="true"></i>' +
+      '</button>';
+
+    dom.mobileWarningClose = dom.mobileWarning.querySelector(
+      ".mobile-unsupported-warning__close",
+    );
+
+    if (dom.mobileWarningClose) {
+      dom.mobileWarningClose.addEventListener(
+        "click",
+        function onCloseMobileWarning() {
+          dom.mobileWarningDismissed = true;
+          syncMobileExperienceWarning();
+        },
+      );
+    }
+
+    document.body.appendChild(dom.mobileWarning);
+
+    if (!dom.mobileWarningEventsBound) {
+      dom.mobileWarningEventsBound = true;
+      window.addEventListener("resize", syncMobileExperienceWarning);
+    }
+
+    syncMobileExperienceWarning();
+  }
+
+  function isMobileOrTabletViewport() {
+    if (typeof window.matchMedia !== "function") {
+      return window.innerWidth <= MOBILE_WARNING_BREAKPOINT;
+    }
+
+    return window.matchMedia(
+      "(max-width: " + MOBILE_WARNING_BREAKPOINT + "px)",
+    ).matches;
+  }
+
+  function syncMobileExperienceWarning() {
+    if (!dom.mobileWarning) {
+      return;
+    }
+
+    dom.mobileWarning.hidden =
+      !isMobileOrTabletViewport() || dom.mobileWarningDismissed;
+  }
   function renderProfileWidget() {
     var markup =
       '<div class="profile-widget" data-profile-root>' +
@@ -1292,6 +1359,9 @@
       : fallback;
   }
 })();
+
+
+
 
 
 
