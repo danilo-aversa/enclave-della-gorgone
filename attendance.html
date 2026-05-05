@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Appello | Enclave della Gorgone</title>
+
     <style>
       html {background: #0f171b;}
       body {margin: 0; background: #0f171b; opacity: 0; transition: opacity 160ms ease;}
@@ -11,6 +12,7 @@
       body.is-page-leaving {opacity: 0;}
       @media (prefers-reduced-motion: reduce) {body {transition: none;}}
     </style>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -24,31 +26,34 @@
     <link rel="stylesheet" href="styles/styles.css" />
     <link rel="stylesheet" href="styles/attendance.css" />
   </head>
+
   <body>
     <div class="app-layout">
       <aside data-sidebar-container></aside>
 
       <div class="content-shell">
-
-
         <main class="main-content attendance-page" aria-live="polite">
-          <section class="section-card quest-page-header" aria-labelledby="attendance-page-title">
-            <div class="quest-page-header__top">
-              <div class="quest-page-header__copy">
-                <p class="quest-page-eyebrow">Organizzazione</p>
-                <h1 id="attendance-page-title">Appello</h1>
-                <p class="hero-support">Calendario disponibilitÃ  dei membri dell'Enclave.</p>
+          <section class="section-card attendance-page-header" aria-labelledby="attendance-page-title">
+            <div class="attendance-page-header__top">
+              <div class="attendance-page-header__copy">
+                <p class="attendance-page-eyebrow">Organizzazione</p>
+                <h1 id="attendance-page-title">Sessioni</h1>
+                <p class="hero-support">
+                  Calendario operativo delle disponibilità dei membri dell'Enclave.
+                </p>
               </div>
             </div>
           </section>
 
-          <section class="section-card attendance-calendar" aria-labelledby="attendance-calendar-title">
-            <div class="attendance-calendar__head">
-              <h2 id="attendance-calendar-title">Calendario disponibilitÃ </h2>
+          <section class="section-card attendance-page-panel attendance-calendar" aria-labelledby="attendance-calendar-title">
+            <div class="attendance-page-list__head attendance-calendar__head">
+              <h2 id="attendance-calendar-title" class="attendance-calendar__range" data-attendance-range>
+                Caricamento periodo...
+              </h2>
 
-              <div class="attendance-calendar__toolbar">
+              <div class="attendance-calendar__toolbar attendance-toolbar">
                 <div class="attendance-view-switch" role="group" aria-label="Vista calendario">
-                  <button type="button" class="attendance-view-switch__btn is-active" data-attendance-view="month">
+                  <button type="button" class="attendance-view-switch__btn" data-attendance-view="month">
                     Mese
                   </button>
                   <button type="button" class="attendance-view-switch__btn" data-attendance-view="week">
@@ -56,40 +61,48 @@
                   </button>
                 </div>
 
-                <div class="attendance-nav" role="group" aria-label="Navigazione calendario">
+                <div class="attendance-nav attendance-actions" role="group" aria-label="Navigazione calendario">
                   <button type="button" class="attendance-nav__btn" data-attendance-prev>
                     <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
                     <span class="sr-only">Periodo precedente</span>
                   </button>
-                  <button type="button" class="attendance-nav__btn" data-attendance-today>Oggi</button>
+                  <button type="button" class="attendance-nav__btn" data-attendance-today>
+                    <i class="fa-solid fa-calendar-day" aria-hidden="true"></i>
+                    <span class="sr-only">Oggi</span>
+                  </button>
                   <button type="button" class="attendance-nav__btn" data-attendance-next>
                     <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                     <span class="sr-only">Periodo successivo</span>
                   </button>
                 </div>
               </div>
-
-              <p class="attendance-calendar__range" data-attendance-range>Caricamento periodo...</p>
-              <p class="attendance-calendar__profile-status" data-attendance-player-status aria-live="polite">
-                Accedi dal profilo per segnare le disponibilitÃ .
-              </p>
             </div>
+
 
             <div class="attendance-calendar__surface" data-attendance-surface>
-              <p class="quest-loading">Caricamento disponibilitÃ ...</p>
+              <p class="quest-loading">Caricamento disponibilità...</p>
             </div>
+
             <p class="attendance-calendar__feedback" data-attendance-feedback aria-live="polite"></p>
           </section>
         </main>
+
+        <footer class="site-footer">
+          <div class="footer-links">
+            <a href="docs.html?doc=lore/introduzione">Ambientazione</a>
+            <a href="#">Regole</a>
+            <a href="quests.html">Operazioni</a>
+            <a href="#">Avvisi</a>
+            <a href="#">Apri VTT</a>
+          </div>
+          <p>Ultima sincronizzazione: 05 maggio 2026, 22:15</p>
+        </footer>
       </div>
-</div>
+    </div>
+
     <script src="scripts/page-transition.js" defer></script>
     <script src="scripts/layout.js" defer></script>
     <script src="scripts/main.js" defer></script>
     <script src="scripts/attendance.js" defer></script>
   </body>
 </html>
-
-
-
-

@@ -82,7 +82,7 @@
               </div>
 
               <div class="characters-filter-block">
-                <p class="characters-filter-title">DisponibilitÃ </p>
+                <p class="characters-filter-title">Disponibilità</p>
                 <div class="characters-availability-filters">
                   <button type="button" class="characters-filter-pill is-active" data-characters-availability="all">
                     Tutti
@@ -158,7 +158,7 @@
         </section>
       </main>
     </div>
-</div>
+  </div>
 
   <div class="import-modal" data-character-import-modal hidden>
     <div class="import-modal__backdrop" data-character-import-close></div>
@@ -186,6 +186,15 @@
           data-character-portrait-file
         />
 
+        <label class="import-modal__check" for="character-external-collaborator">
+          <input
+            id="character-external-collaborator"
+            type="checkbox"
+            data-character-external-collaborator
+          />
+          <span>Collaboratore esterno</span>
+        </label>
+
         <p class="import-modal__status" data-character-import-status aria-live="polite"></p>
 
         <div class="import-modal__actions">
@@ -208,4 +217,3 @@
 </body>
 
 </html>
-

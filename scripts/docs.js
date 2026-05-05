@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   "use strict";
 
   var SUPABASE_URL = "https://atglgaritxzowshenaqr.supabase.co";
@@ -11,6 +11,7 @@
   var WIKI_IMAGE_LIST_ENDPOINT = SUPABASE_URL + "/functions/v1/list-wiki-images";
   var WIKI_MANAGE_LIST_ENDPOINT = SUPABASE_URL + "/functions/v1/list-wiki-pages";
   var WIKI_REORDER_ENDPOINT = SUPABASE_URL + "/functions/v1/reorder-wiki-pages";
+  var WIKI_DELETE_ENDPOINT = SUPABASE_URL + "/functions/v1/delete-wiki-page";
   var IMPORT_SECRET = "Gorgone-Import-9f4kLm2Qx7pR8vT1zA";
   var DOCS_SEARCH_MIN_CHARS = 2;
   var DOCS_SEARCH_LIMIT = 10;
@@ -275,6 +276,7 @@
     editorSaving: false,
     imageUploading: false,
     publishToggleBusy: false,
+    deletePageBusy: false,
     editorMode: "edit",
     editorViewMode: "editor",
     editorSourceMode: "visual",
@@ -386,6 +388,9 @@
       treeToggle: document.querySelector("[data-docs-tree-toggle]"),
       reorderToggle: document.querySelector("[data-docs-reorder-toggle]"),
       treeControls: document.querySelector(".docs-tree__controls"),
+      treeBulkControls: document.querySelector("[data-docs-tree-bulk-controls]"),
+      treeCollapseGroupsToggle: document.querySelector("[data-docs-collapse-groups-toggle]"),
+      treeCollapsePagesToggle: document.querySelector("[data-docs-collapse-pages-toggle]"),
       treePanel: document.querySelector(".docs-tree"),
       groupLinks: document.querySelectorAll("[data-doc-group-link]"),
       metaSection: document.querySelector("[data-docs-meta-section]"),
@@ -441,6 +446,7 @@
       treeContextNew: document.querySelector("[data-docs-tree-context-new]"),
       treeContextEdit: document.querySelector("[data-docs-tree-context-edit]"),
       treeContextToggle: document.querySelector("[data-docs-tree-context-toggle]"),
+      treeContextDelete: document.querySelector("[data-docs-tree-context-delete]"),
       treeContextSubpage: document.querySelector("[data-docs-tree-context-subpage]"),
       treeContextGroupPage: document.querySelector("[data-docs-tree-context-group-page]"),
       treeContextIcon: document.querySelector("[data-docs-tree-context-icon]"),
@@ -463,6 +469,7 @@
 
     ensureDocsTreeContextEnhancements();
     ensureDocsMobileNavigation();
+    ensureDocsTreeBulkControls();
     bindUIEvents();
     syncDocsTreeToggleState();
     syncManageAccessState();
@@ -646,6 +653,101 @@
     }
   }
 
+  function ensureDocsTreeFooterControls() {
+    if (!state.elements || !state.elements.treePanel || !state.elements.tree) {
+      return null;
+    }
+
+    var footer = state.elements.treeFooterControls;
+
+    if (!footer || !footer.isConnected) {
+      footer = state.elements.treePanel.querySelector("[data-docs-tree-footer-controls]");
+    }
+
+    if (!footer) {
+      footer = document.createElement("div");
+      footer.className = "docs-tree-footer-controls";
+      footer.setAttribute("data-docs-tree-footer-controls", "");
+    }
+
+    if (footer.parentNode !== state.elements.treePanel) {
+      state.elements.treePanel.appendChild(footer);
+    }
+
+    if (footer.previousElementSibling !== state.elements.tree) {
+      if (state.elements.tree.nextSibling) {
+        state.elements.treePanel.insertBefore(footer, state.elements.tree.nextSibling);
+      } else {
+        state.elements.treePanel.appendChild(footer);
+      }
+    }
+
+    state.elements.treeFooterControls = footer;
+    return footer;
+  }
+
+  function syncDocsTreeFooterControls() {
+    var footer = ensureDocsTreeFooterControls();
+    if (!footer) {
+      return;
+    }
+
+    if (state.elements.treeBulkControls && state.elements.treeBulkControls.parentNode !== footer) {
+      footer.appendChild(state.elements.treeBulkControls);
+    }
+
+    if (state.elements.reorderToggle && state.elements.reorderToggle.parentNode !== footer) {
+      footer.appendChild(state.elements.reorderToggle);
+    }
+  }
+
+  function ensureDocsTreeBulkControls() {
+    if (!state.elements || !state.elements.treePanel || !state.elements.tree) {
+      return;
+    }
+
+    var footer = ensureDocsTreeFooterControls();
+
+    if (state.elements.treeBulkControls && state.elements.treeBulkControls.isConnected) {
+      syncDocsTreeFooterControls();
+      syncDocsTreeBulkControlsUi();
+      return;
+    }
+
+    var controls = document.createElement("div");
+    controls.className = "docs-tree-bulk-controls";
+    controls.setAttribute("data-docs-tree-bulk-controls", "");
+    controls.setAttribute("aria-label", "Controlli indice");
+
+    var groupsButton = document.createElement("button");
+    groupsButton.type = "button";
+    groupsButton.className = "docs-tree-bulk-controls__btn";
+    groupsButton.setAttribute("data-docs-collapse-groups-toggle", "");
+    groupsButton.innerHTML = '<i class="fa-solid fa-folder-tree" aria-hidden="true"></i><span>Collassa gruppi</span>';
+
+    var pagesButton = document.createElement("button");
+    pagesButton.type = "button";
+    pagesButton.className = "docs-tree-bulk-controls__btn";
+    pagesButton.setAttribute("data-docs-collapse-pages-toggle", "");
+    pagesButton.innerHTML = '<i class="fa-solid fa-file-lines" aria-hidden="true"></i><span>Collassa sottopagine</span>';
+
+    controls.appendChild(groupsButton);
+    controls.appendChild(pagesButton);
+
+    if (footer) {
+      footer.appendChild(controls);
+    } else {
+      state.elements.treePanel.appendChild(controls);
+    }
+
+    state.elements.treeBulkControls = controls;
+    state.elements.treeCollapseGroupsToggle = groupsButton;
+    state.elements.treeCollapsePagesToggle = pagesButton;
+
+    syncDocsTreeFooterControls();
+    syncDocsTreeBulkControlsUi();
+  }
+
   function ensureDocsTreeContextEnhancements() {
     if (!state.elements || !state.elements.treeContextMenu) {
       return;
@@ -682,6 +784,17 @@
       iconButton.innerHTML = '<i class="fa-solid fa-icons" aria-hidden="true"></i><span>Assegna icona</span>';
       state.elements.treeContextMenu.appendChild(iconButton);
       state.elements.treeContextIcon = iconButton;
+    }
+
+    if (!state.elements.treeContextDelete) {
+      var deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "docs-tree-context__action docs-tree-context__action--danger";
+      deleteButton.setAttribute("data-docs-tree-context-delete", "");
+      deleteButton.setAttribute("role", "menuitem");
+      deleteButton.innerHTML = '<i class="fa-solid fa-trash" aria-hidden="true"></i><span>Elimina pagina</span>';
+      state.elements.treeContextMenu.appendChild(deleteButton);
+      state.elements.treeContextDelete = deleteButton;
     }
   }
 
@@ -843,6 +956,19 @@
         setReorderMode(!state.reorderMode);
       });
     }
+
+    if (state.elements.treeCollapseGroupsToggle) {
+      state.elements.treeCollapseGroupsToggle.addEventListener("click", function onCollapseGroupsToggleClick() {
+        toggleDocsTreeCollapseKind("group");
+      });
+    }
+
+    if (state.elements.treeCollapsePagesToggle) {
+      state.elements.treeCollapsePagesToggle.addEventListener("click", function onCollapsePagesToggleClick() {
+        toggleDocsTreeCollapseKind("doc");
+      });
+    }
+
     if (state.elements.createOpen) {
       state.elements.createOpen.addEventListener("click", function onCreateOpenClick() {
         openEditorForCreate();
@@ -884,6 +1010,15 @@
         var entry = getTreeContextEntry();
         closeDocsTreeContextMenu();
         togglePublishForEntry(entry);
+      });
+    }
+
+    if (state.elements.treeContextDelete) {
+      state.elements.treeContextDelete.addEventListener("click", function onTreeContextDeleteClick(event) {
+        event.preventDefault();
+        var entry = getTreeContextEntry();
+        closeDocsTreeContextMenu();
+        deleteWikiEntry(entry);
       });
     }
 
@@ -1265,6 +1400,7 @@
 
     window.addEventListener("resize", function onResize() {
       syncDocsTreeToggleState();
+      syncDocsTreeBulkControlsUi();
       closeDocsTreeContextMenu();
       closeDocsTreeIconPicker();
       closeEditorMarkdownContextMenu();
@@ -4380,6 +4516,114 @@
     } finally {
       setPublishToggleBusyState(false);
     }
+  }
+
+  function findChildPagesForEntry(entry) {
+    if (!entry || !state.manageIndex || !Array.isArray(state.manageIndex.pages)) {
+      return [];
+    }
+
+    var docKey = normalizeDocPath(readString(entry.docKey, ""));
+    if (!docKey) {
+      return [];
+    }
+
+    var children = [];
+    for (var i = 0; i < state.manageIndex.pages.length; i += 1) {
+      var page = state.manageIndex.pages[i];
+      if (!page || page.docKey === docKey) {
+        continue;
+      }
+
+      if (normalizeDocPath(readString(page.parentSlug, "")) === docKey) {
+        children.push(page);
+      }
+    }
+
+    return children;
+  }
+
+  function buildDeletePayload(entry) {
+    return {
+      section: readString(entry.sectionSlug, ""),
+      slug: normalizeDocPath(readString(entry.rawSlug, entry.docKey || "")),
+      doc_key: normalizeDocPath(readString(entry.docKey, "")),
+    };
+  }
+
+  async function deleteWikiEntry(entry) {
+    if (!state.isManageUnlocked || !entry || state.deletePageBusy) {
+      return;
+    }
+
+    var children = findChildPagesForEntry(entry);
+    if (children.length) {
+      window.alert("Questa pagina ha sottopagine. Spostale o cancellale prima di eliminare la pagina genitore.");
+      return;
+    }
+
+    var title = readString(entry.title, "questa pagina");
+    var confirmText = 'Eliminare definitivamente "' + title + '"?' + "" + "Questa operazione non può essere annullata.";
+    if (!window.confirm(confirmText)) {
+      return;
+    }
+
+    var isCurrentEntry = !!(state.currentEntry && state.currentEntry.docKey === entry.docKey);
+    var currentDocKey = state.currentEntry ? state.currentEntry.docKey : "";
+    var payload = buildDeletePayload(entry);
+
+    state.deletePageBusy = true;
+    syncEditActionVisibility();
+
+    try {
+      await submitWikiDelete(payload);
+
+      if (isCurrentEntry) {
+        await refreshDocsData("", {
+          preferPublishedFallback: true,
+          sectionSlug: entry.sectionSlug,
+          excludeDocKey: entry.docKey,
+        });
+      } else {
+        await refreshDocsData(currentDocKey, {
+          preferPublishedFallback: false,
+        });
+      }
+    } catch (error) {
+      console.error("Errore eliminazione pagina wiki:", error);
+      renderDocErrorState({
+        title: "Operazione non completata",
+        message: readString(error && error.message, "Eliminazione pagina non riuscita."),
+      });
+    } finally {
+      state.deletePageBusy = false;
+      syncEditActionVisibility();
+    }
+  }
+
+  async function submitWikiDelete(payload) {
+    var response = await fetch(WIKI_DELETE_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: "Bearer " + SUPABASE_ANON_KEY,
+        "x-import-secret": IMPORT_SECRET,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    var responseBody = await parseResponseBody(response);
+
+    if (!response.ok) {
+      throw new Error(readSupabaseError(responseBody, response.status));
+    }
+
+    if (responseBody && responseBody.success === false) {
+      throw new Error(readString(responseBody.error || responseBody.message, "Eliminazione pagina non riuscita."));
+    }
+
+    return responseBody || {};
   }
 
   function buildPublishPayload(entry, isPublished) {
@@ -16270,6 +16514,7 @@
     var editButton = state.elements.treeContextEdit;
     var toggleButton = state.elements.treeContextToggle;
     var iconButton = state.elements.treeContextIcon;
+    var deleteButton = state.elements.treeContextDelete;
     var subpageButton = state.elements.treeContextSubpage;
     var groupPageButton = state.elements.treeContextGroupPage;
 
@@ -16297,6 +16542,11 @@
 
     if (iconButton) {
       iconButton.hidden = normalizedMode === "blank";
+    }
+
+    if (deleteButton) {
+      deleteButton.hidden = normalizedMode === "blank" || normalizedMode === "group";
+      deleteButton.disabled = state.deletePageBusy;
     }
 
     var toggleIcon = toggleButton.querySelector("i");
@@ -16428,6 +16678,7 @@
     if (!sections.length) {
       container.innerHTML = '<p class="docs-state">Indice non disponibile.</p>';
       renderDocsSearchResults();
+      syncDocsTreeBulkControlsUi();
       return;
     }
 
@@ -16463,6 +16714,7 @@
 
     container.appendChild(wrapper);
     renderDocsSearchResults();
+    syncDocsTreeBulkControlsUi();
   }
 
   function renderHiddenPagesGroup(sectionBlock, sectionSlug) {
@@ -16571,6 +16823,122 @@
 
     persistDocsTreeCollapsedSet();
     renderDocsTree();
+  }
+
+  function getRenderedDocsTreeCollapseKeys(kind) {
+    if (!state.elements || !state.elements.tree) {
+      return [];
+    }
+
+    var prefix = cleanSegment(kind || "") + ":";
+    var nodes = state.elements.tree.querySelectorAll("[data-docs-tree-collapse]");
+    var seen = Object.create(null);
+    var keys = [];
+
+    for (var i = 0; i < nodes.length; i += 1) {
+      var key = readString(nodes[i].getAttribute("data-docs-tree-collapse"), "");
+      if (!key || key.indexOf(prefix) !== 0 || seen[key]) {
+        continue;
+      }
+
+      seen[key] = true;
+      keys.push(key);
+    }
+
+    return keys;
+  }
+
+  function areAllDocsTreeKeysCollapsed(keys) {
+    if (!Array.isArray(keys) || !keys.length) {
+      return false;
+    }
+
+    var set = getDocsTreeCollapsedSet();
+    for (var i = 0; i < keys.length; i += 1) {
+      if (!set.has(keys[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function toggleDocsTreeCollapseKind(kind) {
+    var keys = getRenderedDocsTreeCollapseKeys(kind);
+    if (!keys.length) {
+      syncDocsTreeBulkControlsUi();
+      return;
+    }
+
+    var shouldExpand = areAllDocsTreeKeysCollapsed(keys);
+    var set = getDocsTreeCollapsedSet();
+
+    for (var i = 0; i < keys.length; i += 1) {
+      if (shouldExpand) {
+        set.delete(keys[i]);
+      } else {
+        set.add(keys[i]);
+      }
+    }
+
+    persistDocsTreeCollapsedSet();
+    renderDocsTree();
+  }
+
+  function syncDocsTreeBulkButton(button, keys, collapseLabel, expandLabel, collapseIcon, expandIcon) {
+    if (!button) {
+      return;
+    }
+
+    var hasKeys = Array.isArray(keys) && keys.length > 0;
+    var allCollapsed = hasKeys && areAllDocsTreeKeysCollapsed(keys);
+    var label = allCollapsed ? expandLabel : collapseLabel;
+    var iconClass = allCollapsed ? expandIcon : collapseIcon;
+    var icon = button.querySelector("i");
+    var text = button.querySelector("span");
+
+    button.hidden = !hasKeys || isMobileViewport();
+    button.disabled = !hasKeys;
+    button.setAttribute("aria-pressed", allCollapsed ? "true" : "false");
+    setIconButtonLabel(button, label);
+
+    if (icon) {
+      icon.className = iconClass;
+    }
+
+    if (text) {
+      text.textContent = label;
+    }
+  }
+
+  function syncDocsTreeBulkControlsUi() {
+    if (!state.elements || !state.elements.treeBulkControls) {
+      return;
+    }
+
+    var groupKeys = getRenderedDocsTreeCollapseKeys("group");
+    var docKeys = getRenderedDocsTreeCollapseKeys("doc");
+    var isDesktop = !isMobileViewport();
+
+    state.elements.treeBulkControls.hidden = !isDesktop || (!groupKeys.length && !docKeys.length);
+
+    syncDocsTreeBulkButton(
+      state.elements.treeCollapseGroupsToggle,
+      groupKeys,
+      "Collassa gruppi",
+      "Espandi gruppi",
+      "fa-solid fa-folder-minus",
+      "fa-solid fa-folder-plus"
+    );
+
+    syncDocsTreeBulkButton(
+      state.elements.treeCollapsePagesToggle,
+      docKeys,
+      "Collassa sottopagine",
+      "Espandi sottopagine",
+      "fa-solid fa-file-circle-minus",
+      "fa-solid fa-file-circle-plus"
+    );
   }
 
   function readDocsTreeGroupFromElement(element) {

@@ -25,6 +25,7 @@
       form: document.querySelector("[data-character-import-form]"),
       jsonInput: document.querySelector("[data-character-json-file]"),
       portraitInput: document.querySelector("[data-character-portrait-file]"),
+      externalCollaboratorInput: document.querySelector("[data-character-external-collaborator]"),
       submitButton: document.querySelector("[data-character-import-submit]"),
       status: document.querySelector("[data-character-import-status]"),
     };
@@ -121,11 +122,15 @@
       try {
         actorData = JSON.parse(jsonText);
       } catch (parseError) {
-        throw new Error("Il file JSON non è valido.");
+        throw new Error("Il file JSON non Ã¨ valido.");
       }
 
       var formData = new FormData();
       formData.append("character_json", jsonFile);
+      formData.append(
+        "is_external_collaborator",
+        elements.externalCollaboratorInput && elements.externalCollaboratorInput.checked ? "true" : "false"
+      );
 
       if (portraitFile) {
         formData.append("portrait_image", portraitFile);
@@ -247,9 +252,14 @@
     if (elements.portraitInput) {
       elements.portraitInput.disabled = isSubmitting;
     }
+
+    if (elements.externalCollaboratorInput) {
+      elements.externalCollaboratorInput.disabled = isSubmitting;
+    }
   }
 
   function readString(value, fallback) {
     return typeof value === "string" && value.trim() !== "" ? value : fallback;
   }
 })();
+

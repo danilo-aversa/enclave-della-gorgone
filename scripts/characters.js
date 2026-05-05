@@ -9,7 +9,20 @@
     "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Z2xnYXJpdHh6b3dzaGVuYXFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NzcxNDQsImV4cCI6MjA5MjM1MzE0NH0.ObDvvWMkddZL8wABKyI-TBi4KgVoYArJQjoOnAmVVe8"
   );
 
+  var IMPORT_SECRET = "Gorgone-Import-9f4kLm2Qx7pR8vT1zA";
+
   var ACTIVE_QUEST_STATUSES = new Set(["in-corso", "preparazione", "prioritaria"]);
+  var COMPLETED_QUEST_STATUSES = new Set([
+    "completata",
+    "completato",
+    "conclusa",
+    "concluso",
+    "archiviata",
+    "archiviato",
+    "completed",
+    "complete",
+    "done",
+  ]);
 
   var state = {
     all: [],
@@ -17,12 +30,15 @@
     selectedSlug: "",
     classFilters: new Set(),
     availability: "all",
+    isUpdatingCharacter: false,
+    rosterDragSuppressClickUntil: 0,
   };
 
   document.addEventListener("DOMContentLoaded", initCharactersPage);
 
   async function initCharactersPage() {
     var elements = {
+      filters: document.querySelector(".characters-filters"),
       search: document.querySelector("[data-characters-search]"),
       searchToggle: document.querySelector("[data-characters-search-toggle]"),
       searchPanel: document.querySelector("[data-characters-search-panel]"),
@@ -38,13 +54,20 @@
       return;
     }
 
+    setupFiltersDrawer(elements);
     bindSearch(elements);
+    setupAvailabilityFilterButtons(elements);
     bindAvailabilityFilters(elements);
     bindRosterControls(elements);
+    bindRosterDrag(elements);
 
     try {
       var payload = await fetchCharactersPageData();
-      state.all = normalizeCharacters(payload.characters, payload.activeQuestByCharacter);
+      state.all = normalizeCharacters(
+        payload.characters,
+        payload.activeQuestByCharacter,
+        payload.completedQuestsByCharacter
+      );
 
       renderClassFilters(elements);
 
@@ -85,6 +108,111 @@
       renderCharacterDetail(elements, current);
       updateRosterNavState(elements);
     });
+  }
+
+  function setupFiltersDrawer(elements) {
+    var filters = elements.filters;
+
+    if (!filters || filters.dataset.filterDrawerReady === "true") {
+      return;
+    }
+
+    var panelId = "characters-filter-panel";
+    var toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "characters-filter-toggle";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-controls", panelId);
+    toggle.innerHTML = '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i><span>Filtri e ricerca</span>';
+
+    var panel = document.createElement("div");
+    panel.id = panelId;
+    panel.className = "characters-filter-panel";
+    panel.hidden = true;
+
+    var inner = document.createElement("div");
+    inner.className = "characters-filters";
+
+    while (filters.firstChild) {
+      inner.appendChild(filters.firstChild);
+    }
+
+    panel.appendChild(inner);
+
+    filters.classList.remove("characters-filters");
+    filters.classList.add("characters-filter-drawer");
+    filters.dataset.filterDrawerReady = "true";
+    filters.appendChild(toggle);
+    filters.appendChild(panel);
+    placeFiltersDrawerAfterRoster(elements, filters);
+
+    elements.filterToggle = toggle;
+    elements.filterPanel = panel;
+
+    toggle.addEventListener("click", function onFilterToggleClick() {
+      var nextExpanded = panel.hidden;
+      panel.hidden = !nextExpanded;
+      toggle.setAttribute("aria-expanded", String(nextExpanded));
+    });
+  }
+
+  function placeFiltersDrawerAfterRoster(elements, filters) {
+    if (!filters || !elements || !elements.roster) {
+      return;
+    }
+
+    var rosterShell = elements.roster.closest(".characters-roster-shell");
+
+    if (!rosterShell) {
+      return;
+    }
+
+    var header = ensureRosterHeader(rosterShell);
+    var actions = header.querySelector(".characters-roster-head__actions");
+
+    if (!actions || filters.parentNode === actions) {
+      return;
+    }
+
+    filters.classList.add(
+      "characters-filter-drawer--bubble",
+      "characters-filter-drawer--in-roster",
+      "characters-filter-drawer--in-header"
+    );
+    rosterShell.classList.add("characters-roster-shell--has-filter-drawer");
+    actions.appendChild(filters);
+  }
+
+  function ensureRosterHeader(rosterShell) {
+    var existing = rosterShell.querySelector(":scope > .characters-roster-head");
+
+    if (existing) {
+      return existing;
+    }
+
+    var header = document.createElement("header");
+    header.className = "characters-roster-head";
+
+    var titleWrap = document.createElement("div");
+    titleWrap.className = "characters-roster-head__title-wrap";
+
+    var eyebrow = document.createElement("span");
+    eyebrow.className = "characters-roster-head__eyebrow";
+    eyebrow.textContent = "Archivio Enclave";
+
+    var title = document.createElement("h2");
+    title.className = "characters-roster-head__title";
+    title.textContent = "Agenti Operativi";
+
+    var actions = document.createElement("div");
+    actions.className = "characters-roster-head__actions";
+
+    titleWrap.appendChild(title);
+    header.appendChild(titleWrap);
+    header.appendChild(actions);
+    rosterShell.insertBefore(header, rosterShell.firstChild);
+
+    return header;
   }
 
   function bindSearch(elements) {
@@ -141,6 +269,54 @@
     });
   }
 
+  function setupAvailabilityFilterButtons(elements) {
+    if (!elements.availabilityButtons || !elements.availabilityButtons.length) {
+      return;
+    }
+
+    for (var i = 0; i < elements.availabilityButtons.length; i += 1) {
+      var button = elements.availabilityButtons[i];
+      var value = button.getAttribute("data-characters-availability") || "all";
+      var label = getAvailabilityFilterLabel(value);
+      var iconClass = getAvailabilityFilterIconClass(value);
+
+      button.classList.add("characters-availability-filter");
+      button.setAttribute("aria-label", label);
+      button.title = label;
+      button.innerHTML =
+        '<span class="characters-availability-filter__icon"><i class="fa-solid ' +
+        iconClass +
+        '" aria-hidden="true"></i></span>' +
+        '<span class="characters-availability-filter__label">' +
+        label +
+        '</span>';
+    }
+
+    syncAvailabilityButtons(elements);
+  }
+
+  function getAvailabilityFilterLabel(value) {
+    switch (value) {
+      case "free":
+        return "Disponibili";
+      case "engaged":
+        return "Impegnati";
+      default:
+        return "Tutti";
+    }
+  }
+
+  function getAvailabilityFilterIconClass(value) {
+    switch (value) {
+      case "free":
+        return "fa-feather";
+      case "engaged":
+        return "fa-crosshairs";
+      default:
+        return "fa-users";
+    }
+  }
+
   function bindAvailabilityFilters(elements) {
     if (!elements.availabilityButtons || !elements.availabilityButtons.length) {
       return;
@@ -177,7 +353,103 @@
 
     window.addEventListener("resize", function onResize() {
       updateRosterNavState(elements);
+      scheduleCharacterHeaderWidthSync(elements.detail);
     });
+  }
+
+  function bindRosterDrag(elements) {
+    var roster = elements.roster;
+
+    if (!roster || roster.dataset.rosterDragReady === "true") {
+      return;
+    }
+
+    roster.dataset.rosterDragReady = "true";
+    roster.classList.add("is-grabbable");
+
+    var drag = {
+      pointerId: null,
+      startX: 0,
+      startScrollLeft: 0,
+      moved: false,
+    };
+
+    roster.addEventListener("pointerdown", function onRosterPointerDown(event) {
+      if (event.button !== undefined && event.button !== 0) {
+        return;
+      }
+
+      if (event.target && event.target.closest("input, textarea, select, a")) {
+        return;
+      }
+
+      drag.pointerId = event.pointerId;
+      drag.startX = event.clientX;
+      drag.startScrollLeft = roster.scrollLeft;
+      drag.moved = false;
+      roster.classList.add("is-pointer-down");
+    });
+
+    roster.addEventListener("pointermove", function onRosterPointerMove(event) {
+      if (drag.pointerId !== event.pointerId) {
+        return;
+      }
+
+      var deltaX = event.clientX - drag.startX;
+
+      if (!drag.moved && Math.abs(deltaX) < 5) {
+        return;
+      }
+
+      drag.moved = true;
+      roster.classList.add("is-dragging");
+
+      try {
+        roster.setPointerCapture(event.pointerId);
+      } catch (_error) {
+        // Pointer capture can fail on some synthetic events. Drag still works without it.
+      }
+      roster.scrollLeft = drag.startScrollLeft - deltaX;
+      event.preventDefault();
+      updateRosterNavState(elements);
+    });
+
+    function endRosterDrag(event) {
+      if (drag.pointerId !== event.pointerId) {
+        return;
+      }
+
+      if (drag.moved) {
+        state.rosterDragSuppressClickUntil = Date.now() + 260;
+      }
+
+      roster.classList.remove("is-pointer-down", "is-dragging");
+
+      try {
+        roster.releasePointerCapture(event.pointerId);
+      } catch (_error) {
+        // Safe to ignore when capture was not active.
+      }
+
+      drag.pointerId = null;
+      drag.startX = 0;
+      drag.startScrollLeft = 0;
+      drag.moved = false;
+      updateRosterNavState(elements);
+    }
+
+    roster.addEventListener("pointerup", endRosterDrag);
+    roster.addEventListener("pointercancel", endRosterDrag);
+    roster.addEventListener(
+      "click",
+      function onRosterClickAfterDrag(event) {
+        if (Date.now() <= state.rosterDragSuppressClickUntil) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      true
+    );
   }
 
   async function fetchCharactersPageData() {
@@ -189,13 +461,16 @@
 
     var responses = await Promise.all([
       fetchFromSupabase("characters", "*", "order=name.asc", key),
-      fetchFromSupabase("quests", "id,slug,title,status,location,next_session_at", "", key),
+      fetchFromSupabase("quests", "*", "", key),
       fetchFromSupabase("quest_characters", "quest_id,character_id", "", key),
     ]);
 
+    var questMaps = buildQuestMaps(responses[1], responses[2]);
+
     return {
       characters: responses[0],
-      activeQuestByCharacter: buildActiveQuestByCharacter(responses[1], responses[2]),
+      activeQuestByCharacter: questMaps.activeQuestByCharacter,
+      completedQuestsByCharacter: questMaps.completedQuestsByCharacter,
     };
   }
 
@@ -229,27 +504,28 @@
     return payload;
   }
 
-  function buildActiveQuestByCharacter(quests, questCharacters) {
+  function buildQuestMaps(quests, questCharacters) {
     var activeQuests = new Map();
+    var completedQuests = new Map();
     var activeQuestByCharacter = new Map();
+    var completedQuestsByCharacter = new Map();
 
     for (var i = 0; i < quests.length; i += 1) {
       var quest = quests[i];
       var questId = quest && quest.id !== null && quest.id !== undefined ? String(quest.id) : "";
-      var status = readString(quest && quest.status, "");
+      var status = normalizeStatus(quest && quest.status);
 
-      if (!questId || !ACTIVE_QUEST_STATUSES.has(status)) {
+      if (!questId) {
         continue;
       }
 
-      activeQuests.set(questId, {
-        id: quest.id,
-        slug: readString(quest.slug, ""),
-        title: readString(quest.title, "Missione"),
-        status: status,
-        location: readString(quest.location, ""),
-        next_session_at: readString(quest.next_session_at, ""),
-      });
+      if (ACTIVE_QUEST_STATUSES.has(status)) {
+        activeQuests.set(questId, normalizeQuestSummary(quest));
+      }
+
+      if (COMPLETED_QUEST_STATUSES.has(status)) {
+        completedQuests.set(questId, normalizeQuestSummary(quest));
+      }
     }
 
     for (var j = 0; j < questCharacters.length; j += 1) {
@@ -257,19 +533,58 @@
       var questIdKey = row && row.quest_id !== null && row.quest_id !== undefined ? String(row.quest_id) : "";
       var characterIdKey = row && row.character_id !== null && row.character_id !== undefined ? String(row.character_id) : "";
 
-      if (!questIdKey || !characterIdKey || !activeQuests.has(questIdKey)) {
+      if (!questIdKey || !characterIdKey) {
         continue;
       }
 
-      var candidate = activeQuests.get(questIdKey);
-      var current = activeQuestByCharacter.get(characterIdKey);
+      if (activeQuests.has(questIdKey)) {
+        var candidate = activeQuests.get(questIdKey);
+        var current = activeQuestByCharacter.get(characterIdKey);
 
-      if (!current || compareActiveQuestPriority(candidate, current) > 0) {
-        activeQuestByCharacter.set(characterIdKey, candidate);
+        if (!current || compareActiveQuestPriority(candidate, current) > 0) {
+          activeQuestByCharacter.set(characterIdKey, candidate);
+        }
+      }
+
+      if (completedQuests.has(questIdKey)) {
+        var completedList = completedQuestsByCharacter.get(characterIdKey) || [];
+        completedList.push(completedQuests.get(questIdKey));
+        completedQuestsByCharacter.set(characterIdKey, completedList);
       }
     }
 
-    return activeQuestByCharacter;
+    completedQuestsByCharacter.forEach(function sortCompletedQuests(list) {
+      list.sort(compareCompletedQuests);
+    });
+
+    return {
+      activeQuestByCharacter: activeQuestByCharacter,
+      completedQuestsByCharacter: completedQuestsByCharacter,
+    };
+  }
+
+  function normalizeQuestSummary(quest) {
+    return {
+      id: quest.id,
+      slug: readString(quest.slug, ""),
+      title: readString(quest.title, "Missione"),
+      status: normalizeStatus(quest.status),
+      location: readString(quest.location, ""),
+      next_session_at: readString(quest.next_session_at, ""),
+      last_session_at: readString(quest.last_session_at, ""),
+      completed_at:
+        readString(quest.completed_at, "") ||
+        readString(quest.finished_at, "") ||
+        readString(quest.ended_at, "") ||
+        readString(quest.operation_end_at, "") ||
+        readString(quest.end_date, "") ||
+        readString(quest.last_session_at, ""),
+      started_at:
+        readString(quest.started_at, "") ||
+        readString(quest.operation_start_at, "") ||
+        readString(quest.start_date, "") ||
+        readString(quest.created_at, ""),
+    };
   }
 
   function compareActiveQuestPriority(left, right) {
@@ -299,7 +614,7 @@
   }
 
   function getQuestStatusPriority(status) {
-    switch (readString(status, "")) {
+    switch (normalizeStatus(status)) {
       case "prioritaria":
         return 3;
       case "in-corso":
@@ -309,6 +624,29 @@
       default:
         return 0;
     }
+  }
+
+  function compareCompletedQuests(left, right) {
+    var leftTime = toSortableDate(left && left.completed_at);
+    var rightTime = toSortableDate(right && right.completed_at);
+
+    if (leftTime !== rightTime) {
+      if (leftTime === Infinity) {
+        return 1;
+      }
+
+      if (rightTime === Infinity) {
+        return -1;
+      }
+
+      return rightTime - leftTime;
+    }
+
+    return readString(left && left.title, "").localeCompare(readString(right && right.title, ""), "it");
+  }
+
+  function normalizeStatus(value) {
+    return readString(value, "").toLowerCase();
   }
 
   function toSortableDate(value) {
@@ -325,7 +663,7 @@
     return parsed.getTime();
   }
 
-  function normalizeCharacters(rows, activeQuestByCharacter) {
+  function normalizeCharacters(rows, activeQuestByCharacter, completedQuestsByCharacter) {
     return rows
       .map(function (row) {
         var name = readString(row.name, "Personaggio senza nome");
@@ -333,6 +671,7 @@
         var fallbackSlug = slugify(name || foundryId || String(row.id || "personaggio"));
         var characterId = row && row.id !== null && row.id !== undefined ? String(row.id) : "";
         var activeQuest = activeQuestByCharacter.get(characterId) || null;
+        var completedQuests = completedQuestsByCharacter.get(characterId) || [];
 
         return {
           id: row.id,
@@ -356,10 +695,12 @@
             readString(row.quote, "") ||
             readString(row.tagline, "") ||
             readString(row.catchphrase, ""),
+          operative_rule: normalizeOperativeRule(row.operative_rule),
           bio: readString(row.bio, ""),
           appearance: readString(row.appearance, ""),
           trait: readString(row.trait, ""),
           status: readString(row.status, ""),
+          isExternalCollaborator: readBoolean(row.is_external_collaborator),
           medals: normalizeMedals(
             row.medals !== undefined
               ? row.medals
@@ -371,6 +712,7 @@
           ),
           engagement: activeQuest ? "engaged" : "free",
           activeQuest: activeQuest,
+          completedQuests: completedQuests,
         };
       })
       .filter(function (row) {
@@ -563,7 +905,9 @@
 
     for (var i = 0; i < elements.availabilityButtons.length; i += 1) {
       var value = elements.availabilityButtons[i].getAttribute("data-characters-availability") || "all";
-      elements.availabilityButtons[i].classList.toggle("is-active", value === state.availability);
+      var isActive = value === state.availability;
+      elements.availabilityButtons[i].classList.toggle("is-active", isActive);
+      elements.availabilityButtons[i].setAttribute("aria-pressed", String(isActive));
     }
   }
 
@@ -598,13 +942,15 @@
       return;
     }
 
-    if (!findBySlug(state.filtered, state.selectedSlug)) {
-      state.selectedSlug = state.filtered[0].slug;
+    var selectedCharacter = findBySlug(state.all, state.selectedSlug) || findBySlug(state.filtered, state.selectedSlug) || state.filtered[0];
+
+    if (!state.selectedSlug && selectedCharacter) {
+      state.selectedSlug = selectedCharacter.slug;
       updateUrlCharacter(state.selectedSlug, true);
     }
 
     renderRoster(elements, preserveScroll);
-    renderCharacterDetail(elements, findBySlug(state.filtered, state.selectedSlug) || state.filtered[0]);
+    renderCharacterDetail(elements, selectedCharacter);
     updateRosterNavState(elements);
   }
 
@@ -615,54 +961,113 @@
     roster.innerHTML = "";
 
     var fragment = document.createDocumentFragment();
+    var officialCharacters = [];
+    var externalCharacters = [];
 
-    state.filtered.forEach(function (character) {
-      var button = document.createElement("button");
-      button.type = "button";
-      button.className = "roster-item" + (character.slug === state.selectedSlug ? " is-selected" : "");
-      button.setAttribute("aria-pressed", String(character.slug === state.selectedSlug));
-      button.dataset.slug = character.slug;
+    for (var i = 0; i < state.filtered.length; i += 1) {
+      if (state.filtered[i].isExternalCollaborator) {
+        externalCharacters.push(state.filtered[i]);
+      } else {
+        officialCharacters.push(state.filtered[i]);
+      }
+    }
 
-      var status = document.createElement("span");
-      status.className = "roster-item__status " + (character.engagement === "engaged" ? "is-engaged" : "is-free");
-      status.setAttribute("aria-hidden", "true");
-      status.innerHTML =
-        character.engagement === "engaged"
-          ? "<i class=\"fa-solid fa-crosshairs\" aria-hidden=\"true\"></i>"
-          : "<i class=\"fa-solid fa-feather\" aria-hidden=\"true\"></i>";
+    appendRosterGroup(fragment, officialCharacters, elements);
 
-      var image = document.createElement("img");
-      image.className = "roster-item__image";
-      image.src = character.portrait_url || character.token_url || fallbackPortraitSvg(character.name);
-      image.alt = "Ritratto di " + character.name;
-      image.addEventListener("error", function onImgError() {
-        image.src = fallbackPortraitSvg(character.name);
-      });
+    if (officialCharacters.length && externalCharacters.length) {
+      fragment.appendChild(buildRosterDivider("Collaboratori esterni"));
+    }
 
-      var label = document.createElement("span");
-      label.className = "roster-item__name";
-      label.textContent = character.name;
+    if (!officialCharacters.length && externalCharacters.length) {
+      fragment.appendChild(buildRosterDivider("Collaboratori esterni"));
+    }
 
-      button.appendChild(status);
-      button.appendChild(image);
-      button.appendChild(label);
-
-      button.addEventListener("click", function onSelectCharacter() {
-        state.selectedSlug = character.slug;
-        renderRoster(elements, true);
-        renderCharacterDetail(elements, character);
-        updateUrlCharacter(character.slug, false);
-        updateRosterNavState(elements);
-      });
-
-      fragment.appendChild(button);
-    });
+    appendRosterGroup(fragment, externalCharacters, elements);
 
     roster.appendChild(fragment);
 
     if (preserveScroll) {
       roster.scrollLeft = previousScroll;
     }
+  }
+
+  function appendRosterGroup(fragment, characters, elements) {
+    for (var i = 0; i < characters.length; i += 1) {
+      fragment.appendChild(buildRosterItem(characters[i], elements));
+    }
+  }
+
+  function buildRosterDivider(labelText) {
+    var divider = document.createElement("div");
+    divider.className = "roster-divider";
+    divider.setAttribute("role", "separator");
+
+    var line = document.createElement("span");
+    line.className = "roster-divider__line";
+    line.setAttribute("aria-hidden", "true");
+
+    var label = document.createElement("span");
+    label.className = "roster-divider__label";
+    label.textContent = labelText;
+
+    divider.appendChild(line);
+    divider.appendChild(label);
+
+    return divider;
+  }
+
+  function buildRosterItem(character, elements) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className =
+      "roster-item" +
+      (character.slug === state.selectedSlug ? " is-selected" : "") +
+      (character.isExternalCollaborator ? " is-external-collaborator" : "");
+    button.setAttribute("aria-pressed", String(character.slug === state.selectedSlug));
+    button.dataset.slug = character.slug;
+
+    var status = document.createElement("span");
+    status.className = "roster-item__status " + (character.engagement === "engaged" ? "is-engaged" : "is-free");
+    status.setAttribute("aria-hidden", "true");
+    status.innerHTML =
+      character.engagement === "engaged"
+        ? "<i class=\"fa-solid fa-crosshairs\" aria-hidden=\"true\"></i>"
+        : "<i class=\"fa-solid fa-feather\" aria-hidden=\"true\"></i>";
+
+    var image = document.createElement("img");
+    image.className = "roster-item__image";
+    image.src = character.portrait_url || character.token_url || fallbackPortraitSvg(character.name);
+    image.alt = "Ritratto di " + character.name;
+    image.addEventListener("error", function onImgError() {
+      image.src = fallbackPortraitSvg(character.name);
+    });
+
+    var label = document.createElement("span");
+    label.className = "roster-item__name";
+    label.textContent = character.name;
+
+    button.appendChild(status);
+    button.appendChild(image);
+    button.appendChild(label);
+
+    if (character.isExternalCollaborator) {
+      var badge = document.createElement("span");
+      badge.className = "roster-item__external-badge";
+      badge.title = "Collaboratore esterno";
+      badge.setAttribute("aria-label", "Collaboratore esterno");
+      badge.innerHTML = '<i class="fa-solid fa-handshake-angle" aria-hidden="true"></i>';
+      button.appendChild(badge);
+    }
+
+    button.addEventListener("click", function onSelectCharacter() {
+      state.selectedSlug = character.slug;
+      renderRoster(elements, true);
+      renderCharacterDetail(elements, character);
+      updateUrlCharacter(character.slug, false);
+      updateRosterNavState(elements);
+    });
+
+    return button;
   }
 
   function renderCharacterDetail(elements, character) {
@@ -677,10 +1082,457 @@
     var sheet = document.createElement("article");
     sheet.className = "character-sheet";
 
+    if (canManageCharacters()) {
+      sheet.appendChild(buildCharacterUpdateButton(elements, character));
+    }
+
     sheet.appendChild(buildCharacterHero(character));
     sheet.appendChild(buildCharacterLayout(character));
 
     detail.appendChild(sheet);
+    scheduleCharacterHeaderWidthSync(detail);
+  }
+
+  function buildCharacterUpdateButton(elements, character) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "character-update-button";
+    button.title = "Aggiorna personaggio";
+    button.setAttribute("aria-label", "Aggiorna personaggio");
+    button.innerHTML = '<i class="fa-solid fa-rotate" aria-hidden="true"></i>';
+
+    button.addEventListener("click", function onCharacterUpdateClick() {
+      openCharacterUpdateDialog(elements, character);
+    });
+
+    return button;
+  }
+
+  function canManageCharacters() {
+    var importTrigger = document.querySelector(
+      "[data-character-import-open], [data-character-import-trigger], [data-character-import-button], [data-character-import-modal-open]"
+    );
+    var importForm = document.querySelector("[data-character-import-form]");
+    var importModal = document.querySelector("[data-character-import-modal], .character-import-modal, .import-modal");
+    var body = document.body;
+    var html = document.documentElement;
+
+    if (hasAdminMarker(body) || hasAdminMarker(html) || hasStoredAdminRole() || hasGlobalAdminProfile()) {
+      return true;
+    }
+
+    if (hasStoredAccessCode()) {
+      return true;
+    }
+
+    if (importTrigger || importForm || importModal) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function hasAdminMarker(element) {
+    if (!element) {
+      return false;
+    }
+
+    return (
+      element.classList.contains("is-admin") ||
+      element.classList.contains("admin") ||
+      element.getAttribute("data-role") === "admin" ||
+      element.getAttribute("data-user-role") === "admin" ||
+      element.getAttribute("data-profile-role") === "admin" ||
+      element.getAttribute("data-can-import-characters") === "true" ||
+      element.getAttribute("data-can-manage-characters") === "true"
+    );
+  }
+
+  function hasStoredAdminRole() {
+    var roleKeys = [
+      "gorgoneRole",
+      "gorgoneUserRole",
+      "gorgoneProfileRole",
+      "gorgoneAccessRole",
+      "gorgonePermissionRole",
+    ];
+
+    for (var i = 0; i < roleKeys.length; i += 1) {
+      var role = readString(localStorage.getItem(roleKeys[i]), "").toLowerCase();
+      if (role === "admin" || role === "administrator" || role === "master") {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function hasStoredAccessCode() {
+    return !!readString(localStorage.getItem("gorgoneAccessCode"), "");
+  }
+
+  function hasGlobalAdminProfile() {
+    var candidates = [
+      window.gorgoneProfile,
+      window.GorgoneProfile,
+      window.gorgoneCurrentProfile,
+      window.GorgoneCurrentProfile,
+      window.currentProfile,
+    ];
+
+    for (var i = 0; i < candidates.length; i += 1) {
+      if (isAdminProfile(candidates[i])) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function isAdminProfile(profile) {
+    if (!profile || typeof profile !== "object") {
+      return false;
+    }
+
+    var role = readString(profile.role || profile.permission || profile.access_role || profile.accessRole, "").toLowerCase();
+
+    return (
+      role === "admin" ||
+      role === "administrator" ||
+      role === "master" ||
+      profile.is_admin === true ||
+      profile.isAdmin === true ||
+      profile.can_import_characters === true ||
+      profile.canImportCharacters === true ||
+      profile.can_manage_characters === true ||
+      profile.canManageCharacters === true
+    );
+  }
+
+  function isUsableAdminControl(element) {
+    if (!element) {
+      return false;
+    }
+
+    if (element.hidden || element.disabled || element.getAttribute("aria-disabled") === "true") {
+      return false;
+    }
+
+    if (element.closest("[hidden], [aria-hidden='true']")) {
+      return false;
+    }
+
+    var style = window.getComputedStyle(element);
+    return style.display !== "none" && style.visibility !== "hidden";
+  }
+
+  function openCharacterUpdateDialog(elements, character) {
+    var dialog = ensureCharacterUpdateDialog();
+    var form = dialog.querySelector("[data-character-update-form]");
+    var fileInput = dialog.querySelector("[data-character-update-json]");
+    var externalInput = dialog.querySelector("[data-character-update-external]");
+    var mottoInput = dialog.querySelector("[data-character-update-motto]");
+    var operativeRuleInput = dialog.querySelector("[data-character-update-operative-rule]");
+    var status = dialog.querySelector("[data-character-update-status]");
+    var title = dialog.querySelector("[data-character-update-title]");
+
+    if (!form || !fileInput || !externalInput || !mottoInput || !operativeRuleInput || !status || !title) {
+      return;
+    }
+
+    form.reset();
+    form.dataset.characterSlug = character.slug;
+    externalInput.checked = !!character.isExternalCollaborator;
+    mottoInput.value = character.motto || "";
+    operativeRuleInput.value = character.operative_rule || "";
+    status.textContent = "";
+    title.textContent = "Aggiorna " + character.name;
+
+    dialog.hidden = false;
+    dialog.classList.add("is-open");
+
+    window.requestAnimationFrame(function focusUpdateInput() {
+      fileInput.focus();
+    });
+
+    form.onsubmit = function onCharacterUpdateSubmit(event) {
+      event.preventDefault();
+      submitCharacterUpdate(elements, character, dialog);
+    };
+  }
+
+  function ensureCharacterUpdateDialog() {
+    var existing = document.querySelector("[data-character-update-dialog]");
+
+    if (existing) {
+      return existing;
+    }
+
+    var overlay = document.createElement("div");
+    overlay.className = "character-update-dialog";
+    overlay.hidden = true;
+    overlay.setAttribute("data-character-update-dialog", "");
+
+    var panel = document.createElement("section");
+    panel.className = "character-update-dialog__panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", "true");
+    panel.setAttribute("aria-labelledby", "character-update-dialog-title");
+
+    panel.innerHTML =
+      '<form class="character-update-dialog__form" data-character-update-form>' +
+      '<header class="character-update-dialog__head">' +
+      '<div>' +
+      '<p class="character-update-dialog__eyebrow">Dossier personaggio</p>' +
+      '<h3 id="character-update-dialog-title" data-character-update-title>Aggiorna personaggio</h3>' +
+      '</div>' +
+      '<button type="button" class="character-update-dialog__close" data-character-update-close aria-label="Chiudi">' +
+      '<i class="fa-solid fa-xmark" aria-hidden="true"></i>' +
+      '</button>' +
+      '</header>' +
+      '<label class="character-update-dialog__field">' +
+      '<span>JSON Foundry aggiornato <small>(opzionale)</small></span>' +
+      '<input type="file" accept="application/json,.json" data-character-update-json />' +
+      '</label>' +
+      '<label class="character-update-dialog__field">' +
+      '<span>Motto</span>' +
+      '<input type="text" maxlength="180" placeholder="Membro operativo dell’Enclave" data-character-update-motto />' +
+      '</label>' +
+      '<label class="character-update-dialog__field">' +
+      '<span>Ruolo narrativo</span>' +
+      '<select data-character-update-operative-rule>' +
+      '<option value="">Nessun ruolo</option>' +
+      '<option value="custode">Custode</option>' +
+      '<option value="cercatore">Cercatore</option>' +
+      '<option value="sigillatore">Sigillatore</option>' +
+      '<option value="sentinella">Sentinella</option>' +
+      '</select>' +
+      '</label>' +
+      '<label class="character-update-dialog__check">' +
+      '<input type="checkbox" data-character-update-external />' +
+      '<span>Collaboratore esterno</span>' +
+      '</label>' +
+      '<p class="character-update-dialog__status" data-character-update-status aria-live="polite"></p>' +
+      '<footer class="character-update-dialog__actions">' +
+      '<button type="button" class="character-update-dialog__secondary" data-character-update-cancel>Annulla</button>' +
+      '<button type="submit" class="character-update-dialog__primary">' +
+      '<i class="fa-solid fa-upload" aria-hidden="true"></i><span>Aggiorna</span>' +
+      '</button>' +
+      '</footer>' +
+      '</form>';
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", function onUpdateOverlayClick(event) {
+      if (event.target === overlay) {
+        closeCharacterUpdateDialog(overlay);
+      }
+    });
+
+    var closeButtons = overlay.querySelectorAll("[data-character-update-close], [data-character-update-cancel]");
+    for (var i = 0; i < closeButtons.length; i += 1) {
+      closeButtons[i].addEventListener("click", function onCloseUpdateDialog() {
+        closeCharacterUpdateDialog(overlay);
+      });
+    }
+
+    document.addEventListener("keydown", function onUpdateDialogEscape(event) {
+      if (event.key === "Escape" && !overlay.hidden) {
+        closeCharacterUpdateDialog(overlay);
+      }
+    });
+
+    return overlay;
+  }
+
+  function closeCharacterUpdateDialog(dialog) {
+    if (!dialog) {
+      return;
+    }
+
+    dialog.hidden = true;
+    dialog.classList.remove("is-open");
+  }
+
+  async function submitCharacterUpdate(elements, character, dialog) {
+    if (state.isUpdatingCharacter) {
+      return;
+    }
+
+    var form = dialog.querySelector("[data-character-update-form]");
+    var fileInput = dialog.querySelector("[data-character-update-json]");
+    var externalInput = dialog.querySelector("[data-character-update-external]");
+    var mottoInput = dialog.querySelector("[data-character-update-motto]");
+    var operativeRuleInput = dialog.querySelector("[data-character-update-operative-rule]");
+    var status = dialog.querySelector("[data-character-update-status]");
+    var submit = dialog.querySelector("button[type='submit']");
+    var file = fileInput && fileInput.files && fileInput.files[0];
+
+    state.isUpdatingCharacter = true;
+    setCharacterUpdateDialogBusy(dialog, true);
+
+    if (status) {
+      status.textContent = "Aggiornamento in corso…";
+    }
+
+    try {
+      var formData = new FormData();
+
+      if (file) {
+        var payload = await readJsonFile(file);
+        var updateFile = new File([JSON.stringify(payload)], file.name || "character.json", {
+          type: "application/json",
+        });
+
+        formData.append("character_json", updateFile);
+      }
+
+      formData.append("is_external_collaborator", externalInput && externalInput.checked ? "true" : "false");
+      formData.append("motto", mottoInput ? mottoInput.value.trim() : "");
+      formData.append("operative_rule", operativeRuleInput ? normalizeOperativeRule(operativeRuleInput.value) : "");
+      formData.append("current_character_id", character.id !== undefined && character.id !== null ? String(character.id) : "");
+      formData.append("current_character_slug", character.slug || "");
+      formData.append("current_foundry_id", character.foundry_id || "");
+      formData.append("metadata_only", file ? "false" : "true");
+      appendCharacterImportSecret(formData);
+
+      var result = await postCharacterImport(formData);
+
+      if (status) {
+        status.textContent = "Personaggio aggiornato.";
+      }
+
+      await reloadCharactersAfterUpdate(elements, character, result);
+      closeCharacterUpdateDialog(dialog);
+    } catch (error) {
+      console.warn("Errore aggiornamento personaggio:", error);
+
+      if (status) {
+        status.textContent = readString(error && error.message, "Impossibile aggiornare il personaggio.");
+      }
+    } finally {
+      state.isUpdatingCharacter = false;
+      setCharacterUpdateDialogBusy(dialog, false);
+
+      if (submit) {
+        submit.blur();
+      }
+    }
+  }
+
+  function setCharacterUpdateDialogBusy(dialog, isBusy) {
+    var controls = dialog.querySelectorAll("input, button");
+
+    for (var i = 0; i < controls.length; i += 1) {
+      controls[i].disabled = isBusy;
+    }
+  }
+
+  async function readJsonFile(file) {
+    var text = await file.text();
+
+    try {
+      return JSON.parse(text);
+    } catch (_error) {
+      throw new Error("Il file JSON non è valido.");
+    }
+  }
+
+  async function postCharacterImport(formData) {
+    var key = SUPABASE_ANON_KEY || readString(localStorage.getItem("gorgoneSupabaseAnonKey"), "");
+    var accessCode = readCharacterImportSecret();
+    var headers = {
+      apikey: key,
+      Authorization: "Bearer " + key,
+    };
+
+    if (accessCode) {
+      headers["x-import-secret"] = accessCode;
+      headers["x-gorgone-access-code"] = accessCode;
+      headers["x-access-code"] = accessCode;
+    }
+
+    var response = await fetch(SUPABASE_URL + "/functions/v1/import-character", {
+      method: "POST",
+      headers: headers,
+      body: formData,
+    });
+
+    var payload = await parseResponseBody(response);
+
+    if (!response.ok) {
+      throw new Error(readSupabaseError(payload, response.status));
+    }
+
+    return payload || {};
+  }
+
+  function readCharacterImportSecret() {
+    return IMPORT_SECRET;
+  }
+
+  function appendCharacterImportSecret(formData) {
+    var accessCode = readCharacterImportSecret();
+
+    if (!accessCode || !formData || typeof formData.append !== "function") {
+      return;
+    }
+
+    formData.append("import_secret", accessCode);
+    formData.append("access_code", accessCode);
+    formData.append("gorgone_access_code", accessCode);
+  }
+
+  async function reloadCharactersAfterUpdate(elements, previousCharacter, importResult) {
+    var payload = await fetchCharactersPageData();
+    state.all = normalizeCharacters(
+      payload.characters,
+      payload.activeQuestByCharacter,
+      payload.completedQuestsByCharacter
+    );
+
+    renderClassFilters(elements);
+
+    var updated = findUpdatedCharacter(state.all, previousCharacter, importResult) || previousCharacter;
+    state.selectedSlug = updated.slug || previousCharacter.slug;
+    applyFilters(elements, true);
+    updateRosterNavState(elements);
+  }
+
+  function findUpdatedCharacter(list, previousCharacter, importResult) {
+    var record = readImportedCharacterRecord(importResult);
+    var id = record && record.id !== undefined && record.id !== null ? String(record.id) : String(previousCharacter.id || "");
+    var foundryId = readString((record && record.foundry_id) || previousCharacter.foundry_id, "");
+    var slug = readString((record && record.slug) || previousCharacter.slug, "");
+
+    for (var i = 0; i < list.length; i += 1) {
+      if (id && String(list[i].id) === id) {
+        return list[i];
+      }
+    }
+
+    for (var j = 0; j < list.length; j += 1) {
+      if (foundryId && list[j].foundry_id === foundryId) {
+        return list[j];
+      }
+    }
+
+    for (var k = 0; k < list.length; k += 1) {
+      if (slug && list[k].slug === slug) {
+        return list[k];
+      }
+    }
+
+    return null;
+  }
+
+  function readImportedCharacterRecord(importResult) {
+    if (!importResult || typeof importResult !== "object") {
+      return null;
+    }
+
+    return importResult.character || importResult.record || importResult.data || null;
   }
 
   function buildCharacterHero(character) {
@@ -690,8 +1542,12 @@
     var portraitPanel = document.createElement("section");
     portraitPanel.className = "character-hero__portrait";
 
-    var portraitFrame = document.createElement("div");
-    portraitFrame.className = "character-hero__portrait-frame";
+    var portraitFrame = document.createElement("button");
+    portraitFrame.type = "button";
+    portraitFrame.className = "character-hero__portrait-frame character-hero__portrait-toggle";
+    portraitFrame.setAttribute("aria-expanded", "false");
+    portraitFrame.setAttribute("aria-label", "Espandi ritratto di " + character.name);
+    portraitFrame.title = "Espandi ritratto";
 
     var portrait = document.createElement("img");
     portrait.src = character.portrait_url || character.token_url || fallbackPortraitSvg(character.name);
@@ -702,16 +1558,21 @@
 
     portraitFrame.appendChild(portrait);
 
-    var availabilityPill = document.createElement("span");
-    availabilityPill.className =
-      "character-hero__availability " +
-      (character.engagement === "engaged" ? "is-engaged" : "is-free");
-    availabilityPill.innerHTML =
-      character.engagement === "engaged"
-        ? "<i class=\"fa-solid fa-crosshairs\" aria-hidden=\"true\"></i><span>Impegnato</span>"
-        : "<i class=\"fa-solid fa-feather\" aria-hidden=\"true\"></i><span>Libero</span>";
+    var operativeRuleBadge = buildOperativeRuleBadge(character.operative_rule);
+    if (operativeRuleBadge) {
+      portraitFrame.appendChild(operativeRuleBadge);
+    }
 
-    portraitFrame.appendChild(availabilityPill);
+    portraitFrame.addEventListener("click", function onPortraitToggleClick() {
+      var expanded = portraitPanel.classList.toggle("is-expanded");
+      portraitFrame.setAttribute("aria-expanded", String(expanded));
+      portraitFrame.setAttribute(
+        "aria-label",
+        (expanded ? "Riduci ritratto di " : "Espandi ritratto di ") + character.name
+      );
+      portraitFrame.title = expanded ? "Riduci ritratto" : "Espandi ritratto";
+    });
+
     portraitPanel.appendChild(portraitFrame);
 
     hero.appendChild(portraitPanel);
@@ -875,6 +1736,10 @@
       main.appendChild(buildBiographySection(character.bio));
     }
 
+    if (character.completedQuests && character.completedQuests.length) {
+      main.appendChild(buildMissionHistorySection(character.completedQuests));
+    }
+
     var side = document.createElement("aside");
     side.className = "character-layout__side";
 
@@ -932,6 +1797,7 @@
 
     list.appendChild(buildFactItem("Specie", character.species || "Non registrata"));
     list.appendChild(buildFactItem("Classe", character.class_name || "Non registrata"));
+    list.appendChild(buildFactItem("Ruolo narrativo", getOperativeRuleLabel(character.operative_rule) || "Non registrato"));
 
     if (character.subclass_name) {
       list.appendChild(buildFactItem("Sottoclasse", character.subclass_name));
@@ -941,6 +1807,7 @@
       list.appendChild(buildFactItem("Background", character.background));
     }
 
+    list.appendChild(buildFactItem("Missioni concluse", String((character.completedQuests && character.completedQuests.length) || 0)));
     list.appendChild(buildFactItem("Medaglie", String((character.medals && character.medals.length) || 0)));
 
     panel.appendChild(list);
@@ -1014,6 +1881,85 @@
     }
 
     return "Membro operativo dell’Enclave";
+  }
+
+  function normalizeOperativeRule(value) {
+    var normalized = assetSlug(value);
+
+    switch (normalized) {
+      case "custode":
+      case "cercatore":
+      case "sigillatore":
+      case "sentinella":
+        return normalized;
+      default:
+        return "";
+    }
+  }
+
+  function getOperativeRuleLabel(value) {
+    switch (normalizeOperativeRule(value)) {
+      case "custode":
+        return "Custode";
+      case "cercatore":
+        return "Cercatore";
+      case "sigillatore":
+        return "Sigillatore";
+      case "sentinella":
+        return "Sentinella";
+      default:
+        return "";
+    }
+  }
+
+  function getOperativeRuleFallbackIconClass(value) {
+    switch (normalizeOperativeRule(value)) {
+      case "custode":
+        return "fa-shield-halved";
+      case "cercatore":
+        return "fa-compass";
+      case "sigillatore":
+        return "fa-lock";
+      case "sentinella":
+        return "fa-tower-observation";
+      default:
+        return "fa-circle";
+    }
+  }
+
+  function operativeRuleIconPath(value) {
+    var role = normalizeOperativeRule(value);
+    return role ? "assets/icons/roles/" + role + ".webp" : "";
+  }
+
+  function buildOperativeRuleBadge(value) {
+    var role = normalizeOperativeRule(value);
+    var label = getOperativeRuleLabel(role);
+    var iconPath = operativeRuleIconPath(role);
+
+    if (!role || !label || !iconPath) {
+      return null;
+    }
+
+    var badge = document.createElement("span");
+    badge.className = "character-hero__operative-rule character-hero__operative-rule--" + role;
+    badge.title = label;
+    badge.setAttribute("aria-label", "Ruolo narrativo: " + label);
+
+    var image = document.createElement("img");
+    image.src = iconPath;
+    image.alt = "";
+    image.decoding = "async";
+    image.loading = "lazy";
+
+    image.addEventListener("error", function onOperativeRuleIconError() {
+      badge.innerHTML = "";
+      badge.appendChild(buildFallbackIcon(getOperativeRuleFallbackIconClass(role)));
+    });
+
+    badge.appendChild(image);
+
+    return badge;
   }
 
   function looksLikeHtml(value) {
@@ -1209,184 +2155,422 @@ function appendPlainRichText(container, value) {
   }
 
   function buildBiographySection(bioText) {
-  var wrap = document.createElement("section");
-  wrap.className = "biography-wrap";
+    var content = document.createElement("div");
+    content.className = "biography-text character-rich-text";
 
-  wrap.appendChild(createSectionHeading("Biografia", "fa-scroll"));
+    if (looksLikeHtml(bioText)) {
+      content.innerHTML = sanitizeFoundryBiographyHtml(bioText);
+    } else {
+      appendPlainRichText(content, bioText);
+    }
 
-  var content = document.createElement("div");
-  content.className = "biography-text character-rich-text";
-
-  if (looksLikeHtml(bioText)) {
-    content.innerHTML = sanitizeFoundryBiographyHtml(bioText);
-  } else {
-    appendPlainRichText(content, bioText);
+    return buildCollapsibleSection({
+      title: "Biografia",
+      iconClass: "fa-scroll",
+      body: content,
+      expanded: true,
+      extraClass: "biography-wrap",
+    });
   }
 
-  wrap.appendChild(content);
+  function appendTextSection(container, titleText, value, iconClass) {
+    if (!value) {
+      return;
+    }
 
-  var BIO_TOGGLE_THRESHOLD = 2000;
+    container.appendChild(
+      buildCollapsibleSection({
+        title: titleText,
+        iconClass: iconClass,
+        body: buildRichTextContainer(value),
+        expanded: true,
+        extraClass: "content-block",
+      })
+    );
+  }
 
-  if (bioText.length > BIO_TOGGLE_THRESHOLD) {
-    content.classList.add("is-collapsed");
+  function buildMissionHistorySection(completedQuests) {
+    var list = document.createElement("div");
+    list.className = "character-mission-history";
+
+    for (var i = 0; i < completedQuests.length; i += 1) {
+      list.appendChild(buildMissionHistoryItem(completedQuests[i]));
+    }
+
+    return buildCollapsibleSection({
+      title: "Storico missioni",
+      iconClass: "fa-flag-checkered",
+      body: list,
+      expanded: false,
+      extraClass: "content-block character-collapsible--mission-history",
+    });
+  }
+
+  function buildMissionHistoryItem(quest) {
+    var item = document.createElement("article");
+    item.className = "character-mission-history__item";
+
+    var marker = document.createElement("span");
+    marker.className = "character-mission-history__marker";
+    marker.innerHTML = '<i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>';
+
+    var body = document.createElement("div");
+    body.className = "character-mission-history__body";
+
+    var head = document.createElement("div");
+    head.className = "character-mission-history__head";
+
+    var title;
+
+    if (quest.slug) {
+      title = document.createElement("a");
+      title.href = "quest.html?quest=" + encodeURIComponent(quest.slug);
+    } else {
+      title = document.createElement("span");
+    }
+
+    title.className = "character-mission-history__title";
+    title.textContent = quest.title;
+
+    var status = document.createElement("span");
+    status.className = "character-mission-history__status";
+    status.textContent = "Conclusa";
+
+    head.appendChild(title);
+    head.appendChild(status);
+
+    var meta = document.createElement("div");
+    meta.className = "character-mission-history__meta";
+
+    if (quest.location) {
+      meta.appendChild(buildMissionHistoryMetaPill({
+        iconClass: "fa-location-dot",
+        content: buildMissionHistoryLocationNode(quest.location),
+      }));
+    }
+
+    meta.appendChild(buildMissionHistoryMetaPill({
+      iconClass: "fa-calendar-check",
+      text: quest.completed_at ? formatDate(quest.completed_at) : "Data non registrata",
+    }));
+
+    body.appendChild(head);
+    body.appendChild(meta);
+
+    item.appendChild(marker);
+    item.appendChild(body);
+
+    return item;
+  }
+
+  function buildMissionHistoryMetaPill(options) {
+    var pill = document.createElement("span");
+    pill.className = "character-mission-history__pill";
+
+    var icon = document.createElement("i");
+    icon.className = "fa-solid " + options.iconClass;
+    icon.setAttribute("aria-hidden", "true");
+
+    var label = document.createElement("span");
+    label.className = "character-mission-history__pill-text";
+
+    if (options.content) {
+      label.appendChild(options.content);
+    } else {
+      label.textContent = options.text || "";
+    }
+
+    pill.appendChild(icon);
+    pill.appendChild(label);
+
+    return pill;
+  }
+
+  function buildMissionHistoryLocationNode(value) {
+    var parsed = parseMarkdownStyleLink(value);
+
+    if (parsed && parsed.url) {
+      var link = document.createElement("a");
+      link.href = parsed.url;
+      link.textContent = parsed.label || parsed.url;
+      link.className = "character-mission-history__location-link";
+      return link;
+    }
+
+    var text = document.createElement("span");
+    text.textContent = value;
+    return text;
+  }
+
+  function parseMarkdownStyleLink(value) {
+    var text = readString(value, "");
+    var labelStart = text.indexOf("[");
+    var labelEnd = text.indexOf("]", labelStart + 1);
+    var urlStart = text.indexOf("{", labelEnd + 1);
+    var urlEnd = text.indexOf("}", urlStart + 1);
+
+    if (labelStart !== 0 || labelEnd <= labelStart || urlStart !== labelEnd + 1 || urlEnd <= urlStart) {
+      return null;
+    }
+
+    return {
+      label: text.slice(labelStart + 1, labelEnd).trim(),
+      url: text.slice(urlStart + 1, urlEnd).trim(),
+    };
+  }
+
+  function buildCollapsibleSection(options) {
+    var sectionId = "character-section-" + Math.random().toString(36).slice(2);
+    var expanded = options.expanded !== false;
+
+    var section = document.createElement("section");
+    section.className = "character-collapsible" + (options.extraClass ? " " + options.extraClass : "");
 
     var toggle = document.createElement("button");
     toggle.type = "button";
-    toggle.className = "biography-toggle";
-    toggle.textContent = "Espandi";
+    toggle.className = "character-collapsible__toggle character-section-head";
+    toggle.setAttribute("aria-expanded", String(expanded));
+    toggle.setAttribute("aria-controls", sectionId);
 
-    toggle.addEventListener("click", function onToggle() {
-      var collapsed = content.classList.toggle("is-collapsed");
-      toggle.textContent = collapsed ? "Espandi" : "Riduci";
+    var main = document.createElement("span");
+    main.className = "character-collapsible__toggle-main";
+
+    var icon = document.createElement("i");
+    icon.className = "fa-solid " + (options.iconClass || "fa-circle");
+    icon.setAttribute("aria-hidden", "true");
+
+    var label = document.createElement("span");
+    label.textContent = options.title;
+
+    var chevron = document.createElement("i");
+    chevron.className = "fa-solid fa-chevron-down character-collapsible__chevron";
+    chevron.setAttribute("aria-hidden", "true");
+
+    main.appendChild(icon);
+    main.appendChild(label);
+    toggle.appendChild(main);
+    toggle.appendChild(chevron);
+
+    var body = document.createElement("div");
+    body.id = sectionId;
+    body.className = "character-collapsible__body";
+    body.hidden = !expanded;
+    body.appendChild(options.body);
+
+    toggle.addEventListener("click", function onSectionToggle() {
+      var nextExpanded = body.hidden;
+      body.hidden = !nextExpanded;
+      toggle.setAttribute("aria-expanded", String(nextExpanded));
+      scheduleCharacterHeaderWidthSync(section.closest("[data-character-detail]") || document);
     });
 
-    wrap.appendChild(toggle);
+    section.appendChild(toggle);
+    section.appendChild(body);
+
+    return section;
   }
 
-  return wrap;
-}
-
-function appendTextSection(container, titleText, value, iconClass) {
-  if (!value) {
-    return;
+  function buildRichTextContainer(value) {
+    var container = document.createElement("div");
+    container.className = "character-rich-text";
+    appendRichTextContent(container, value);
+    return container;
   }
 
-  var block = document.createElement("section");
-  block.className = "content-block";
+  function appendPlainRichText(container, value) {
+    var normalized = normalizeRichText(value);
 
-  block.appendChild(createSectionHeading(titleText, iconClass));
-  block.appendChild(buildRichTextContainer(value));
+    if (!normalized) {
+      return;
+    }
 
-  container.appendChild(block);
-}
+    var blocks = splitRichTextBlocks(normalized);
 
-function buildRichTextContainer(value) {
-  var container = document.createElement("div");
-  container.className = "character-rich-text";
-  appendRichTextContent(container, value);
-  return container;
-}
-
-function appendRichTextContent(container, value) {
-  var normalized = normalizeRichText(value);
-
-  if (!normalized) {
-    return;
-  }
-
-  if (isUnorderedListText(normalized)) {
-    container.appendChild(buildUnorderedList(normalized));
-    return;
-  }
-
-  if (isOrderedListText(normalized)) {
-    container.appendChild(buildOrderedList(normalized));
-    return;
-  }
-
-  var blocks = splitRichTextBlocks(normalized);
-
-  for (var i = 0; i < blocks.length; i += 1) {
-    var paragraph = document.createElement("p");
-    paragraph.textContent = blocks[i];
-    container.appendChild(paragraph);
-  }
-}
-
-function normalizeRichText(value) {
-  return String(value || "")
-    .replace(/\r\n?/g, "\n")
-    .replace(/\u00a0/g, " ")
-    .replace(/\t/g, "    ")
-    .trim();
-}
-
-function splitRichTextBlocks(value) {
-  return value
-    .split(/\n{2,}/)
-    .map(function (block) {
-      return block.replace(/[ \t]+\n/g, "\n").trim();
-    })
-    .filter(Boolean);
-}
-
-function isUnorderedListText(value) {
-  var lines = value
-    .split("\n")
-    .map(function (line) {
-      return line.trim();
-    })
-    .filter(Boolean);
-
-  if (!lines.length) {
-    return false;
-  }
-
-  for (var i = 0; i < lines.length; i += 1) {
-    if (!/^[-*•]\s+/.test(lines[i])) {
-      return false;
+    for (var i = 0; i < blocks.length; i += 1) {
+      var paragraph = document.createElement("p");
+      paragraph.textContent = blocks[i];
+      container.appendChild(paragraph);
     }
   }
 
-  return true;
-}
+  function appendRichTextContent(container, value) {
+    var normalized = normalizeRichText(value);
 
-function isOrderedListText(value) {
-  var lines = value
-    .split("\n")
-    .map(function (line) {
-      return line.trim();
-    })
-    .filter(Boolean);
+    if (!normalized) {
+      return;
+    }
 
-  if (!lines.length) {
-    return false;
-  }
+    if (isUnorderedListText(normalized)) {
+      container.appendChild(buildUnorderedList(normalized));
+      return;
+    }
 
-  for (var i = 0; i < lines.length; i += 1) {
-    if (!/^\d+[.)]\s+/.test(lines[i])) {
-      return false;
+    if (isOrderedListText(normalized)) {
+      container.appendChild(buildOrderedList(normalized));
+      return;
+    }
+
+    var blocks = splitRichTextBlocks(normalized);
+
+    for (var i = 0; i < blocks.length; i += 1) {
+      var paragraph = document.createElement("p");
+      paragraph.textContent = blocks[i];
+      container.appendChild(paragraph);
     }
   }
 
-  return true;
-}
+  function normalizeRichText(value) {
+    var LF = String.fromCharCode(10);
+    var CR = String.fromCharCode(13);
+    var TAB = String.fromCharCode(9);
 
-function buildUnorderedList(value) {
-  var list = document.createElement("ul");
-  var lines = value
-    .split("\n")
-    .map(function (line) {
-      return line.trim();
-    })
-    .filter(Boolean);
-
-  for (var i = 0; i < lines.length; i += 1) {
-    var item = document.createElement("li");
-    item.textContent = lines[i].replace(/^[-*•]\s+/, "").trim();
-    list.appendChild(item);
+    return replaceSpecialSpaces(String(value || ""))
+      .split(CR + LF)
+      .join(LF)
+      .split(CR)
+      .join(LF)
+      .split(TAB)
+      .join("    ")
+      .trim();
   }
 
-  return list;
-}
+  function splitRichTextBlocks(value) {
+    var LF = String.fromCharCode(10);
+    var lines = String(value || "").split(LF);
+    var blocks = [];
+    var current = [];
 
-function buildOrderedList(value) {
-  var list = document.createElement("ol");
-  var lines = value
-    .split("\n")
-    .map(function (line) {
-      return line.trim();
-    })
-    .filter(Boolean);
+    for (var i = 0; i < lines.length; i += 1) {
+      var line = lines[i].trimEnd();
 
-  for (var i = 0; i < lines.length; i += 1) {
-    var item = document.createElement("li");
-    item.textContent = lines[i].replace(/^\d+[.)]\s+/, "").trim();
-    list.appendChild(item);
+      if (!line.trim()) {
+        if (current.length) {
+          blocks.push(current.join(LF).trim());
+          current = [];
+        }
+        continue;
+      }
+
+      current.push(line);
+    }
+
+    if (current.length) {
+      blocks.push(current.join(LF).trim());
+    }
+
+    return blocks.filter(Boolean);
   }
 
-  return list;
-}
+  function isUnorderedListText(value) {
+    var lines = getNonEmptyLines(value);
+
+    if (!lines.length) {
+      return false;
+    }
+
+    for (var i = 0; i < lines.length; i += 1) {
+      if (!isUnorderedListLine(lines[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function isOrderedListText(value) {
+    var lines = getNonEmptyLines(value);
+
+    if (!lines.length) {
+      return false;
+    }
+
+    for (var i = 0; i < lines.length; i += 1) {
+      if (!isOrderedListLine(lines[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function buildUnorderedList(value) {
+    var list = document.createElement("ul");
+    var lines = getNonEmptyLines(value);
+
+    for (var i = 0; i < lines.length; i += 1) {
+      var item = document.createElement("li");
+      item.textContent = stripUnorderedListMarker(lines[i]);
+      list.appendChild(item);
+    }
+
+    return list;
+  }
+
+  function buildOrderedList(value) {
+    var list = document.createElement("ol");
+    var lines = getNonEmptyLines(value);
+
+    for (var i = 0; i < lines.length; i += 1) {
+      var item = document.createElement("li");
+      item.textContent = stripOrderedListMarker(lines[i]);
+      list.appendChild(item);
+    }
+
+    return list;
+  }
+
+  function getNonEmptyLines(value) {
+    var LF = String.fromCharCode(10);
+
+    return String(value || "")
+      .split(LF)
+      .map(function (line) {
+        return line.trim();
+      })
+      .filter(Boolean);
+  }
+
+  function isUnorderedListLine(line) {
+    var marker = line.charAt(0);
+    return (marker === "-" || marker === "*" || marker === "•") && line.charAt(1) === " ";
+  }
+
+  function stripUnorderedListMarker(line) {
+    return isUnorderedListLine(line) ? line.slice(2).trim() : line.trim();
+  }
+
+  function isOrderedListLine(line) {
+    var index = 0;
+
+    while (index < line.length && isDigit(line.charAt(index))) {
+      index += 1;
+    }
+
+    if (index === 0 || index >= line.length - 1) {
+      return false;
+    }
+
+    var marker = line.charAt(index);
+    return (marker === "." || marker === ")") && line.charAt(index + 1) === " ";
+  }
+
+  function stripOrderedListMarker(line) {
+    if (!isOrderedListLine(line)) {
+      return line.trim();
+    }
+
+    var index = 0;
+
+    while (index < line.length && isDigit(line.charAt(index))) {
+      index += 1;
+    }
+
+    return line.slice(index + 2).trim();
+  }
+
+  function isDigit(character) {
+    return character >= "0" && character <= "9";
+  }
 
   function createSectionHeading(text, iconClass) {
     var title = document.createElement("h4");
@@ -1403,6 +2587,82 @@ function buildOrderedList(value) {
     title.appendChild(label);
 
     return title;
+  }
+
+  function replaceSpecialSpaces(value) {
+    return String(value || "").split(String.fromCharCode(160)).join(" ");
+  }
+
+  var characterHeaderSyncFrame = 0;
+
+  function scheduleCharacterHeaderWidthSync(root) {
+    if (characterHeaderSyncFrame) {
+      window.cancelAnimationFrame(characterHeaderSyncFrame);
+    }
+
+    characterHeaderSyncFrame = window.requestAnimationFrame(function onHeaderSyncFrame() {
+      characterHeaderSyncFrame = 0;
+      syncCharacterHeaderWidths(root || document);
+    });
+  }
+
+  function syncCharacterHeaderWidths(root) {
+    var scope = root && root.querySelectorAll ? root : document;
+    var layouts = scope.querySelectorAll(".character-layout");
+
+    for (var i = 0; i < layouts.length; i += 1) {
+      syncCharacterLayoutHeaderWidths(layouts[i]);
+    }
+  }
+
+  function syncCharacterLayoutHeaderWidths(layout) {
+    var side = layout.querySelector(".character-layout__side");
+    var toggles = layout.querySelectorAll(".character-collapsible__toggle");
+
+    if (!side || !toggles.length) {
+      return;
+    }
+
+    for (var i = 0; i < toggles.length; i += 1) {
+      toggles[i].style.width = "";
+    }
+
+    var sideStyle = window.getComputedStyle(side);
+    var sideRect = side.getBoundingClientRect();
+    var layoutRect = layout.getBoundingClientRect();
+    var sideFloat = sideStyle.float || sideStyle.cssFloat;
+
+    if (sideFloat === "none" || sideRect.width <= 0) {
+      setHeaderWidths(toggles, Math.floor(layoutRect.width));
+      return;
+    }
+
+    var sideMarginLeft = parseFloat(sideStyle.marginLeft) || 0;
+    var sideMarginTop = parseFloat(sideStyle.marginTop) || 0;
+    var sideMarginBottom = parseFloat(sideStyle.marginBottom) || 0;
+    var sideTop = sideRect.top - sideMarginTop;
+    var sideBottom = sideRect.bottom + sideMarginBottom;
+    var fullWidth = Math.floor(layoutRect.width);
+    var leftWidth = Math.floor(sideRect.left - layoutRect.left - sideMarginLeft);
+
+    if (leftWidth < 220) {
+      setHeaderWidths(toggles, fullWidth);
+      return;
+    }
+
+    for (var j = 0; j < toggles.length; j += 1) {
+      var toggleRect = toggles[j].getBoundingClientRect();
+      var overlapsSide = toggleRect.top < sideBottom && toggleRect.bottom > sideTop;
+      toggles[j].style.width = Math.max(160, overlapsSide ? leftWidth : fullWidth) + "px";
+    }
+  }
+
+  function setHeaderWidths(toggles, width) {
+    var safeWidth = Math.max(160, width);
+
+    for (var i = 0; i < toggles.length; i += 1) {
+      toggles[i].style.width = safeWidth + "px";
+    }
   }
 
   function scrollRosterBy(roster, direction) {
@@ -1448,7 +2708,7 @@ function buildOrderedList(value) {
   }
 
   function mapQuestStatusLabel(status) {
-    switch (readString(status, "")) {
+    switch (normalizeStatus(status)) {
       case "prioritaria":
         return "Prioritaria";
       case "in-corso":
@@ -1521,6 +2781,12 @@ function buildOrderedList(value) {
 
   function readSupabaseError(payload, statusCode) {
     var details = payload && payload.message ? payload.message : payload && payload.error;
+    var debug = payload && payload.auth_debug ? payload.auth_debug : null;
+
+    if (details && debug) {
+      return String(details) + " — " + JSON.stringify(debug);
+    }
+
     if (details) {
       return String(details);
     }
@@ -1561,5 +2827,22 @@ function buildOrderedList(value) {
 
   function readString(value, fallback) {
     return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
+  }
+
+  function readBoolean(value) {
+    if (typeof value === "boolean") {
+      return value;
+    }
+
+    if (typeof value === "number") {
+      return value === 1;
+    }
+
+    if (typeof value === "string") {
+      var normalized = value.trim().toLowerCase();
+      return normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "on";
+    }
+
+    return false;
   }
 })();
