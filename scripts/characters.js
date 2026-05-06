@@ -30,6 +30,7 @@
     selectedSlug: "",
     classFilters: new Set(),
     availability: "all",
+    characterType: "all",
     isUpdatingCharacter: false,
     rosterDragSuppressClickUntil: 0,
   };
@@ -57,7 +58,9 @@
     setupFiltersDrawer(elements);
     bindSearch(elements);
     setupAvailabilityFilterButtons(elements);
+    setupCharacterTypeFilterButtons(elements);
     bindAvailabilityFilters(elements);
+    bindCharacterTypeFilters(elements);
     bindRosterControls(elements);
     bindRosterDrag(elements);
 
@@ -137,6 +140,7 @@
       inner.appendChild(filters.firstChild);
     }
 
+    inner.appendChild(buildCharacterTypeFilterGroup());
     panel.appendChild(inner);
 
     filters.classList.remove("characters-filters");
@@ -148,6 +152,7 @@
 
     elements.filterToggle = toggle;
     elements.filterPanel = panel;
+    elements.characterTypeButtons = filters.querySelectorAll("[data-characters-type]");
 
     toggle.addEventListener("click", function onFilterToggleClick() {
       var nextExpanded = panel.hidden;
@@ -187,6 +192,7 @@
     var existing = rosterShell.querySelector(":scope > .characters-roster-head");
 
     if (existing) {
+      ensureCharacterUpdateNpcField(existing);
       return existing;
     }
 
@@ -317,6 +323,79 @@
     }
   }
 
+  function buildCharacterTypeFilterGroup() {
+    var group = document.createElement("section");
+    group.className = "characters-type-filter-group";
+    group.setAttribute("aria-label", "Filtra tipo personaggio");
+
+    var label = document.createElement("span");
+    label.className = "characters-type-filter-group__label";
+    label.textContent = "Tipo";
+
+    var buttons = document.createElement("div");
+    buttons.className = "characters-type-filter-group__buttons";
+
+    buttons.appendChild(buildCharacterTypeFilterButton("all"));
+    buttons.appendChild(buildCharacterTypeFilterButton("operatives"));
+    buttons.appendChild(buildCharacterTypeFilterButton("npc"));
+
+    group.appendChild(label);
+    group.appendChild(buttons);
+
+    return group;
+  }
+
+  function buildCharacterTypeFilterButton(value) {
+    var button = document.createElement("button");
+    var label = getCharacterTypeFilterLabel(value);
+
+    button.type = "button";
+    button.className = "characters-availability-filter characters-type-filter";
+    button.setAttribute("aria-pressed", "false");
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    button.dataset.charactersType = value;
+    button.innerHTML =
+      '<span class="characters-availability-filter__icon"><i class="fa-solid ' +
+      getCharacterTypeFilterIconClass(value) +
+      '" aria-hidden="true"></i></span>' +
+      '<span class="characters-availability-filter__label">' +
+      label +
+      '</span>';
+
+    return button;
+  }
+
+  function setupCharacterTypeFilterButtons(elements) {
+    if (!elements.characterTypeButtons || !elements.characterTypeButtons.length) {
+      return;
+    }
+
+    syncCharacterTypeButtons(elements);
+  }
+
+  function getCharacterTypeFilterLabel(value) {
+    switch (value) {
+      case "operatives":
+        return "Agenti";
+      case "npc":
+        return "PNG";
+      default:
+        return "Tutti";
+    }
+  }
+
+  function getCharacterTypeFilterIconClass(value) {
+    switch (value) {
+      case "operatives":
+        return "fa-shield-halved";
+      case "npc":
+        return "fa-user-secret";
+      default:
+        return "fa-users";
+    }
+  }
+
   function bindAvailabilityFilters(elements) {
     if (!elements.availabilityButtons || !elements.availabilityButtons.length) {
       return;
@@ -327,6 +406,21 @@
         var next = event.currentTarget.getAttribute("data-characters-availability") || "all";
         state.availability = next;
         syncAvailabilityButtons(elements);
+        applyFilters(elements, true);
+      });
+    }
+  }
+
+  function bindCharacterTypeFilters(elements) {
+    if (!elements.characterTypeButtons || !elements.characterTypeButtons.length) {
+      return;
+    }
+
+    for (var i = 0; i < elements.characterTypeButtons.length; i += 1) {
+      elements.characterTypeButtons[i].addEventListener("click", function onCharacterTypeClick(event) {
+        var next = event.currentTarget.getAttribute("data-characters-type") || "all";
+        state.characterType = next;
+        syncCharacterTypeButtons(elements);
         applyFilters(elements, true);
       });
     }
@@ -701,6 +795,7 @@
           trait: readString(row.trait, ""),
           status: readString(row.status, ""),
           isExternalCollaborator: readBoolean(row.is_external_collaborator),
+          isNpc: readBoolean(row.is_npc !== undefined ? row.is_npc : row.isNpc),
           medals: normalizeMedals(
             row.medals !== undefined
               ? row.medals
@@ -911,6 +1006,19 @@
     }
   }
 
+  function syncCharacterTypeButtons(elements) {
+    if (!elements.characterTypeButtons || !elements.characterTypeButtons.length) {
+      return;
+    }
+
+    for (var i = 0; i < elements.characterTypeButtons.length; i += 1) {
+      var value = elements.characterTypeButtons[i].getAttribute("data-characters-type") || "all";
+      var isActive = value === state.characterType;
+      elements.characterTypeButtons[i].classList.toggle("is-active", isActive);
+      elements.characterTypeButtons[i].setAttribute("aria-pressed", String(isActive));
+    }
+  }
+
   function applyFilters(elements, preserveScroll) {
     var query = elements.search ? elements.search.value.trim().toLowerCase() : "";
 
@@ -924,6 +1032,14 @@
       }
 
       if (state.availability === "engaged" && character.engagement !== "engaged") {
+        return false;
+      }
+
+      if (state.characterType === "operatives" && (character.isNpc || character.isExternalCollaborator)) {
+        return false;
+      }
+
+      if (state.characterType === "npc" && !character.isNpc) {
         return false;
       }
 
@@ -962,10 +1078,13 @@
 
     var fragment = document.createDocumentFragment();
     var officialCharacters = [];
+    var npcCharacters = [];
     var externalCharacters = [];
 
     for (var i = 0; i < state.filtered.length; i += 1) {
-      if (state.filtered[i].isExternalCollaborator) {
+      if (state.filtered[i].isNpc) {
+        npcCharacters.push(state.filtered[i]);
+      } else if (state.filtered[i].isExternalCollaborator) {
         externalCharacters.push(state.filtered[i]);
       } else {
         officialCharacters.push(state.filtered[i]);
@@ -974,15 +1093,15 @@
 
     appendRosterGroup(fragment, officialCharacters, elements);
 
-    if (officialCharacters.length && externalCharacters.length) {
-      fragment.appendChild(buildRosterDivider("Collaboratori esterni"));
+    if (npcCharacters.length) {
+      fragment.appendChild(buildRosterDivider("PNG"));
+      appendRosterGroup(fragment, npcCharacters, elements);
     }
 
-    if (!officialCharacters.length && externalCharacters.length) {
+    if (externalCharacters.length) {
       fragment.appendChild(buildRosterDivider("Collaboratori esterni"));
+      appendRosterGroup(fragment, externalCharacters, elements);
     }
-
-    appendRosterGroup(fragment, externalCharacters, elements);
 
     roster.appendChild(fragment);
 
@@ -1022,7 +1141,8 @@
     button.className =
       "roster-item" +
       (character.slug === state.selectedSlug ? " is-selected" : "") +
-      (character.isExternalCollaborator ? " is-external-collaborator" : "");
+      (character.isExternalCollaborator ? " is-external-collaborator" : "") +
+      (character.isNpc ? " is-npc" : "");
     button.setAttribute("aria-pressed", String(character.slug === state.selectedSlug));
     button.dataset.slug = character.slug;
 
@@ -1050,7 +1170,14 @@
     button.appendChild(image);
     button.appendChild(label);
 
-    if (character.isExternalCollaborator) {
+    if (character.isNpc) {
+      var npcBadge = document.createElement("span");
+      npcBadge.className = "roster-item__external-badge roster-item__npc-badge";
+      npcBadge.title = "PNG";
+      npcBadge.setAttribute("aria-label", "PNG");
+      npcBadge.innerHTML = '<i class="fa-solid fa-user-secret" aria-hidden="true"></i>';
+      button.appendChild(npcBadge);
+    } else if (character.isExternalCollaborator) {
       var badge = document.createElement("span");
       badge.className = "roster-item__external-badge";
       badge.title = "Collaboratore esterno";
@@ -1230,19 +1357,22 @@
     var dialog = ensureCharacterUpdateDialog();
     var form = dialog.querySelector("[data-character-update-form]");
     var fileInput = dialog.querySelector("[data-character-update-json]");
+    var portraitInput = dialog.querySelector("[data-character-update-portrait]");
     var externalInput = dialog.querySelector("[data-character-update-external]");
+    var npcInput = dialog.querySelector("[data-character-update-npc]");
     var mottoInput = dialog.querySelector("[data-character-update-motto]");
     var operativeRuleInput = dialog.querySelector("[data-character-update-operative-rule]");
     var status = dialog.querySelector("[data-character-update-status]");
     var title = dialog.querySelector("[data-character-update-title]");
 
-    if (!form || !fileInput || !externalInput || !mottoInput || !operativeRuleInput || !status || !title) {
+    if (!form || !fileInput || !portraitInput || !externalInput || !npcInput || !mottoInput || !operativeRuleInput || !status || !title) {
       return;
     }
 
     form.reset();
     form.dataset.characterSlug = character.slug;
     externalInput.checked = !!character.isExternalCollaborator;
+    npcInput.checked = !!character.isNpc;
     mottoInput.value = character.motto || "";
     operativeRuleInput.value = character.operative_rule || "";
     status.textContent = "";
@@ -1265,6 +1395,8 @@
     var existing = document.querySelector("[data-character-update-dialog]");
 
     if (existing) {
+      ensureCharacterUpdatePortraitField(existing);
+      ensureCharacterUpdateNpcField(existing);
       return existing;
     }
 
@@ -1295,6 +1427,10 @@
       '<input type="file" accept="application/json,.json" data-character-update-json />' +
       '</label>' +
       '<label class="character-update-dialog__field">' +
+      '<span>Nuovo ritratto <small>(opzionale)</small></span>' +
+      '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif" data-character-update-portrait />' +
+      '</label>' +
+      '<label class="character-update-dialog__field">' +
       '<span>Motto</span>' +
       '<input type="text" maxlength="180" placeholder="Membro operativo dell’Enclave" data-character-update-motto />' +
       '</label>' +
@@ -1311,6 +1447,10 @@
       '<label class="character-update-dialog__check">' +
       '<input type="checkbox" data-character-update-external />' +
       '<span>Collaboratore esterno</span>' +
+      '</label>' +
+      '<label class="character-update-dialog__check">' +
+      '<input type="checkbox" data-character-update-npc />' +
+      '<span>PNG</span>' +
       '</label>' +
       '<p class="character-update-dialog__status" data-character-update-status aria-live="polite"></p>' +
       '<footer class="character-update-dialog__actions">' +
@@ -1346,6 +1486,44 @@
     return overlay;
   }
 
+  function ensureCharacterUpdatePortraitField(dialog) {
+    if (!dialog || dialog.querySelector("[data-character-update-portrait]")) {
+      return;
+    }
+
+    var jsonField = dialog.querySelector("[data-character-update-json]");
+    var jsonLabel = jsonField ? jsonField.closest(".character-update-dialog__field") : null;
+
+    if (!jsonLabel || !jsonLabel.parentNode) {
+      return;
+    }
+
+    var portraitLabel = document.createElement("label");
+    portraitLabel.className = "character-update-dialog__field";
+    portraitLabel.innerHTML =
+      '<span>Nuovo ritratto <small>(opzionale)</small></span>' +
+      '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif" data-character-update-portrait />';
+    jsonLabel.parentNode.insertBefore(portraitLabel, jsonLabel.nextSibling);
+  }
+
+  function ensureCharacterUpdateNpcField(dialog) {
+    if (!dialog || dialog.querySelector("[data-character-update-npc]")) {
+      return;
+    }
+
+    var externalField = dialog.querySelector("[data-character-update-external]");
+    var externalLabel = externalField ? externalField.closest(".character-update-dialog__check") : null;
+
+    if (!externalLabel || !externalLabel.parentNode) {
+      return;
+    }
+
+    var npcLabel = document.createElement("label");
+    npcLabel.className = "character-update-dialog__check";
+    npcLabel.innerHTML = '<input type="checkbox" data-character-update-npc /><span>PNG</span>';
+    externalLabel.parentNode.insertBefore(npcLabel, externalLabel.nextSibling);
+  }
+
   function closeCharacterUpdateDialog(dialog) {
     if (!dialog) {
       return;
@@ -1362,12 +1540,16 @@
 
     var form = dialog.querySelector("[data-character-update-form]");
     var fileInput = dialog.querySelector("[data-character-update-json]");
+    var portraitInput = dialog.querySelector("[data-character-update-portrait]");
     var externalInput = dialog.querySelector("[data-character-update-external]");
+    var npcInput = dialog.querySelector("[data-character-update-npc]");
     var mottoInput = dialog.querySelector("[data-character-update-motto]");
     var operativeRuleInput = dialog.querySelector("[data-character-update-operative-rule]");
     var status = dialog.querySelector("[data-character-update-status]");
     var submit = dialog.querySelector("button[type='submit']");
     var file = fileInput && fileInput.files && fileInput.files[0];
+    var portraitField = dialog.querySelector("[data-character-update-portrait]");
+    var portraitFile = portraitField && portraitField.files && portraitField.files[0];
 
     state.isUpdatingCharacter = true;
     setCharacterUpdateDialogBusy(dialog, true);
@@ -1388,7 +1570,13 @@
         formData.append("character_json", updateFile);
       }
 
+      if (portraitFile) {
+        validateCharacterPortraitFile(portraitFile);
+        formData.append("portrait_image", portraitFile);
+      }
+
       formData.append("is_external_collaborator", externalInput && externalInput.checked ? "true" : "false");
+      formData.append("is_npc", npcInput && npcInput.checked ? "true" : "false");
       formData.append("motto", mottoInput ? mottoInput.value.trim() : "");
       formData.append("operative_rule", operativeRuleInput ? normalizeOperativeRule(operativeRuleInput.value) : "");
       formData.append("current_character_id", character.id !== undefined && character.id !== null ? String(character.id) : "");
@@ -1426,6 +1614,25 @@
 
     for (var i = 0; i < controls.length; i += 1) {
       controls[i].disabled = isBusy;
+    }
+  }
+
+  function validateCharacterPortraitFile(file) {
+    if (!file) {
+      return;
+    }
+
+    var allowedTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+    var fileType = readString(file.type, "").toLowerCase();
+    var fileName = readString(file.name, "").toLowerCase();
+    var hasAllowedExtension = /\.(png|jpe?g|webp|gif)$/i.test(fileName);
+
+    if (fileType && !allowedTypes.has(fileType)) {
+      throw new Error("Il ritratto deve essere un'immagine PNG, JPG, WEBP o GIF.");
+    }
+
+    if (!fileType && !hasAllowedExtension) {
+      throw new Error("Il ritratto deve essere un'immagine PNG, JPG, WEBP o GIF.");
     }
   }
 
@@ -1736,7 +1943,7 @@
       main.appendChild(buildBiographySection(character.bio));
     }
 
-    if (character.completedQuests && character.completedQuests.length) {
+    if (!character.isNpc && character.completedQuests && character.completedQuests.length) {
       main.appendChild(buildMissionHistorySection(character.completedQuests));
     }
 
