@@ -208,7 +208,7 @@
 
     var title = document.createElement("h2");
     title.className = "characters-roster-head__title";
-    title.textContent = "Agenti Operativi";
+    title.textContent = "Membri dell'Organizzazione";
 
     var actions = document.createElement("div");
     actions.className = "characters-roster-head__actions";
@@ -1146,14 +1146,6 @@
     button.setAttribute("aria-pressed", String(character.slug === state.selectedSlug));
     button.dataset.slug = character.slug;
 
-    var status = document.createElement("span");
-    status.className = "roster-item__status " + (character.engagement === "engaged" ? "is-engaged" : "is-free");
-    status.setAttribute("aria-hidden", "true");
-    status.innerHTML =
-      character.engagement === "engaged"
-        ? "<i class=\"fa-solid fa-crosshairs\" aria-hidden=\"true\"></i>"
-        : "<i class=\"fa-solid fa-feather\" aria-hidden=\"true\"></i>";
-
     var image = document.createElement("img");
     image.className = "roster-item__image";
     image.src = character.portrait_url || character.token_url || fallbackPortraitSvg(character.name);
@@ -1166,25 +1158,8 @@
     label.className = "roster-item__name";
     label.textContent = character.name;
 
-    button.appendChild(status);
     button.appendChild(image);
     button.appendChild(label);
-
-    if (character.isNpc) {
-      var npcBadge = document.createElement("span");
-      npcBadge.className = "roster-item__external-badge roster-item__npc-badge";
-      npcBadge.title = "PNG";
-      npcBadge.setAttribute("aria-label", "PNG");
-      npcBadge.innerHTML = '<i class="fa-solid fa-user-secret" aria-hidden="true"></i>';
-      button.appendChild(npcBadge);
-    } else if (character.isExternalCollaborator) {
-      var badge = document.createElement("span");
-      badge.className = "roster-item__external-badge";
-      badge.title = "Collaboratore esterno";
-      badge.setAttribute("aria-label", "Collaboratore esterno");
-      badge.innerHTML = '<i class="fa-solid fa-handshake-angle" aria-hidden="true"></i>';
-      button.appendChild(badge);
-    }
 
     button.addEventListener("click", function onSelectCharacter() {
       state.selectedSlug = character.slug;

@@ -548,12 +548,18 @@ body > * {
 
 .quests-page-list--archive {
   grid-area: quests-archive;
+  margin-top: 2rem;
 }
 
 .quests-page-list__head {
   display: grid;
   gap: 0.22rem;
-  margin: 0 0 1rem;
+  margin: 0;
+  border: 1px solid rgba(var(--line-soft-rgb), 0.56);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 1.35rem 1.45rem;
+  background: var(--panel-gradient);
 }
 
 .quests-page-list__head h2 {
@@ -564,6 +570,75 @@ body > * {
   line-height: 1.05;
   text-transform: uppercase;
   color: var(--text-strong);
+}
+
+.quests-page-list__archive-toggle {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "archive-eyebrow archive-icon"
+    "archive-title archive-icon";
+  column-gap: 0.85rem;
+  row-gap: 0.22rem;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+}
+
+.quests-page-list__archive-toggle > .quest-page-eyebrow {
+  grid-area: archive-eyebrow;
+  justify-self: start;
+  align-self: end;
+}
+
+.quests-page-list__archive-toggle > h2 {
+  grid-area: archive-title;
+  justify-self: start;
+  align-self: start;
+}
+
+.quests-page-list__archive-toggle:hover h2,
+.quests-page-list__archive-toggle:focus-visible h2 {
+  color: var(--accent-strong);
+}
+
+.quests-page-list__archive-toggle:focus-visible {
+  outline: 1px solid rgba(var(--accent-strong-rgb), 0.72);
+  outline-offset: 0.45rem;
+}
+
+.quests-page-list__archive-icon {
+  grid-area: archive-icon;
+  justify-self: end;
+  align-self: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(var(--line-strong-rgb), 0.72);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--control-rgb), 0.72);
+  color: var(--accent-strong);
+}
+
+.quests-page-list__archive-icon i {
+  font-size: 0.82rem;
+  transition: transform 0.16s ease;
+}
+
+.quests-page-list--archive.is-open .quests-page-list__archive-icon i {
+  transform: rotate(180deg);
+}
+
+.quests-page-list--archive .quest-list[hidden] {
+  display: none !important;
 }
 
 .quests-page .quest-list {

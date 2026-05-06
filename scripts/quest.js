@@ -191,6 +191,8 @@
       if (archiveSection) {
         archiveSection.hidden = archivedQuests.length === 0;
       }
+
+      setupQuestArchiveCollapse(archiveSection, archiveList, archivedQuests.length);
     } catch (error) {
       console.error("Errore nel caricamento delle missioni:", error);
       renderQuestListMessage(questList, "Impossibile caricare le missioni in questo momento.");
@@ -199,6 +201,48 @@
         archiveSection.hidden = true;
       }
     }
+  }
+
+  function setupQuestArchiveCollapse(archiveSection, archiveList, archivedCount) {
+    if (!archiveSection || !archiveList || archivedCount <= 0) {
+      return;
+    }
+
+    var head = archiveSection.querySelector(".quests-page-list__head");
+    if (!head) {
+      return;
+    }
+
+    var toggle = archiveSection.querySelector("[data-quest-archive-toggle]");
+    if (!toggle) {
+      toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "quests-page-list__archive-toggle";
+      toggle.dataset.questArchiveToggle = "true";
+      toggle.setAttribute("aria-controls", archiveList.id || "quest-archive-list");
+
+      while (head.firstChild) {
+        toggle.appendChild(head.firstChild);
+      }
+
+      var icon = document.createElement("span");
+      icon.className = "quests-page-list__archive-icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.innerHTML = '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>';
+      toggle.appendChild(icon);
+
+      head.appendChild(toggle);
+
+      toggle.addEventListener("click", function onArchiveToggleClick() {
+        var isOpen = archiveSection.classList.toggle("is-open");
+        archiveList.hidden = !isOpen;
+        toggle.setAttribute("aria-expanded", String(isOpen));
+      });
+    }
+
+    archiveSection.classList.remove("is-open");
+    archiveList.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
   }
 
   async function loadQuestDataFromSupabase() {
